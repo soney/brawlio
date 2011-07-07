@@ -1,0 +1,30 @@
+/*
+$Date: 2008-07-04 18:06:56 -0400 (Fri, 04 Jul 2008) $
+
+Copyright 2008, nicerobot.org
+DigestJ is licensed under the (GPL-LICENSE.txt) license.
+
+This file skins login_dialog.
+
+*/
+
+#login_secret {
+  color:silver;
+}
+
+#login_dialog {
+  display:none;
+}
+
+#recaptcha, .login_button {
+  float: left;
+  margin-right: 5px;
+}
+
+.openid {
+  background: url(../image/openid-bg.gif) no-repeat;
+  background-position: 0 50%;
+  padding-left: 18px;
+  background-color: #fff;
+  color: #000;
+}

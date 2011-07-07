@@ -1,9 +1,9 @@
 var sqlite_path = __dirname+"/../vendor/node-sqlite";
 var sqlite = require(sqlite_path+"/sqlite");
-var db_path = "./brawlio_db.sqlite3";
+var db_path = __dirname+"/brawlio_db.sqlite3";
 
 require.paths.unshift(".");
-var User = require("user");
+var User = require("./user");
 
 var Database = function() {};
 
@@ -21,6 +21,7 @@ var Database = function() {};
 		if(db == null) {
 			db = _database;
 		}
+
 		db.close();
 		_database = undefined;
 	};
@@ -58,6 +59,8 @@ var Database = function() {};
 		query("CREATE TABLE users (" +
 			"id INTEGER PRIMARY KEY, " +
 			"username TEXT, " +
+			"email TEXT, " +
+			"verification TEXT, " +
 			"password TEXT)");
 	};
 
@@ -70,15 +73,29 @@ var Database = function() {};
 		close();
 	};
 
-	this.create_user = function(username, password) {
-		var insert = query("INSERT INTO users (username, password) VALUES (?,?)", [username, password]);
-		var id = insert.insertId;
+	this.create_user = function(username, email, verification) {
+		var db = open();
+		var result = db.query("SELECT * FROM USERS WHERE username==(?) OR email==(?)", [username, email]);
 
-		var user = user_factory({id: id, username: username});
+		var user = undefined;
+		if(result.rows.length === 0) {
+			var insert = db.query("INSERT INTO users (username, email, verification) VALUES (?,?,?)", [username, email, verification]);
+			var id = insert.insertId;
+			user = user_factory({id: id, username: username, email: email});
+		}
+		close();
 		return user;
 	};
 	this.user_exists_with_username = function(username) {
 		var result = query("SELECT * FROM USERS WHERE username==(?)", [username]);
+		return result.rows.length > 0;
+	};
+	this.user_exists_with_email = function(email) {
+		var result = query("SELECT * FROM USERS WHERE email==(?)", [email]);
+		return result.rows.length > 0;
+	};
+	this.user_exists_with_username_or_email = function(username, email) {
+		var result = query("SELECT * FROM USERS WHERE username==(?) OR email==(?)", [username, email]);
 		return result.rows.length > 0;
 	};
 	this.fetch_user_by_id = function(id) {
@@ -100,18 +117,11 @@ var Database = function() {};
 			}
 			else {
 				var user = user_factory({id: row.id, username: row.username});
-				return user;
+				return {result: true, user: user};
 			}
 		}
 	};
 }).call(Database.prototype);
 
-exports.BIODB = Database;
-
 var db = new Database();
-db.drop_tables();
-db.create_tables();
-console.log(db.user_exists_with_username("soney"));
-var user = db.create_user("soney", "adobe");
-console.log(db.validate_user("soney", "adobe"));
-console.log(db.user_exists_with_username("soney"));
+exports.database = db;

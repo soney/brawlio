@@ -1,30 +1,45 @@
-var express = require('express');
+var express = require("express");
+var auth = require("connect-auth");
 var socket_io = require('socket.io');
 var Worker = require('webworker').Worker;
+var DigestJ = require('./digestj');
+var database = require('./database').database;
+var Registration = require('./registration');
 
 var BrawlIO = function() {
 };
 
+var getSharedSecretForUserFunction = function(user,  callback) {
+        var result;
+        if(user == 'foo')
+                result= 'bar';
+        callback(null, result);
+};
+
 (function() {
 	//Private memebers
-	var app = undefined,
+	var server = undefined,
 		io = undefined;
 
 	var start_server = function(path) {
-		app = express.createServer();
-		io = socket_io.listen(app);
-
-		app.configure(function() {
-			app.use(express.static(path));
-		});
-
-		app.get('/', function(req, res, next) {
-			res.render('index');
-		});
+		server = express.createServer(
+				express.cookieParser()
+	//			, connect.session({secret: 'almaden'})
+				//, auth(DigestJ({getSharedSecretForUser: getSharedSecretForUserFunction}))
+				, express.router(routes)
+				, express.static(path)
+			);
+		io = socket_io.listen(server);
 
 		initialize_sockets(io);
 
-		app.listen(8000);
+		server.listen(8000);
+	};
+
+	var routes = function(server) {
+		server.get("/register/:key", function(req, res, next) {
+			res.render("client/register");
+		});
 	};
 
 	var initialize_sockets = function(io) {
@@ -34,6 +49,20 @@ var BrawlIO = function() {
 	};
 
 	var initialize_socket = function(socket) {
+		socket.on('login', function(user, password) {
+			var validation= database.validate_user(user, password);
+			if(validation.result) {
+				socket.emit("login_success", validation.user);
+			}
+			else {
+				socket.emit("login_failure", validation.explanation);
+			}
+		});
+		socket.on('register', function(user, email) {
+			var reg_key = Registration.generate_key();
+			Registration.send_reg_email(user, email, reg_key);
+			database.create_user(user, email, reg_key);
+		});
 	};
 
 	//Public members
@@ -46,37 +75,3 @@ var BrawlIO = function() {
 }).call(BrawlIO.prototype);
 
 module.exports = BrawlIO;
-
-/*
-var app = express.createServer(),
-	io = require('socket.io').listen(app);
-var Worker = require('webworker').Worker;
-
-app.configure(function() {
-	app.use(express.static(__dirname));
-});
-
-app.get('/', function(req, res, next) {
-	res.render('index');
-});
-
-
-io.sockets.on('connection', function (socket) {
-	socket.on('fight', function(p1_text, p2_text) {
-		var p1_worker = new Worker(__dirname+'/server/brawlio_worker.js', p1_text);
-		var p2_worker = new Worker(__dirname+'/server/brawlio_worker.js', p2_text);
-
-
-		p1_worker.onmessage = function(e) {
-			console.log("Received message: " + e);
-			p1_worker.terminate();
-		};
-
-		p1_worker.postMessage({ foo : 'bar' });
-		p1_worker.postMessage({'set_text'});
-	});
-});
-
-app.listen(8000);
-console.log("Listening on port 8000");
-*/

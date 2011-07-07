@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/!svn/ver/146/trunk/login/db/sql
+END
+users.sql
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/143/trunk/login/db/sql/users.sql
+END
+auths.sql
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/132/trunk/login/db/sql/auths.sql
+END
+fails.sql
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/146/trunk/login/db/sql/fails.sql
+END
