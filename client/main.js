@@ -1,12 +1,12 @@
-(function(window) {
-	var FistiCode = {
-		_debug: true
+define(function() {
+	var BrawlIO = {
 	};
-	window.FistiCode = FistiCode;
 
-	FistiCode.assert = function(test, message) {
+	BrawlIO.assert = function(test, message) {
 		if(FistiCode._debug) {
 			console.assert(test, message);
 		}
 	};
-})(window);
+
+	return BrawlIO;
+});
