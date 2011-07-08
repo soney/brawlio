@@ -1,6 +1,0 @@
-# Rewrite required for CGI-mode PHP's HTTP Authorization to work.
-# Sets $_REQUEST['HTTP_AUTHENTICATE']
-# $Id$
-RewriteEngine on
-RewriteCond %{HTTP:Authorization}  !^$
-RewriteRule ^index.php$ index.php?HTTP_AUTHENTICATE=%{HTTP:Authorization}

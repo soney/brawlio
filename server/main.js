@@ -2,17 +2,12 @@ var openid = require('openid');
 var querystring = require('querystring');
 var url = require('url');
 var express = require("express");
-var auth = require("connect-auth");
 var socket_io = require('socket.io');
-var Worker = require('webworker').Worker;
-var DigestJ = require('./digestj');
 var database = require('./database').database;
-var Registration = require('./registration');
 
 var BrawlIO = function() {
 };
 
-var main_path;
 
 (function() {
 	//Private memebers
@@ -20,17 +15,54 @@ var main_path;
 		io = undefined;
 
 	var start_server = function(path) {
-	main_path = path;
 		server = express.createServer(
-				 express.router(routes)
+				express.cookieParser()
+				, express.session({secret: "adobe"})
+				, express.router(routes)
 				, express.static(path)
 			);
 		io = socket_io.listen(server);
+		io.set("log level", 3);
 
 		initialize_sockets(io);
 
 		server.listen(8000);
 	};
+
+	var session_to_user = {};
+	var initialize_sockets = function(io) {
+		io.sockets.on('connection', function(socket) {
+			socket.on('session_key', function(key, callback) {
+				var user_id = session_to_user[key];
+				if(user_id) {
+					delete session_to_user[key];
+					initialize_socket(socket, user_id);
+					callback();
+				}
+			});
+		});
+	};
+
+	var initialize_socket = function(socket, user_id) {
+		socket.on('get_user', function(username, callback) {
+			if(username!=null) {
+				database.get_user_with_username(username, callback);
+			}
+			else {
+				database.get_user_with_id(user_id, callback);
+			}
+		});
+		socket.on('get_user_teams', function(username, callback) {
+			var teams_for_user_id = user_id;
+			if(username!=null) {
+				teams_for_user_id = username;
+			}
+
+			//This function automatically determines if the id is a string or number
+			database.get_user_teams(teams_for_user_id, callback);
+		});
+	};
+
 
 	var relyingParty = new openid.RelyingParty(
 		'http://localhost:8000/verify' // Verification URL (yours)
@@ -39,9 +71,23 @@ var main_path;
 		, false // Strict mode
 		, []); // List of extensions to enable and include
 
+	function render_home(req, res, next) {
+		var session = req.session;
+		if(session.user_id) {
+			session_to_user[req.sessionID] = session.user_id;
+			res.render("dashboard.jade", {layout: false, session_key: req.sessionID});
+		}
+		else {
+			res.render("index.jade", {layout: false});
+		}
+	}
+
 	var routes = function(server) {
 		server.get("/", function(req, res, next) {
-			res.render("index.jade", {layout: false});
+			render_home(req, res, next);
+		});
+		server.get("/dashboard", function(req, res, next) {
+			render_home(req, res, next);
 		});
 		server.get("/authenticate", function(req, res, next) {
 			var parsedUrl = url.parse(req.url);
@@ -65,7 +111,9 @@ var main_path;
 				}
 			});
 		});
+
 		server.get("/verify", function(req, res, next) {
+			var session = req.session;
             // Verify identity assertion
             // NOTE: Passing just the URL is also possible
             relyingParty.verifyAssertion(req, function(error, result) {
@@ -74,16 +122,19 @@ var main_path;
 						var claimed_identifier = result.claimedIdentifier;
 
 						var user_id = database.user_key_with_openid(claimed_identifier);
-						console.log(user_id);
+
 						if(user_id === null) {
-							res.render("verify_success_new_user.jade", {layout: false});
+							user_id = database.add_user_with_openid(claimed_identifier);
+							session.user_id = user_id;
+							res.render("verify/new_user_success.jade", {layout: false, userid: user_id});
 						}
 						else {
-							res.render("verify_success_old_user.jade", {layout: false});
+							session.user_id = user_id;
+							res.render("verify/old_user_success.jade", {layout: false});
 						}
 					}
 					else {
-						res.render("verify_fail.jade", {layout: false});
+						res.render("verify/fail.jade", {layout: false});
 					}
 				}
 				else {
@@ -91,18 +142,41 @@ var main_path;
 				}
             });
 		});
-		server.get("/dashboard", function(req, res, next) {
-			res.render("dashboard.jade", {layout: false});
-		});
-	};
 
-	var initialize_sockets = function(io) {
-		io.sockets.on('connection', function(socket) {
-			initialize_socket(socket);
-		});
-	};
+		server.get("/user_init", function(req, res, next) {
+			var query = req.query;
+			var id = query.id;
+			var username = query.username;
+			var email = query.email;
 
-	var initialize_socket = function(socket) {
+			var options = {};
+			if(username) options.username = '"'+username+'"';
+			if(email) options.email = '"'+email+'"';
+
+			database.set_user_details(id, options);
+			res.render("verify/user_init.jade", {layout: false});
+		});
+
+		server.get("/logout", function(req, res, next) {
+			var session = req.session;
+			session.destroy();
+			res.render("logout.jade", {layout: false});
+		});
+
+		server.get("/user/:username", function(req, res, next) {
+			var username = req.params.username;
+			var user = database.get_user_with_username(username);
+			res.render("user.jade", {layout: false, user: user, requested_username: username});
+		});
+
+		server.get("/manage_account", function(req, res, next) {
+			var session = req.session;
+			if(session.user_id) {
+				var user_id = session.user_id;
+				var user = database.get_user_with_id(user_id);
+				res.render("manage_account.jade", {layout: false, user: user});
+			}
+		});
 	};
 
 	//Public members

@@ -2,5 +2,18 @@
 html(lang="en")
   head
     title Brawl IO
+    script(src="vendor/require.js")
+    script(src="client/require_paths.js")
+    script
+      require(["vendor/jquery", "client/widgets/dashboard", "client/brawlio"], function() {
+        $(function() {
+          BrawlIO.initialize("#{session_key}", $("#dashboard"));
+        });
+      });
   body
-    | Dashboard 
+    #dashboard
+    //
+      h1 Brawl IO
+      h2.user
+      a(href="/logout") logout
+      .teams

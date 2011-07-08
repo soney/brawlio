@@ -4,6 +4,8 @@ var db_path = __dirname+"/brawlio_db.sqlite3";
 
 require.paths.unshift(".");
 var User = require("./user");
+var WeightClasses = require("./weight_class");
+var Team = require("./team");
 
 var Database = function() {};
 
@@ -45,8 +47,12 @@ var Database = function() {};
 	};
 
 	var user_factory = function(options) {
-		var user = new User(options.id, options.username);
+		var user = new User(options.id, options.username, options.email);
 		return user;
+	};
+	var team_factory = function(options) {
+		var team = new Team(options.id, options.active, options.weight_class, options.weight_class_name, options.code);
+		return team;
 	};
 
 	// Public members
@@ -55,22 +61,40 @@ var Database = function() {};
 	this.create_tables = function() {
 		this.create_user_table();
 		this.create_openid_table();
+		this.create_teams_table();
+		this.create_brawls_table();
+	};
+
+	this.create_openid_table = function() {
+		query("CREATE TABLE openid (" +
+			"openid_url TEXT PRIMARY KEY UNIQUE, " +
+			"user_fk INTEGER REFERENCES users(pk))");
 	};
 	this.create_user_table = function() {
 		query("CREATE TABLE users (" +
-			"pk INTEGER PRIMARY KEY, " +
+			"pk INTEGER PRIMARY KEY UNIQUE, " +
 			"username TEXT, " +
 			"email TEXT)");
 	};
-	this.create_openid_table = function() {
-		query("CREATE TABLE openid (" +
-			"openid_url TEXT PRIMARY KEY, " +
-			"user_fk INTEGER)");
+	this.create_teams_table = function() {
+		query("CREATE TABLE teams(" +
+			"pk INTEGER PRIMARY KEY UNIQUE, " +
+			"active INTEGER DEFAULT 0, " +
+			"user_fk INTEGER REFERENCES users(pk), " +
+			"weight_class INTEGER, " +
+			"code TEXT)");
+	};
+	this.create_brawls_table = function() {
+		query("CREATE TABLE brawls(" +
+			"pk INTEGER PRIMARY KEY UNIQUE, " +
+			"team_1_fk INTEGER REFERENCES teams(pk), " +
+			"team_2_fk INTEGER REFERENCES teams(pk), " +
+			"code TEXT)");
 	};
 
 	this.drop_tables = function() {
 		var db = open();
-		var table_names = ["users", "openid"];
+		var table_names = ["users", "openid", "teams", "brawls"];
 		table_names.forEach(function(table_name) {
 			db.query("DROP TABLE IF EXISTS " + table_name);
 		});
@@ -87,57 +111,108 @@ var Database = function() {};
 		}
 	};
 
-	/*
-
-	this.create_user = function(username, email, verification) {
+	this.add_user_with_openid = function(openid_url) {
 		var db = open();
-		var result = db.query("SELECT * FROM USERS WHERE username==(?) OR email==(?)", [username, email]);
+		//Add the user
+		var user_insert = db.query("INSERT INTO users DEFAULT VALUES");
+		var id = user_insert.insertId;
 
-		var user = undefined;
-		if(result.rows.length === 0) {
-			var insert = db.query("INSERT INTO users (username, email, verification) VALUES (?,?,?)", [username, email, verification]);
-			var id = insert.insertId;
-			user = user_factory({id: id, username: username, email: email});
+		//Insert into openid
+		db.query("INSERT INTO openid (openid_url, user_fk) VALUES (?, ?)", [openid_url, id]);
+
+		//Create teams
+		var weight_classes = WeightClasses.enumerate();
+		for(var i = 0, len = weight_classes.length; i<len; i++) {
+			var weight_class = weight_classes[i];
+
+			db.query("INSERT INTO teams (active, user_fk, weight_class) VALUES (?, ?, ?)", [0, id, weight_class]);
 		}
+
 		close();
-		return user;
+		return id;
 	};
-	this.user_exists_with_username = function(username) {
-		var result = query("SELECT * FROM USERS WHERE username==(?)", [username]);
-		return result.rows.length > 0;
-	};
-	this.user_exists_with_email = function(email) {
-		var result = query("SELECT * FROM USERS WHERE email==(?)", [email]);
-		return result.rows.length > 0;
-	};
-	this.user_exists_with_username_or_email = function(username, email) {
-		var result = query("SELECT * FROM USERS WHERE username==(?) OR email==(?)", [username, email]);
-		return result.rows.length > 0;
-	};
-	this.fetch_user_by_id = function(id) {
-		var row = one_row_query("SELECT id, username FROM users WHERE id==(?)", [id]);
-		if(row === undefined) return null;
-		else {
-			var user = user_factory({id: row.id, username: row.username});
-			return user;
-		}
-	};
-	this.validate_user = function(username, password) {
-		var row = one_row_query("SELECT * FROM users WHERE username==(?)", [username]);
-		if(row === undefined) {
-			return {result: false, explanation: "No such user '"+username+"'"};
+
+	this.get_user_with_id = function(id, callback) {
+		var row = one_row_query("SELECT * FROM users WHERE pk==(?) LIMIT 1", [id]);
+		if(row !== undefined) {
+			var user = user_factory({id: row.pk, username: row.username, email: row.email});
+			callback(user);
+			return;
 		}
 		else {
-			if(password != row.password) {
-				return {result: false, explanation: "Wrong password"};
-			}
-			else {
-				var user = user_factory({id: row.id, username: row.username});
-				return {result: true, user: user};
-			}
+			callback(null);
+			return;
 		}
 	};
-	*/
+
+	this.get_user_with_username = function(username, callback) {
+		var row = one_row_query("SELECT * FROM users WHERE username==(?) LIMIT 1", [username]);
+
+		if(row !== undefined) {
+			var user = user_factory({id: row.pk, username: row.username, email: row.email});
+			callback(user);
+			return;
+		}
+		else {
+			callback(null);
+			return;
+		}
+	};
+
+	this.set_user_details = function(id, options) {
+		var db = open();
+
+		for(var option_name in options) {
+			var option_value = options[option_name];
+			db.query("UPDATE users SET "+option_name+" = "+option_value+" WHERE pk = "+id);
+		}
+
+		close();
+	};
+
+	this.get_user_teams = function(user_id, callback) {
+		var num_types = WeightClasses.num_types();
+		var db = open();
+
+		if(typeof user_id == "string") {
+			var result = db.query("SELECT pk from users WHERE username==(?) LIMIT 1", [user_id]);
+			var rows = result.rows;
+			if(rows.length !== 1) {
+				callback([]);
+				return;
+			}
+			var row = rows.item(0);
+			user_id = row.pk;
+		}
+		var result = db.query("SELECT * FROM teams WHERE user_fk = " + user_id + " LIMIT " + num_types);
+		close();
+
+		var rows = result.rows;
+
+		var self = this;
+		var teams = [];
+		for(var i = 0, len = rows.length; i<len; i++) {
+			var row = rows.item(i);
+
+			var options = {
+				id: row.pk
+				, active: row.active !== 0
+				, weight_class: row.weight_class
+				, weight_class_name: WeightClasses.get_name(row.weight_class)
+				, code: row.code
+			};
+			
+			var team = team_factory(options);
+			teams.push(team);
+		}
+
+		callback(teams);
+		return;
+	};
+
+	this.activate_team = function(team_id) {
+		query("UPDATE teams SET active = 1 WHERE pk = "+team_id);
+	};
 }).call(Database.prototype);
 
 var db = new Database();

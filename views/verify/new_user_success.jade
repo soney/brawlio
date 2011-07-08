@@ -1,0 +1,23 @@
+!!! 5
+html(lang="en")
+  head
+    title Brawl IO
+    script(src="vendor/require.js")
+    script(src="client/require_paths.js")
+    script
+      require(["vendor/jquery"], function() {
+        var user_id = #{userid};
+        $(function() {
+          $("a#do_submit").click(function() {
+            var username = $("input#desired_username").val();
+            var email = $("input#user_email").val();
+            window.location = "/user_init?"+$.param({id: user_id, username: username, email: email});
+          });
+        });
+      });
+  body
+    label(for="desired_username") Desired Username:
+    input(type="text", id="desired_username", name="desired_username")
+    label(for="user_email") E-mail (optional):
+    input(type="text", id="user_email", name="user_email")
+    a#do_submit(href="javascript:void(0)") Submit

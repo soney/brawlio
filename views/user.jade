@@ -1,0 +1,10 @@
+!!! 5
+html(lang="en")
+  head
+    title Brawl IO
+  body
+    - if(user)
+      h1 Brawl IO
+      h2= user.username 
+    - else
+      p Sorry, no such user #{requested_username}
