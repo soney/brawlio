@@ -15,9 +15,3 @@
 	});
 
 })();
-
-require(["client/main", "vendor/jquery"], function(BrawlIO) {
-	$(function() {
-		BrawlIO.initialize();
-	});
-});

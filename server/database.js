@@ -54,24 +54,40 @@ var Database = function() {};
 	//User functions
 	this.create_tables = function() {
 		this.create_user_table();
+		this.create_openid_table();
 	};
 	this.create_user_table = function() {
 		query("CREATE TABLE users (" +
-			"id INTEGER PRIMARY KEY, " +
+			"pk INTEGER PRIMARY KEY, " +
 			"username TEXT, " +
-			"email TEXT, " +
-			"verification TEXT, " +
-			"password TEXT)");
+			"email TEXT)");
+	};
+	this.create_openid_table = function() {
+		query("CREATE TABLE openid (" +
+			"openid_url TEXT PRIMARY KEY, " +
+			"user_fk INTEGER)");
 	};
 
 	this.drop_tables = function() {
 		var db = open();
-		var table_names = ["users"];
+		var table_names = ["users", "openid"];
 		table_names.forEach(function(table_name) {
 			db.query("DROP TABLE IF EXISTS " + table_name);
 		});
 		close();
 	};
+
+	this.user_key_with_openid = function(openid_url) {
+		var row = one_row_query("SELECT user_fk FROM openid WHERE openid_url==(?) LIMIT 1", [openid_url]);
+		if(row === undefined) {
+			return null;
+		}
+		else {
+			return row.user_fk;
+		}
+	};
+
+	/*
 
 	this.create_user = function(username, email, verification) {
 		var db = open();
@@ -121,6 +137,7 @@ var Database = function() {};
 			}
 		}
 	};
+	*/
 }).call(Database.prototype);
 
 var db = new Database();

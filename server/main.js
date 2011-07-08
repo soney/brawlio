@@ -1,3 +1,6 @@
+var openid = require('openid');
+var querystring = require('querystring');
+var url = require('url');
 var express = require("express");
 var auth = require("connect-auth");
 var socket_io = require('socket.io');
@@ -9,12 +12,7 @@ var Registration = require('./registration');
 var BrawlIO = function() {
 };
 
-var getSharedSecretForUserFunction = function(user,  callback) {
-        var result;
-        if(user == 'foo')
-                result= 'bar';
-        callback(null, result);
-};
+var main_path;
 
 (function() {
 	//Private memebers
@@ -22,11 +20,9 @@ var getSharedSecretForUserFunction = function(user,  callback) {
 		io = undefined;
 
 	var start_server = function(path) {
+	main_path = path;
 		server = express.createServer(
-				express.cookieParser()
-	//			, connect.session({secret: 'almaden'})
-				//, auth(DigestJ({getSharedSecretForUser: getSharedSecretForUserFunction}))
-				, express.router(routes)
+				 express.router(routes)
 				, express.static(path)
 			);
 		io = socket_io.listen(server);
@@ -36,9 +32,67 @@ var getSharedSecretForUserFunction = function(user,  callback) {
 		server.listen(8000);
 	};
 
+	var relyingParty = new openid.RelyingParty(
+		'http://localhost:8000/verify' // Verification URL (yours)
+		, null // Realm (optional, specifies realm for OpenID authentication)
+		, false // Use stateless verification
+		, false // Strict mode
+		, []); // List of extensions to enable and include
+
 	var routes = function(server) {
-		server.get("/register/:key", function(req, res, next) {
-			res.render("client/register");
+		server.get("/", function(req, res, next) {
+			res.render("index.jade", {layout: false});
+		});
+		server.get("/authenticate", function(req, res, next) {
+			var parsedUrl = url.parse(req.url);
+			// User supplied identifier
+			var query = querystring.parse(parsedUrl.query);
+			var identifier = query.openid_identifier;
+
+			// Resolve identifier, associate, and build authentication URL
+			relyingParty.authenticate(identifier, false, function(error, authUrl) {
+				if (error) {
+				  res.writeHead(200);
+				  res.end('Authentication failed: ' + error);
+				}
+				else if (!authUrl) {
+				  res.writeHead(200);
+				  res.end('Authentication failed');
+				}
+				else {
+				  res.writeHead(302, { Location: authUrl });
+				  res.end();
+				}
+			});
+		});
+		server.get("/verify", function(req, res, next) {
+            // Verify identity assertion
+            // NOTE: Passing just the URL is also possible
+            relyingParty.verifyAssertion(req, function(error, result) {
+				if(result) {
+					if(result.authenticated) {
+						var claimed_identifier = result.claimedIdentifier;
+
+						var user_id = database.user_key_with_openid(claimed_identifier);
+						console.log(user_id);
+						if(user_id === null) {
+							res.render("verify_success_new_user.jade", {layout: false});
+						}
+						else {
+							res.render("verify_success_old_user.jade", {layout: false});
+						}
+					}
+					else {
+						res.render("verify_fail.jade", {layout: false});
+					}
+				}
+				else {
+					res.render("index.jade", {layout: false});
+				}
+            });
+		});
+		server.get("/dashboard", function(req, res, next) {
+			res.render("dashboard.jade", {layout: false});
 		});
 	};
 
@@ -49,20 +103,6 @@ var getSharedSecretForUserFunction = function(user,  callback) {
 	};
 
 	var initialize_socket = function(socket) {
-		socket.on('login', function(user, password) {
-			var validation= database.validate_user(user, password);
-			if(validation.result) {
-				socket.emit("login_success", validation.user);
-			}
-			else {
-				socket.emit("login_failure", validation.explanation);
-			}
-		});
-		socket.on('register', function(user, email) {
-			var reg_key = Registration.generate_key();
-			Registration.send_reg_email(user, email, reg_key);
-			database.create_user(user, email, reg_key);
-		});
 	};
 
 	//Public members
