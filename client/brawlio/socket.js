@@ -33,10 +33,10 @@ define(function() {
 			
 			var on_socket_ready = function() {
 				self.get_user(function(user) {
-					console.log(user);
+					self.db_do("set_username", user.username);
 				});
 				self.get_teams(function(teams) {
-					console.log(teams);
+					self.db_do("set_teams", teams);
 				});
 			};
 		}).call(BrawlIO);

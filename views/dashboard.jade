@@ -4,16 +4,25 @@ html(lang="en")
     title Brawl IO
     script(src="vendor/require.js")
     script(src="client/require_paths.js")
+    script#dashboard_template(type="text/x-handlebars-template")
+      .sidebar
+        h2#my_user_name
+        a(href="/logout") logout
+        .teams
+      .main_view
+    script#sidebar_team_template(type="text/x-handlebars-template")
+      .team 
+        a(href="javascript:void(0)")
+          .weight_class
+          .operations
+    script#dashboard_team_template(type="text/x-handlebars-template")
+      a.edit(href="javascript:void(0)") Edit
+
     script
-      require(["vendor/jquery", "client/widgets/dashboard", "client/brawlio"], function() {
+      require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $("#dashboard"));
         });
       });
   body
     #dashboard
-    //
-      h1 Brawl IO
-      h2.user
-      a(href="/logout") logout
-      .teams
