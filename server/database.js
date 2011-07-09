@@ -1,6 +1,7 @@
 var sqlite_path = __dirname+"/../vendor/node-sqlite";
 var sqlite = require(sqlite_path+"/sqlite");
-var db_path = __dirname+"/brawlio_db.sqlite3";
+var constants = require("./constants");
+var db_path = __dirname+"/"+constants.db_name;
 
 require.paths.unshift(".");
 var User = require("./user");
@@ -8,6 +9,7 @@ var WeightClasses = require("./weight_class");
 var Team = require("./team");
 
 var Database = function() {};
+
 
 (function() {
 	// Private memebers
@@ -199,7 +201,7 @@ var Database = function() {};
 				, active: row.active !== 0
 				, weight_class: row.weight_class
 				, weight_class_name: WeightClasses.get_name(row.weight_class)
-				, code: row.code
+				, code: row.code || ""
 			};
 			
 			var team = team_factory(options);
@@ -208,6 +210,11 @@ var Database = function() {};
 
 		callback(teams);
 		return;
+	};
+
+	this.set_team_code = function(team_id, code, callback) {
+		query("UPDATE teams SET code = (?) WHERE pk = "+team_id, [code]);
+		callback();
 	};
 
 	this.activate_team = function(team_id) {

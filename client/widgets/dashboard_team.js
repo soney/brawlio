@@ -1,35 +1,55 @@
-define(["vendor/jquery", "vendor/jquery-ui", "vendor/handlebars"], function() {
+define(["vendor/jquery", "vendor/jquery-ui"], function() {
+	require(["client/widgets/team_editor"]);
+
+	var Tab = {
+		edit: 1
+		, brawls: 2
+	};
 	var DashboardTeam = {
 		options: {
-			team: null,
-			template: null
+			team: null
 		}
 
 		, _create: function() {
-			this._initialize_templates();
-
 			var element = this.element,
 				options = this.options,
-				team = options.team,
-				template = options.template;
+				team = options.team;
 
-			element.text(team.weight_class_name);
-		}
+			var content = $(BrawlIO.templates.dashboard_team());
+			element.html("");
+			var self = this;
+			element.append(content);
 
-		, _initialize_templates: function() {
-			var get_template = function(jq_query) {
-				var template_html = $(jq_query).html();
-				var template = Handlebars.compile(template_html);
-
-				return template;
-			};
-
-			this.dashboard_template = get_template("script#dashboard_template");
-			this.sidebar_team_template = get_template("script#sidebar_team_template");
+			$("a.brawls", content).click(function() {
+				self.set_tab(Tab.brawls);
+			});
+			$("a.edit", content).click(function() {
+				self.set_tab(Tab.edit);
+			});
+			this.set_tab(Tab.edit);
 		}
 
 		, destroy: function() {
+			this.element.html("");
 			$.Widget.prototype.destroy.apply(this, arguments);
+		}
+
+		, set_tab: function(tab) {
+			var element = this.element,
+				content = $(".content", element),
+				options = this.options,
+				team_id = options.team_id;
+
+			if(content.data("team_editor")) {
+				content.team_editor("destroy");
+			}
+
+			if(tab === Tab.edit) {
+				content.team_editor({team_id: team_id});
+			}
+			else if(tab === Tab.brawls) {
+				console.log("brawls");
+			}
 		}
 	};
 

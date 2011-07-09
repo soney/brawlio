@@ -16,7 +16,17 @@ html(lang="en")
           .weight_class
           .operations
     script#dashboard_team_template(type="text/x-handlebars-template")
-      a.edit(href="javascript:void(0)") Edit
+      .tabs
+        a.brawls(href="javascript:void(0)") Brawls
+        a.edit(href="javascript:void(0)") Edit
+      .content
+    script#team_editor(type="text/x-handlebars-template")
+      .editor
+        .toolbar
+          a.save(href="javascript:void(0)") Save
+          a.verify(href="javascript:void(0)") Verify
+        .text
+          textarea#code {{code}}
 
     script
       require(["vendor/jquery", "client/brawlio"], function() {

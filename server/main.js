@@ -4,10 +4,10 @@ var url = require('url');
 var express = require("express");
 var socket_io = require('socket.io');
 var database = require('./database').database;
+var constants = require('./constants');
 
 var BrawlIO = function() {
 };
-
 
 (function() {
 	//Private memebers
@@ -17,7 +17,7 @@ var BrawlIO = function() {
 	var start_server = function(path) {
 		server = express.createServer(
 				express.cookieParser()
-				, express.session({secret: "adobe"})
+				, express.session({secret: constants.session_secret})
 				, express.router(routes)
 				, express.static(path)
 			);
@@ -61,6 +61,9 @@ var BrawlIO = function() {
 			//This function automatically determines if the id is a string or number
 			database.get_user_teams(teams_for_user_id, callback);
 		});
+		socket.on('set_team_code', function(team_id, code, callback) {
+			database.set_team_code(team_id, code, callback);
+		});
 	};
 
 
@@ -71,8 +74,13 @@ var BrawlIO = function() {
 		, false // Strict mode
 		, []); // List of extensions to enable and include
 
+	var _debug = true;
 	function render_home(req, res, next) {
 		var session = req.session;
+		if(_debug) {
+			session.user_id = 1;
+		}
+
 		if(session.user_id) {
 			session_to_user[req.sessionID] = session.user_id;
 			res.render("dashboard.jade", {layout: false, session_key: req.sessionID});
