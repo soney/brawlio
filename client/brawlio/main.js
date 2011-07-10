@@ -1,4 +1,4 @@
-define(function() {
+define(function(require, exports, module) {
 	require(["vendor/handlebars"]);
 	require(["client/widgets/dashboard"]);
 

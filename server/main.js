@@ -6,7 +6,7 @@ var socket_io = require('socket.io');
 var database = require('./database').database;
 var constants = require('./constants');
 
-var BrawlIO = function() {
+var BrawlIOServer = function() {
 };
 
 (function() {
@@ -188,12 +188,14 @@ var BrawlIO = function() {
 	};
 
 	//Public members
-	this.start = function(path) {
+	this.start = function(path, message) {
 		if(!path) path = __dirname;
 		start_server(path);
-		console.log("Good times to be had at localhost:8000");
+		if(message) {
+			console.log(message);
+		}
 	};
 
-}).call(BrawlIO.prototype);
+}).call(BrawlIOServer.prototype);
 
-module.exports = BrawlIO;
+module.exports = BrawlIOServer;

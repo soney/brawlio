@@ -1,4 +1,4 @@
-define(function() {
+define(function(require, exports, module) {
 	require(["vendor/socket.io"], function() {
 		(function() {
 			var self = this;

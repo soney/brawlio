@@ -32,6 +32,17 @@ html(lang="en")
       require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $("#dashboard"));
+          require(["game/team", "game/brawl"], function(Team, Brawl) {
+            var team1 = new Team({id: 1, code: "player.move_forward();"});
+            var team2 = new Team({id: 2, code: "player.move_forward();"});
+
+            var brawl = new Brawl({
+              teams: [team1, team2]
+            });
+
+            brawl.run();
+
+          });
         });
       });
   body
