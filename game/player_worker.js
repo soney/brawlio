@@ -20,7 +20,7 @@ var player = {};
 
 	assoc_ask('stop_rotating', Actions.rotate.stop);
 	assoc_ask('rotate_clockwise', Actions.rotate.clockwise);
-	assoc_ask('rotate_counter_clockwise', Actions.rotate.counterclockwise);
+	assoc_ask('rotate_counter_clockwise', Actions.rotate.counter_clockwise);
 })(player);
 
 self.onmessage = function(event) {

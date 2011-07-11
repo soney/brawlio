@@ -25,6 +25,7 @@ html(lang="en")
         .toolbar
           a.save(href="javascript:void(0)") Save
           a.verify(href="javascript:void(0)") Verify
+          a.test(href="javascript:void(0)") Test
         .text
           textarea#code {{code}}
 
@@ -32,18 +33,31 @@ html(lang="en")
       require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $("#dashboard"));
-          require(["game/team", "game/brawl"], function(Team, Brawl) {
-            var team1 = new Team({id: 1, code: "player.move_forward();"});
+          require(["game/models/team", "game/models/map", "game/brawl", "game/replay/replay_renderer"], function(Team, Map, Brawl, ReplayRenderer) {
+            var team1 = new Team({id: 1, code: "player.move_forward();player.rotate_counter_clockwise();"});
             var team2 = new Team({id: 2, code: "player.move_forward();"});
+
+            var map = new Map();
+
 
             var brawl = new Brawl({
               teams: [team1, team2]
+              , map: map
             });
 
             brawl.run();
+            window.setTimeout(function() {
+              brawl.terminate(function(replay) {
+                var canvas = $("canvas.replay")[0];
+                var ctx = canvas.getContext('2d');
+                var replay_renderer = new ReplayRenderer(replay);
+                replay_renderer.play(ctx);
+              });
+            }, 1000);
 
           });
         });
       });
   body
     #dashboard
+    canvas.replay(width="300", height="300")

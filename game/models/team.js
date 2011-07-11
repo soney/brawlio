@@ -1,4 +1,4 @@
-define(["game/constants", "game/controllers/player", "game/models/player_model", "vendor/underscore"], function(Constants, Player, PlayerModel) {
+define(["game/constants", "game/models/player", "vendor/underscore"], function(Constants, PlayerModel) {
 	var Team = function(options) {
 		this.code = options.code;
 		this.player_models = new Array(Constants.TEAM_SIZE);
@@ -6,10 +6,6 @@ define(["game/constants", "game/controllers/player", "game/models/player_model",
 			var player_model = new PlayerModel({
 				number: i+1
 			});
-			var player = new Player({
-				model: player_model
-			});
-
 			this.player_models[i] = player_model;
 		}
 	};

@@ -75,11 +75,11 @@ define(["game/constants", "vendor/underscore"], function(Constants) {
 		for(var i = 0, len = this.teams.length; i<len; i++) {
 			this.teams[i].index = i+1;
 		}
+		this.map = options.map;
 	};
 
 	(function() {
 		this.run = function() {
-
 			var player_id = 0;
 			var team_id = 0;
 			var player_workers = new Array(Constants.TEAM_SIZE*2);
@@ -129,10 +129,41 @@ define(["game/constants", "vendor/underscore"], function(Constants) {
 			brawl_worker.postMessage({
 				type: "initialize"
 				, teams: this.teams
+				, map: this.map
 			});
 			brawl_worker.postMessage({
 				type: "run"
 			});
+
+			this.player_workers = player_workers;
+			this.brawl_worker = brawl_worker;
+		};
+		
+		this.terminate = function(replay_callback) {
+			this.brawl_worker.postMessage({
+				type: "clean_up"
+			});
+
+			var self = this;
+			this.brawl_worker.onmessage = function(event) {
+				var data = event.data;
+				if(data.type === "broadcast") {
+					var message = data.message;
+					if(message.type === "replay") {
+						var replay = message.replay;
+
+						for(var i = 0, len = self.player_workers.length; i<len; i++) {
+							var player_worker = self.player_workers[i];
+							player_worker.terminate();
+						}
+						self.brawl_worker.terminate();
+
+						if(replay_callback) {
+							replay_callback(replay);
+						}
+					}
+				}
+			};
 		};
 	}).call(Brawl.prototype);
 

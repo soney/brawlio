@@ -8,8 +8,8 @@ define(["game/actions"], function(Actions) {
 		}, options);
 
 		this.attributes = _.extend({
-			radius: 4 //Radius in tiles
-			, movement_speed: 10.0 //Tiles per round
+			radius: 2 //Radius in tiles
+			, movement_speed: 5.0 //Tiles per round
 			, rotation_speed: 90*Math.PI/180.0 //Radians per round
 			, max_health: 10 //Maximum health
 			, index: -1
