@@ -65,7 +65,7 @@ else {
     }
 }
 
-define(["game/constants", "vendor/underscore"], function(Constants) {
+define(["game/constants", "game/replay/replay", "vendor/underscore"], function(Constants, Replay) {
 	function get_time() {
 		return (new Date()).getTime();
 	}
@@ -76,6 +76,16 @@ define(["game/constants", "vendor/underscore"], function(Constants) {
 			this.teams[i].index = i+1;
 		}
 		this.map = options.map;
+		var self = this;
+		this.replay = new Replay({
+			map: {
+				width: this.map.attributes.width
+				, height: this.map.attributes.height
+			}
+			, update: function() {
+				self.request_replay_update();
+			}
+		});
 	};
 
 	(function() {
@@ -112,6 +122,7 @@ define(["game/constants", "vendor/underscore"], function(Constants) {
 				});
 			}
 
+			var self = this;
 			var brawl_worker = new Worker('game/brawl_worker.js');
 			brawl_worker.onmessage = function(event) {
 				var data = event.data;
@@ -125,6 +136,10 @@ define(["game/constants", "vendor/underscore"], function(Constants) {
 						});
 					});
 				}
+				else if(type === "replay_chunk") {
+					var replay_chunk = data.replay_chunk;
+					self.on_replay_update(replay_chunk);
+				}
 			};
 			brawl_worker.postMessage({
 				type: "initialize"
@@ -137,33 +152,29 @@ define(["game/constants", "vendor/underscore"], function(Constants) {
 
 			this.player_workers = player_workers;
 			this.brawl_worker = brawl_worker;
+			this.request_replay_update();
 		};
-		
-		this.terminate = function(replay_callback) {
+
+		this.get_replay = function() {
+			return this.replay;
+		};
+		this.request_replay_update = function() {
 			this.brawl_worker.postMessage({
-				type: "clean_up"
+				type: "get_replay_chunk"
+				, from_snapshot: this.replay.get_last_snapshot_index() + 1
 			});
+		};
+		this.on_replay_update = function(replay_chunk) {
+			this.replay.concat_chunk(replay_chunk);
+		};
 
-			var self = this;
-			this.brawl_worker.onmessage = function(event) {
-				var data = event.data;
-				if(data.type === "broadcast") {
-					var message = data.message;
-					if(message.type === "replay") {
-						var replay = message.replay;
-
-						for(var i = 0, len = self.player_workers.length; i<len; i++) {
-							var player_worker = self.player_workers[i];
-							player_worker.terminate();
-						}
-						self.brawl_worker.terminate();
-
-						if(replay_callback) {
-							replay_callback(replay);
-						}
-					}
-				}
-			};
+		this.terminate = function(replay_callback) {
+			for(var i = 0, len = this.player_workers.length; i<len; i++) {
+				var player_worker = this.player_workers[i];
+				player_worker.terminate();
+			}
+			this.brawl_worker.terminate();
+			this.replay.mark_complete();
 		};
 	}).call(Brawl.prototype);
 

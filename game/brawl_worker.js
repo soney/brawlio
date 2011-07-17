@@ -1,8 +1,12 @@
 importScripts('game/actions.js');
 
+var post = function() {
+	return self.postMessage.apply(self, arguments);
+};
+
 var _debug = true;
 if(_debug) {
-var ROUNDS_PER_MS = 1/10.0;
+var ROUNDS_PER_MS = 1/100.0;
 var ROUNDS_PER_UPDATE = 0.001;
 }
 else {
@@ -139,12 +143,15 @@ var Player = function(model) {
 }).call(Player.prototype);
 
 var Snapshot = function(data) {
-	this.next = undefined;
+	this.next = this.prev = undefined;
 	this.data = data;
 };
 (function() {
 	this.set_next = function(next) {
 		this.next = next;
+	};
+	this.set_prev = function(prev) {
+		this.prev = prev;
 	};
 	this.serialize = function() {
 		return this.data;
@@ -153,11 +160,12 @@ var Snapshot = function(data) {
 
 var Replay = function(options) {
 	this.objects = [];
-	this.map = options.map;
 	this.first_snapshot = null;
 	this.last_snapshot = null;
 
 	this.num_snapshots = 0;
+
+	this.chunks = [];
 };
 (function() {
 	this.add_object = function(object) {
@@ -166,14 +174,16 @@ var Replay = function(options) {
 	};
 
 	this.add_snapshot = function(snapshot) {
-		if(this.last_snapshot) {
-			this.last_snapshot.set_next(snapshot);
+		if(this.last_snapshot === null) {
+			this.first_snapshot = snapshot;
 		}
 		else {
-			this.first_snapshot = snapshot;
+			snapshot.set_prev(this.last_snapshot);
+			this.last_snapshot.set_next(snapshot);
 		}
 		this.last_snapshot = snapshot;
 
+		snapshot.index = this.num_snapshots;
 		this.num_snapshots++;
 	};
 
@@ -181,12 +191,33 @@ var Replay = function(options) {
 		return object.__object_id;
 	};
 
-	this.serialize = function() {
+	this.serialize = function(from_snapshot) {
 		var rv = {
-			objects: new Array(this.objects.length)
+			objects: this.serialize_objects()
 			, snapshots: new Array(this.num_snapshots)
-			, map: this.map
 		};
+
+		var curr_snapshot = this.first_snapshot;
+		if(from_snapshot) {
+			while(curr_snapshot != null) {
+				if(curr_snapshot.index >= from_snapshot) {
+					break;
+				}
+				curr_snapshot = curr_snapshot.next;
+			}
+		}
+		var x = 0;
+		while(curr_snapshot != null) {
+			rv.snapshots[x] = this.serialize_snapshot(curr_snapshot);
+			curr_snapshot = curr_snapshot.next;
+			x++;
+		}
+
+		return rv;
+	};
+
+	this.serialize_objects = function() {
+		var objects = new Array(this.objects.length);
 
 		for(var i = 0, len = this.objects.length; i<len; i++) {
 			var object = this.objects[i];
@@ -197,43 +228,34 @@ var Replay = function(options) {
 				serialized_object.radius = object.get_radius();
 			}
 
-			rv.objects[i] = serialized_object;
+			objects[i] = serialized_object;
+		}
+		return objects;
+	};
+
+	this.serialize_snapshot = function(snapshot) {
+		var serialized_snapshot = {
+			round: snapshot.data.round
+			, object_states: new Array(this.objects.length)
+			, index: snapshot.index
+		};
+		var state = snapshot.data.state;
+		var objects = state.get_keys();
+		for(var i = 0, len = objects.length; i<len; i++) {
+			var object = objects[i];
+			var object_state = state.get(object);
+			var object_id = this.get_object_id(object);
+
+			serialized_snapshot.object_states[object_id] = object_state;
 		}
 
-		var x = 0;
-		var curr_snapshot = this.first_snapshot;
-		while(curr_snapshot != null) {
-			var serialized_snapshot = {
-				round: curr_snapshot.data.round
-				, object_states: new Array(this.objects.length)
-			};
-			var state = curr_snapshot.data.state;
-			var objects = state.get_keys();
-			for(var i = 0, len = objects.length; i<len; i++) {
-				var object = objects[i];
-				var object_state = state.get(object);
-				var object_id = this.get_object_id(object);
-
-				serialized_snapshot.object_states[object_id] = object_state;
-			}
-
-			rv.snapshots[x] = serialized_snapshot;
-			curr_snapshot = curr_snapshot.next;
-			x++;
-		}
-
-		return rv;
+		return serialized_snapshot;
 	};
 }).call(Replay.prototype);
 
 var Brawl = function(options) {
 	this.map = options.map;
-	this.replay = new Replay({
-		map: {
-			width: this.map.attributes.width
-			, height: this.map.attributes.height
-		}
-	});
+	this.replay = new Replay();
 	this.teams = options.teams;
 
 	this.initialize();
@@ -301,7 +323,7 @@ var Brawl = function(options) {
 	};
 
 	this.broadcast = function(message) {
-		self.postMessage({
+		post({
 			type: "broadcast"
 			, message: message
 		});
@@ -398,7 +420,8 @@ var Brawl = function(options) {
 	};
 
 	this.take_snapshot = function() {
-		this.replay.add_snapshot(this.get_snapshot());
+		var snapshot = this.get_snapshot();
+		this.replay.add_snapshot(snapshot);
 	};
 
 	this.get_snapshot = function() {
@@ -436,10 +459,15 @@ var Brawl = function(options) {
 
 	this.send_replay = function() {
 		var serialized_replay = this.replay.serialize();
-		this.broadcast({
-			type: "replay"
-			, replay: serialized_replay
-		});
+		post({type: "replay"
+				, replay: serialized_replay
+				});
+	};
+	this.send_replay_chunk = function(from_snapshot) {
+		var serialized_replay_chunk = this.replay.serialize(from_snapshot);
+		post({type: "replay_chunk"
+				, replay_chunk: serialized_replay_chunk
+				});
 	};
 
 }).call(Brawl.prototype);
@@ -449,6 +477,9 @@ self.onmessage = function(event) {
 	var type = data.type;
 	if(type === "run") {
 		self.brawl.start();
+	}
+	else if(type === "get_replay_chunk") {
+		self.brawl.send_replay_chunk(data.from_snapshot);
 	}
 	else if(type === "clean_up") {
 		self.brawl.send_replay();

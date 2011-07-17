@@ -44,17 +44,23 @@ html(lang="en")
               teams: [team1, team2]
               , map: map
             });
-
+            var replay = brawl.get_replay();
             brawl.run();
-            window.setTimeout(function() {
-              brawl.terminate(function(replay) {
-                var canvas = $("canvas.replay")[0];
-                var ctx = canvas.getContext('2d');
-                var replay_renderer = new ReplayRenderer(replay);
-                replay_renderer.play(ctx);
-              });
-            }, 1000);
 
+            var canvas = $("canvas.replay")[0];
+            var ctx = canvas.getContext('2d');
+            var replay_renderer = new ReplayRenderer(replay);
+            window.setTimeout(function() {
+              replay.update();
+            }, 2000);
+            window.setTimeout(function() {
+              replay_renderer.play(ctx);
+            }, 3000);
+
+            window.setTimeout(function() {
+              brawl.terminate();
+            }, 10000);
+            
           });
         });
       });
