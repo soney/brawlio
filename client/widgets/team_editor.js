@@ -18,28 +18,47 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				self.save();
 			});
 			$("a.test", content).click(function() {
-				self.save();
-
-				var map = new Map();
-				var my_team = new Team({
-					code: self.get_code()
-				});
-				
-				var other_team = new Team({
-					code: ""
-				});
-
-				var brawl = new Brawl({
-					teams: [my_team, other_team]
-					, map: map
-				});
-				brawl.run();
+				self.test();
 			});
 		}
 
 		, destroy: function() {
 			this.element.html("");
 			$.Widget.prototype.destroy.apply(this, arguments);
+		}
+
+		, test: function() {
+			var self = this;
+
+			this.save();
+
+			var map = new Map();
+			var my_team = new Team({
+				code: self.get_code()
+			});
+			
+			var other_team = new Team({
+				code: ""
+			});
+
+			var brawl = new Brawl({
+				teams: [my_team, other_team]
+				, map: map
+			});
+			var replay = brawl.get_replay();
+			brawl.run();
+			this.show_replay(replay);
+		}
+
+		, show_replay: function(replay) {
+			var element = this.element
+				, sidebar = $(".sidebar", element);
+			sidebar.html(BrawlIO.templates.replay);
+			var replay_element = $(".replay", sidebar);
+
+			replay_element.replay_viewer({
+				replay: replay
+			});
 		}
 
 		, save: function() {

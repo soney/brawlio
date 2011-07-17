@@ -45,9 +45,10 @@ define(function() {
 			
 			this.render(ctx);
 			var self = this;
+			this.replay.update();
 			window.setInterval(function() {
 				self.replay.update();
-			}, 10000);
+			}, 1000);
 		};
 		this.stop = function() {
 			console.log("Replay done");

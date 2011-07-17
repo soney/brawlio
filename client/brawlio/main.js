@@ -1,6 +1,7 @@
 define(function(require, exports, module) {
 	require(["vendor/handlebars"]);
 	require(["client/widgets/dashboard"]);
+	require(["client/widgets/replay_viewer"]);
 
 	var BrawlIO = window.BrawlIO = {
 		_debug: true
@@ -34,6 +35,7 @@ define(function(require, exports, module) {
 				, sidebar_team: get_template("script#sidebar_team_template")
 				, dashboard_team: get_template("script#dashboard_team_template")
 				, team_editor: get_template("script#team_editor")
+				, replay: get_template("script#replay")
 			};
 		};
 
