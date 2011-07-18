@@ -27,7 +27,7 @@ html(lang="en")
           a.verify(href="javascript:void(0)") Verify
           a.test(href="javascript:void(0)") Test
         .text
-          textarea#code {{code}}
+          textarea#code(rows="20", cols="70", style="font-family: Consolas, Monaco; font-size: 13px;") {{code}}
       .sidebar
     script#replay(type="text/x-handlebars-template")
       .replay
@@ -35,6 +35,7 @@ html(lang="en")
           a.play(href="javascript:void(0)") Play
           a.stop(href="javascript:void(0)") Stop
         canvas.viewer(width="300", height="300")
+        .console
 
     script
       require(["vendor/jquery", "client/brawlio"], function() {

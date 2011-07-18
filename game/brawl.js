@@ -140,6 +140,19 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 					var replay_chunk = data.replay_chunk;
 					self.on_replay_update(replay_chunk);
 				}
+				else if(type === "event") {
+					var audience = data.audience
+						, event_id = data.event_id;
+
+					for(var i = 0, len = audience.length; i<len; i++) {
+						var player_id = audience[i];
+						var player_worker = player_workers[player_id];
+						player_worker.postMessage({
+							type: "event"
+							, event_id: event_id
+						});
+					}
+				}
 			};
 			brawl_worker.postMessage({
 				type: "initialize"

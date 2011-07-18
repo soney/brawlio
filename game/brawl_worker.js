@@ -1,4 +1,5 @@
 importScripts('game/actions.js');
+importScripts('game/util/worker_utils.js');
 
 var post = function() {
 	return self.postMessage.apply(self, arguments);
@@ -14,34 +15,6 @@ var ROUNDS_PER_MS = 1/1000.0;
 var ROUNDS_PER_UPDATE = 0.001;
 }
 
-var Hash = function() {
-	this.keys = [];
-	this.values = [];
-};
-(function() {
-	this.set = function(key, value) {
-		for(var i = 0, len = this.keys.length; i<len; i++) {
-			if(key === this.keys[i]) {
-				this.values[i] = value;
-				return;
-			}
-		}
-		this.keys.push(key);
-		this.values.push(value);
-	};
-	this.get = function(key) {
-		for(var i = 0, len = this.keys.length; i<len; i++) {
-			if(key === this.keys[i]) {
-				return this.values[i];
-			}
-		}
-		return undefined;
-	};
-	this.get_keys = function() {
-		return this.keys;
-	};
-}).call(Hash.prototype);
-
 var Player = function(model) {
 	this.model = model;
 	this.id = this.model.id;
@@ -52,34 +25,16 @@ var Player = function(model) {
 	this.health = this.get_max_health();
 };
 (function() {
-	this.get_rotation_speed = function() {
-		return this.model.attributes.rotation_speed;
-	};
-	this.get_movement_speed = function() {
-		return this.model.attributes.movement_speed;
-	};
-	this.get_radius = function() {
-		return this.model.attributes.radius;
-	};
-	this.get_max_health = function() {
-		return this.model.attributes.max_health;
-	};
-	this.is_alive = function() {
-		return this.health > 0;
-	};
-	this.is_dead = function() {
-		return !this.is_alive();
-	};
+	this.get_rotation_speed = function() { return this.model.attributes.rotation_speed; };
+	this.get_movement_speed = function() { return this.model.attributes.movement_speed; };
+	this.get_radius = function() { return this.model.attributes.radius; };
+	this.get_max_health = function() { return this.model.attributes.max_health; };
+	this.is_alive = function() { return this.health > 0; };
+	this.is_dead = function() { return !this.is_alive(); };
 
-	this.set_x = function(x) {
-		this.x = x;
-	};
-	this.set_y = function(y) {
-		this.y = y;
-	};
-	this.set_theta = function(theta) {
-		this.theta = theta;
-	};
+	this.set_x = function(x) { this.x = x; };
+	this.set_y = function(y) { this.y = y; };
+	this.set_theta = function(theta) { this.theta = theta; };
 	this.get_new_position = function(delta_rounds) {
 		var rv = {x: this.x, y: this.y, theta: this.theta};
 
@@ -130,11 +85,11 @@ var Player = function(model) {
 				else if(action === Actions.rotate.clockwise) {
 					d_theta = distance;
 				}
-				else if(action === Actions.rotate.counterclockwise) {
+				else if(action === Actions.rotate.counter_clockwise) {
 					d_theta = -distance;
 				}
 
-				rv.theta += distance;
+				rv.theta += d_theta;
 			}
 		}
 
@@ -147,15 +102,9 @@ var Snapshot = function(data) {
 	this.data = data;
 };
 (function() {
-	this.set_next = function(next) {
-		this.next = next;
-	};
-	this.set_prev = function(prev) {
-		this.prev = prev;
-	};
-	this.serialize = function() {
-		return this.data;
-	};
+	this.set_next = function(next) { this.next = next; };
+	this.set_prev = function(prev) { this.prev = prev; };
+	this.serialize = function() { return this.data; };
 }).call(Snapshot.prototype);
 
 var Replay = function(options) {
@@ -317,8 +266,9 @@ var Brawl = function(options) {
 		return this.players[player_id];
 	};
 
-	this.get_round = function() {
-		var time = get_time() - this.start_time;
+	this.get_round = function(current_time) {
+		if(arguments.length === 0) current_time = get_time();
+		var time = current_time - this.start_time;
 		return time * ROUNDS_PER_MS;
 	};
 
@@ -440,6 +390,14 @@ var Brawl = function(options) {
 		return snapshot;
 	};
 
+	this.broadcast_event = function(options) {
+		post({
+			type: "event"
+			, event_id: options.event_id
+			, audience: [options.player_id]
+		});
+	};
+
 	this.on_player_request = function(player_id, request) {
 		var player = this.get_player(player_id);
 		var type = request.type;
@@ -454,6 +412,37 @@ var Brawl = function(options) {
 				action_type === Actions.rotate_type) {
 				player.actions[action_type] = action;
 			}
+		}
+		else if(type === "event_listener") {
+			var event_type = request.event_type
+				, options = request.options;
+			if(event_type === "round") {
+				var current_time = get_time()
+					, current_round = this.get_round(current_time)
+					, round = options.round
+					, callback_delay = (round - current_round)/ROUNDS_PER_MS;
+
+				var self = this
+					, callback = function() {
+						self.broadcast_event({
+							event_id: request.id
+							, player_id: player_id
+						});
+					};
+
+				if(callback_delay > 0) {
+					var self = this;
+					setTimeout(function() {
+						callback();
+					}, callback_delay);
+				}
+				else {
+					callback();
+				}
+			}
+		}
+		else {
+			console.log("Unknown player request type", type);
 		}
 	};
 
