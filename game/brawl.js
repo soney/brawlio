@@ -76,6 +76,7 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 			this.teams[i].index = i+1;
 		}
 		this.map = options.map;
+		this.round_limit = options.round_limit;
 		var self = this;
 		this.replay = new Replay({
 			map: {
@@ -153,11 +154,20 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 						});
 					}
 				}
+				else if(type === "game_over") {
+					var old_on_replay_update = self.on_replay_update;
+					self.on_replay_update = function() {
+						old_on_replay_update.apply(self, arguments);
+						self.terminate();
+					};
+					self.request_replay_update();
+				}
 			};
 			brawl_worker.postMessage({
 				type: "initialize"
 				, teams: this.teams
 				, map: this.map
+				, round_limit: this.round_limit
 			});
 			brawl_worker.postMessage({
 				type: "run"
@@ -179,6 +189,12 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 		};
 		this.on_replay_update = function(replay_chunk) {
 			this.replay.concat_chunk(replay_chunk);
+		};
+
+		this.stop = function() {
+			this.brawl_worker.postMessage({
+				type: "stop"
+			});
 		};
 
 		this.terminate = function(replay_callback) {

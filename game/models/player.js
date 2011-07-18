@@ -13,6 +13,7 @@ define(["game/actions"], function(Actions) {
 			, rotation_speed: 90*Math.PI/180.0 //Radians per round
 			, max_health: 10 //Maximum health
 			, index: -1
+			
 		}, options.attributes);
 	};
 

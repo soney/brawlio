@@ -17,6 +17,7 @@ define(function() {
 
 	function draw_player(player, state, ctx) {
 		ctx.save();
+
 		ctx.translate(state.x, state.y);
 		ctx.rotate(state.theta);
 		ctx.fillStyle = "yellow";
@@ -31,6 +32,18 @@ define(function() {
 		ctx.lineTo(player.radius, 0);
 		ctx.stroke();
 
+
+		ctx.restore();
+	}
+
+	function draw_projectile(projectile, state, ctx) {
+		ctx.save();
+
+		ctx.translate(state.x, state.y);
+		ctx.fillStyle = "red";
+		ctx.beginPath();
+		ctx.arc(0, 0, projectile.radius, 0, Math.PI*2, true);
+		ctx.fill();
 
 		ctx.restore();
 	}
@@ -99,6 +112,9 @@ define(function() {
 				var object_state = snapshot.object_states[i];
 				if(object.type === "player") {
 					draw_player(object, object_state, ctx);
+				}
+				else if(object.type === "projectile") {
+					draw_projectile(object, object_state, ctx);
 				}
 			}
 			ctx.restore();

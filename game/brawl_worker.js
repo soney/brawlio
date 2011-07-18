@@ -7,24 +7,28 @@ var post = function() {
 
 var _debug = true;
 if(_debug) {
-var ROUNDS_PER_MS = 1/100.0;
-var ROUNDS_PER_UPDATE = 0.001;
+	var ROUNDS_PER_MS = 1/100.0;
+	var ROUNDS_PER_UPDATE = 0.001;
 }
 else {
-var ROUNDS_PER_MS = 1/1000.0;
-var ROUNDS_PER_UPDATE = 0.001;
+	var ROUNDS_PER_MS = 1/1000.0;
+	var ROUNDS_PER_UPDATE = 0.001;
 }
 
-var Player = function(model) {
+var Player = function(model, game) {
 	this.model = model;
+	this.game = game;
 	this.id = this.model.id;
 	this.actions = [];
 	this.x = -1;
 	this.y = -1;
 	this.theta = 0;
 	this.health = this.get_max_health();
+	this.last_fired_round = null;
 };
 (function() {
+	var ROUNDS_BETWEEN_FIRING = 1;
+
 	this.get_rotation_speed = function() { return this.model.attributes.rotation_speed; };
 	this.get_movement_speed = function() { return this.model.attributes.movement_speed; };
 	this.get_radius = function() { return this.model.attributes.radius; };
@@ -35,6 +39,9 @@ var Player = function(model) {
 	this.set_x = function(x) { this.x = x; };
 	this.set_y = function(y) { this.y = y; };
 	this.set_theta = function(theta) { this.theta = theta; };
+	this.get_x = function() { return this.x; };
+	this.get_y = function() { return this.y; };
+	this.get_theta = function() { return this.theta; };
 	this.get_new_position = function(delta_rounds) {
 		var rv = {x: this.x, y: this.y, theta: this.theta};
 
@@ -95,7 +102,51 @@ var Player = function(model) {
 
 		return rv;
 	};
+	this.fire = function(options) {
+		var round = this.game.get_round();
+		var can_fire = true;
+		if(this.last_fired_round !== null) {
+			if(round-this.last_fired_round < ROUNDS_BETWEEN_FIRING) {
+				can_fire = false;
+			}
+		}
+		if(can_fire) {
+			this.game.on_player_fire(this);
+
+			this.last_fired_round = round;
+		}
+	};
 }).call(Player.prototype);
+
+var Projectile = function(options) {
+	this.options = options;
+	this.x = options.x;
+	this.y = options.y;
+	this.theta = options.theta;
+	this.in_play = true;
+	this.attributes = {
+		radius: 1 //Tiles
+		, speed: 15 //Tiles per round
+	};
+};
+(function() {
+	this.get_new_position = function(delta_rounds) {
+		var theta = this.get_theta();
+		var movement_speed = this.get_movement_speed();
+		var distance = delta_rounds * movement_speed;
+		var dx = Math.cos(theta) * distance;
+		var dy = Math.sin(theta) * distance;
+
+		return {x: this.get_x()+dx, y: this.get_y()+dy};
+	};
+	this.get_x = function() { return this.x; };
+	this.get_y = function() { return this.y; };
+	this.get_theta = function() { return this.theta; };
+	this.set_x = function(x) { this.x = x; };
+	this.set_y = function(y) { this.y = y; };
+	this.get_movement_speed = function() { return this.attributes.speed; };
+	this.get_radius = function() { return this.attributes.radius; };
+}).call(Projectile.prototype);
 
 var Snapshot = function(data) {
 	this.next = this.prev = undefined;
@@ -176,6 +227,10 @@ var Replay = function(options) {
 				serialized_object.type = "player";
 				serialized_object.radius = object.get_radius();
 			}
+			else if(object instanceof Projectile) {
+				serialized_object.type = "projectile";
+				serialized_object.radius = object.get_radius();
+			}
 
 			objects[i] = serialized_object;
 		}
@@ -206,6 +261,7 @@ var Brawl = function(options) {
 	this.map = options.map;
 	this.replay = new Replay();
 	this.teams = options.teams;
+	this.round_limit = options.round_limit == null ? -1 : options.round_limit;
 
 	this.initialize();
 };
@@ -216,13 +272,14 @@ var Brawl = function(options) {
 	};
 
 	this.initialize = function() {
-		this.players = [];
+		this.projectiles = [];
+		this.players = new Array(this.teams.length * this.teams[0].player_models.length);
 		for(var i = 0, leni = this.teams.length; i<leni; i++) {
 			var team = this.teams[i];
 
 			for(var j = 0, lenj = team.player_models.length; j<lenj; j++) {
 				var player_model = team.player_models[j];
-				var player = new Player(player_model);
+				var player = new Player(player_model, this);
 
 				this.players[player.id] = player;
 				this.replay.add_object(player);
@@ -262,6 +319,13 @@ var Brawl = function(options) {
 		});
 	};
 
+	this.end_game = function() {
+		clearInterval(this.update_timeout);
+		post({
+			type: "game_over"
+		});
+	};
+
 	this.get_player = function(player_id) {
 		return this.players[player_id];
 	};
@@ -283,7 +347,7 @@ var Brawl = function(options) {
 		this.do_update();
 
 		var me = this;
-		setTimeout(function() {
+		this.update_timeout = setTimeout(function() {
 			me.update();
 		}, ROUNDS_PER_UPDATE / ROUNDS_PER_MS);
 	};
@@ -291,6 +355,9 @@ var Brawl = function(options) {
 	this.do_update = function() {
 		var old_round = this.round;
 		this.round = this.get_round();
+		if(this.round_limit >= 0 && this.round >= this.round_limit) {
+			this.end_game();
+		}
 
 		var delta_rounds = this.round - old_round;
 
@@ -300,7 +367,31 @@ var Brawl = function(options) {
 				this.update_player(player, delta_rounds);
 			}
 		}
+		for(var i = 0, len = this.projectiles.length; i<len; i++) {
+			var projectile = this.projectiles[i];
+			this.update_projectile(projectile, delta_rounds);
+		}
 		this.take_snapshot();
+	};
+
+
+	this.on_player_fire = function(player) {
+		this.do_update();
+		var projectile = new Projectile({
+			x: player.get_x()
+			, y: player.get_y()
+			, theta: player.get_theta()
+		});
+		this.projectiles.push(projectile);
+		this.replay.add_object(projectile);
+	};
+
+	this.update_projectile = function(projectile, delta_rounds) {
+		var old_pos = {x: projectile.x, y: projectile.y};
+		var new_pos = projectile.get_new_position(delta_rounds);
+
+		projectile.set_x(new_pos.x);
+		projectile.set_y(new_pos.y);
 	};
 
 	this.update_player = function(player, delta_rounds) {
@@ -382,6 +473,11 @@ var Brawl = function(options) {
 			var player_state = {x: player.x, y: player.y, theta: player.theta};
 			state.set(player, player_state);
 		}
+		for(var i = 0, len = this.projectiles.length; i<len; i++) {
+			var projectile = this.projectiles[i];
+			var projectile_state = {x: projectile.x, y: projectile.y};
+			state.set(projectile, projectile_state);
+		}
 		var data = {
 			round: this.get_round()
 			, state: state
@@ -411,6 +507,12 @@ var Brawl = function(options) {
 			if(action_type === Actions.move_type ||
 				action_type === Actions.rotate_type) {
 				player.actions[action_type] = action;
+			}
+			else if(action_type === Actions.instantaneous_type) {
+				var options = request.options;
+				if(action === Actions.fire) {
+					player.fire(options);
+				}
 			}
 		}
 		else if(type === "event_listener") {
@@ -470,13 +572,14 @@ self.onmessage = function(event) {
 	else if(type === "get_replay_chunk") {
 		self.brawl.send_replay_chunk(data.from_snapshot);
 	}
-	else if(type === "clean_up") {
-		self.brawl.send_replay();
+	else if(type === "stop") {
+		self.brawl.end_game();
 	}
 	else if(type === "initialize") {
 		self.brawl = new Brawl({
 			map: data.map
 			, teams: data.teams
+			, round_limit: data.round_limit
 		});
 	}
 	else if(type === "player_request") {

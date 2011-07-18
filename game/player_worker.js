@@ -27,9 +27,11 @@ var player = {};
 (function(player) {
 	var assoc_ask = function(fn_name, action) {
 		player [fn_name] = function() {
+			var options = Array.prototype.slice.call(arguments);
 			return self.postMessage({
 				type: "action"
 				, action: action
+				, options: options
 			});
 		};
 	};
@@ -46,6 +48,8 @@ var player = {};
 	assoc_ask('turnRight', Actions.rotate.clockwise);
 	assoc_ask('rotateCounterClockwise', Actions.rotate.counter_clockwise);
 	assoc_ask('turnLeft', Actions.rotate.counter_clockwise);
+
+	assoc_ask('fire', Actions.fire);
 })(player);
 
 var game = {};
