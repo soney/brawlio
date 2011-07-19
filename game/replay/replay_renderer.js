@@ -105,7 +105,7 @@ define(function() {
 			ctx.scale(PIXELS_PER_TILE, PIXELS_PER_TILE);
 			var map = this.replay.get_map();
 			draw_map(map, ctx);
-			for(var i = 0, len = snapshot.object_states.length; i<len; i++) {
+			for(var i in snapshot.object_states) {
 				var object_index = i;
 				var object = this.replay.get_object(object_index);
 

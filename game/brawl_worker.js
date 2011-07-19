@@ -146,6 +146,7 @@ var Projectile = function(options) {
 	this.set_y = function(y) { this.y = y; };
 	this.get_movement_speed = function() { return this.attributes.speed; };
 	this.get_radius = function() { return this.attributes.radius; };
+	this.get_source = function() { return this.options.source; };
 }).call(Projectile.prototype);
 
 var Snapshot = function(data) {
@@ -381,6 +382,7 @@ var Brawl = function(options) {
 			x: player.get_x()
 			, y: player.get_y()
 			, theta: player.get_theta()
+			, source: player
 		});
 		this.projectiles.push(projectile);
 		this.replay.add_object(projectile);
@@ -390,8 +392,34 @@ var Brawl = function(options) {
 		var old_pos = {x: projectile.x, y: projectile.y};
 		var new_pos = projectile.get_new_position(delta_rounds);
 
-		projectile.set_x(new_pos.x);
-		projectile.set_y(new_pos.y);
+		var left_map = this.projectile_left_map(projectile, old_pos, new_pos);
+		var hit_other_player = false;
+
+		if(!left_map) {
+			hit_other_player = this.projectile_hit_player(projectile, old_pos, new_pos);
+			if(hit_other_player !== false) {
+				hit_other_player.hp -= 1;
+				console.log("HIT!");
+				hit_other_player = true;
+			}
+		}
+
+		if(left_map || hit_other_player) {
+			projectile.in_play = false;
+			var found_projectile = false;
+			for(var i = 0, len = this.projectiles.length; i<len; i++) {
+				var p = this.projectiles[i];
+				if(p === projectile) found_projectile = true;
+				if(found_projectile) {
+					this.projectiles[i] = this.projectiles[i+1];
+				}
+			}
+			this.projectiles.length = this.projectiles.length - 1;
+		}
+		else {
+			projectile.set_x(new_pos.x);
+			projectile.set_y(new_pos.y);
+		}
 	};
 
 	this.update_player = function(player, delta_rounds) {
@@ -404,6 +432,39 @@ var Brawl = function(options) {
 		player.set_x(new_pos.x);
 		player.set_y(new_pos.y);
 		player.set_theta(new_pos.theta);
+	};
+
+	this.projectile_hit_player = function(projectile, old_pos, new_pos) {
+		var source = projectile.get_source();
+		var delta_x = new_pos.x - old_pos.x;
+		var delta_y = new_pos.y - old_pos.y;
+		var m = delta_y/delta_x;
+		var b = new_pos.y - m*new_pos.x;
+
+		var denom = Math.sqrt(m*m+1);
+		var projectile_radius = projectile.get_radius();
+		for(var i = 0, len = this.players.length; i<len; i++) {
+			var player = this.players[i];
+			if(player === source) continue;
+			var closest_distance = Math.abs(player.get_y() - m*player.get_x() - b) / denom;
+			if(closest_distance < player.get_radius() + projectile_radius) {
+				return player;
+			}
+		}
+		
+		return false;
+	};
+
+	this.projectile_left_map = function(projectile, old_pos, new_pos) {
+		var map_width = this.map.attributes.width;
+		var map_height = this.map.attributes.height;
+		var radius = projectile.get_radius();
+
+		var min_x = new_pos.x - radius;
+		var max_x = new_pos.x + radius;
+		var min_y = new_pos.y - radius;
+		var max_y = new_pos.y + radius;
+		return max_x <= 0 || max_y <= 0 || min_x >= map_height || min_y >= map_height
 	};
 
 	this.check_map_bounds = function(player, old_pos, new_pos) {
