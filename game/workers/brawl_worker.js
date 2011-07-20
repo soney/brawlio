@@ -1,5 +1,6 @@
-importScripts('game/actions.js');
-importScripts('game/util/worker_utils.js');
+importScripts('game/workers/actions.js');
+importScripts('game/workers/util/worker_utils.js');
+importScripts('game/workers/util/brawl/brawl_utils.js');
 
 var post = function() {
 	return self.postMessage.apply(self, arguments);
@@ -15,10 +16,31 @@ else {
 	var ROUNDS_PER_UPDATE = 0.001;
 }
 
-var Player = function(model, game) {
-	this.model = model;
-	this.game = game;
-	this.id = this.model.id;
+var Team = function(options) {
+	this.game = options.game;
+	this.id = options.model.id;
+	var self = this;
+	this.players = options.model.player_models.map(function(player_model) {
+		return new Player({game: self.game, team: self, model: player_model});
+	});
+};
+(function() {
+	this.is_alive = function() {
+		for(var i = 0, len = this.players.length; i<len; i++) {
+			if(this.players[i].is_alive()) return true;
+		}
+		return false;
+	};
+	this.is_dead = function() { return !this.is_alive(); };
+	this.get_players = function() { return this.players; };
+}).call(Team.prototype);
+
+
+var Player = function(options) {
+	this.team = options.team;
+	this.game = options.game;
+	this.id = options.model.id;
+	this.attributes = options.model.attributes;
 	this.actions = [];
 	this.x = -1;
 	this.y = -1;
@@ -29,15 +51,22 @@ var Player = function(model, game) {
 (function() {
 	var ROUNDS_BETWEEN_FIRING = 1;
 
-	this.get_rotation_speed = function() { return this.model.attributes.rotation_speed; };
-	this.get_movement_speed = function() { return this.model.attributes.movement_speed; };
-	this.get_radius = function() { return this.model.attributes.radius; };
-	this.get_max_health = function() { return this.model.attributes.max_health; };
-	this.is_alive = function() { return this.health > 0; };
+	this.get_rotation_speed = function() { return this.attributes.rotation_speed; };
+	this.get_movement_speed = function() { return this.attributes.movement_speed; };
+	this.get_radius = function() { return this.attributes.radius; };
+	this.get_max_health = function() { return this.attributes.max_health; };
+	this.is_alive = function() { return this.get_health() > 0; };
 	this.is_dead = function() { return !this.is_alive(); };
 
 	this.set_x = function(x) { this.x = x; };
 	this.set_y = function(y) { this.y = y; };
+	this.get_health = function() {
+		return this.health;
+	};
+	this.remove_health = function(amount) {
+		this.health -= amount;
+		return this.is_alive();
+	};
 	this.set_theta = function(theta) { this.theta = theta; };
 	this.get_x = function() { return this.x; };
 	this.get_y = function() { return this.y; };
@@ -103,7 +132,9 @@ var Player = function(model, game) {
 		return rv;
 	};
 	this.fire = function(options) {
-		var round = this.game.get_round();
+		var game = this.game;
+
+		var round = game.get_round();
 		var can_fire = true;
 		if(this.last_fired_round !== null) {
 			if(round-this.last_fired_round < ROUNDS_BETWEEN_FIRING) {
@@ -111,7 +142,7 @@ var Player = function(model, game) {
 			}
 		}
 		if(can_fire) {
-			this.game.on_player_fire(this);
+			game.on_player_fire(this);
 
 			this.last_fired_round = round;
 		}
@@ -227,6 +258,7 @@ var Replay = function(options) {
 			if(object instanceof Player) {
 				serialized_object.type = "player";
 				serialized_object.radius = object.get_radius();
+				serialized_object.health = object.get_health();
 			}
 			else if(object instanceof Projectile) {
 				serialized_object.type = "projectile";
@@ -261,9 +293,13 @@ var Replay = function(options) {
 var Brawl = function(options) {
 	this.map = options.map;
 	this.replay = new Replay();
-	this.teams = options.teams;
+	var self = this;
+	this.teams = options.teams.map(function(team) {
+		return new Team({model: team, game: self});
+	});
 	this.round_limit = options.round_limit == null ? -1 : options.round_limit;
-
+	this.projectiles = [];
+	this.players = [];
 	this.initialize();
 };
 
@@ -273,15 +309,10 @@ var Brawl = function(options) {
 	};
 
 	this.initialize = function() {
-		this.projectiles = [];
-		this.players = new Array(this.teams.length * this.teams[0].player_models.length);
 		for(var i = 0, leni = this.teams.length; i<leni; i++) {
-			var team = this.teams[i];
-
-			for(var j = 0, lenj = team.player_models.length; j<lenj; j++) {
-				var player_model = team.player_models[j];
-				var player = new Player(player_model, this);
-
+			var players = this.teams[i].get_players();
+			for(var j = 0, lenj = players.length; j<lenj; j++) {
+				var player = players[j];
 				this.players[player.id] = player;
 				this.replay.add_object(player);
 			}
@@ -293,13 +324,11 @@ var Brawl = function(options) {
 		for(var i = 0; i<start_positions.length; i++) {
 			var sp_team = start_positions[i];
 			var team = this.teams[i];
+			var players = team.get_players();
 
 			for(var j = 0; j<sp_team.length; j++) {
 				var start_position = sp_team[j];
-				var player_model = team.player_models[j];
-				var player_id = player_model.id;
-
-				var player = this.get_player(player_id);
+				var player = players[j];
 
 				player.x = start_position.x;
 				player.y = start_position.y;
@@ -320,16 +349,15 @@ var Brawl = function(options) {
 		});
 	};
 
-	this.end_game = function() {
+	this.end_game = function(winning_team_id) {
 		clearInterval(this.update_timeout);
 		post({
 			type: "game_over"
+			, winner: winning_team_id
 		});
 	};
 
-	this.get_player = function(player_id) {
-		return this.players[player_id];
-	};
+	this.get_player = function(player_id) { return this.players[player_id]; };
 
 	this.get_round = function(current_time) {
 		if(arguments.length === 0) current_time = get_time();
@@ -357,7 +385,16 @@ var Brawl = function(options) {
 		var old_round = this.round;
 		this.round = this.get_round();
 		if(this.round_limit >= 0 && this.round >= this.round_limit) {
-			this.end_game();
+			this.end_game(null);
+			return;
+		}
+		else if(this.teams[0].is_dead()) {
+			this.end_game(this.teams[1].id);
+			return;
+		}
+		else if(this.teams[1].is_dead()) {
+			this.end_game(this.teams[0].id);
+			return;
 		}
 
 		var delta_rounds = this.round - old_round;
@@ -370,6 +407,7 @@ var Brawl = function(options) {
 		}
 		for(var i = 0, len = this.projectiles.length; i<len; i++) {
 			var projectile = this.projectiles[i];
+			if(projectile == null) continue;
 			this.update_projectile(projectile, delta_rounds);
 		}
 		this.take_snapshot();
@@ -398,8 +436,7 @@ var Brawl = function(options) {
 		if(!left_map) {
 			hit_other_player = this.projectile_hit_player(projectile, old_pos, new_pos);
 			if(hit_other_player !== false) {
-				hit_other_player.hp -= 1;
-				console.log("HIT!");
+				hit_other_player.remove_health(1);
 				hit_other_player = true;
 			}
 		}

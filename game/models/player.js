@@ -1,4 +1,4 @@
-define(["game/actions"], function(Actions) {
+define(function() {
 	require(["vendor/underscore"]);
 
 	var PlayerModel = function(options) {

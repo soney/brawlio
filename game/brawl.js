@@ -72,9 +72,6 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 
 	var Brawl = function(options) {
 		this.teams = options.teams;
-		for(var i = 0, len = this.teams.length; i<len; i++) {
-			this.teams[i].index = i+1;
-		}
 		this.map = options.map;
 		this.round_limit = options.round_limit;
 		var self = this;
@@ -92,17 +89,15 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 	(function() {
 		this.run = function() {
 			var player_id = 0;
-			var team_id = 0;
 			var player_workers = new Array(Constants.TEAM_SIZE*2);
 			var players = new Array(Constants.TEAM_SIZE*2);
 			for(var i = 0, leni = this.teams.length; i<leni; i++) {
 				var team = this.teams[i];
-				team.id = team_id;
-				team_id++;
+				team.id = i;
 				_.forEach(team.player_models, function(player_model, number) {
 					player_model.id = player_id;
 
-					var player_worker = new Worker('game/player_worker.js');
+					var player_worker = new Worker('game/workers/player_worker.js');
 					player_worker.postMessage({
 						type: "initialize"
 						, code: team.code
@@ -124,7 +119,7 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 			}
 
 			var self = this;
-			var brawl_worker = new Worker('game/brawl_worker.js');
+			var brawl_worker = new Worker('game/workers/brawl_worker.js');
 			brawl_worker.onmessage = function(event) {
 				var data = event.data;
 				var type = data.type
@@ -155,6 +150,10 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 					}
 				}
 				else if(type === "game_over") {
+					var winning_id = data.winner;
+					if(winning_id !== null) {
+						self.winner = self.teams[winning_id];
+					}
 					var old_on_replay_update = self.on_replay_update;
 					self.on_replay_update = function() {
 						old_on_replay_update.apply(self, arguments);
@@ -204,9 +203,9 @@ define(["game/constants", "game/replay/replay", "vendor/underscore"], function(C
 			}
 			this.brawl_worker.terminate();
 			this.replay.mark_complete();
+			console.log(this.winner,  " wins!");
 		};
 	}).call(Brawl.prototype);
 
 	return Brawl;
 });
-

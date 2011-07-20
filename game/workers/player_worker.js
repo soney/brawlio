@@ -1,5 +1,5 @@
-importScripts('game/actions.js');
-importScripts('game/util/worker_utils.js');
+importScripts('game/workers/actions.js');
+importScripts('game/workers/util/worker_utils.js');
 
 var event_listeners = new Hash();
 
