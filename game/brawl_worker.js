@@ -446,7 +446,8 @@ var Brawl = function(options) {
 		for(var i = 0, len = this.players.length; i<len; i++) {
 			var player = this.players[i];
 			if(player === source) continue;
-			var closest_distance = Math.abs(player.get_y() - m*player.get_x() - b) / denom;
+			var distance = distanceFromLineSegment({x: player.get_x(), y: player.get_y()}, old_pos, new_pos);
+			var closest_distance = distance.segment;
 			if(closest_distance < player.get_radius() + projectile_radius) {
 				return player;
 			}
