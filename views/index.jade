@@ -2,6 +2,8 @@
 html(lang="en")
   head
     title Brawl IO
+    link(type="text/css", rel="stylesheet", href="client/css/main.css")
+    link(type="text/css", rel="stylesheet", href="client/css/index.css")
     script(src="vendor/require.js")
     script(src="client/require_paths.js")
     script
@@ -14,7 +16,22 @@ html(lang="en")
         });
       });
   body
-    h1 Brawl IO
-    h2 Asynchronous fun!
-    a#google_login(href="javascript:void(0)") Login with Google
-    p Lots of cool shit about Brawl IO
+    a(href="http://github.com/soney/brawlio")
+      img(style="position: absolute; top: 0; right: 0; border: 0;", src="https://d3nwyuy0nl342s.cloudfront.net/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67", alt="Fork me on GitHub")
+    .body
+      h1 Brawl.IO
+      h2 asynchronous kung fu
+      .content
+        p Brawl IO is currently under development. If I have spoken to you personally, you may 
+          a#google_login(href="javascript:void(0)") log in with your Google account
+          | .
+          br
+          br
+          | If you somehow stumbled on this page, but don't have an invite, feel free to e-mail me at
+          a(href="mailto:tsoney@gmail.com") tsoney@gmail.com
+          |  or just 
+          a(href="http://github.com/soney/brawlio") fork my Github repo
+          br
+          br
+          | ~Stephen
+

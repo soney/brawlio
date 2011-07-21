@@ -20,11 +20,36 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 			$("a.test", content).click(function() {
 				self.test();
 			});
+			var check_length = function() {
+				self.check_length(team);
+			};
+			$("textarea", content).keyup(check_length);
+			this.check_length_interval = window.setInterval(check_length, 9000);
 		}
 
 		, destroy: function() {
 			this.element.html("");
 			$.Widget.prototype.destroy.apply(this, arguments);
+			this.check_length_interval = window.clearInterval(this.check_length_interval);
+		}
+
+		, check_length: function(team) {
+			var code = this.get_code();
+			var num_chars = code.length;
+			if(num_chars > team.char_limit) {
+				this.add_char_limit_warning(team, num_chars);
+			}
+			else {
+				this.remove_char_limit_warning();
+			}
+		}
+
+		, add_char_limit_warning: function(team, num_chars) {
+			$("textarea", this.content).addClass("warning");
+		}
+
+		, remove_char_limit_warning: function() {
+			$("textarea", this.content).removeClass("warning");
 		}
 
 		, test: function() {

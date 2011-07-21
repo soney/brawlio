@@ -12,7 +12,7 @@ var WeightClasses = {
 			return "middle";
 		}
 		else {
-			return "heavy"
+			return "heavy";
 		}
 	}
 	, get_name: function(weight_class) {
@@ -25,6 +25,17 @@ var WeightClasses = {
 	}
 	, num_types: function() {
 		return WeightClasses.enumerate().length;
+	}
+	, get_char_limit: function(weight_class) {
+		if(weight_class === WeightClasses.classes.light) {
+			return 500;
+		}
+		else if(weight_class === WeightClasses.classes.middle) {
+			return 1000;
+		}
+		else {
+			return 2000;
+		}
 	}
 };
 

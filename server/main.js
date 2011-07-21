@@ -22,7 +22,7 @@ var BrawlIOServer = function() {
 				, express.static(path)
 			);
 		io = socket_io.listen(server);
-		io.set("log level", 3);
+		io.set("log level", 0);
 
 		initialize_sockets(io);
 
@@ -62,7 +62,24 @@ var BrawlIOServer = function() {
 			database.get_user_teams(teams_for_user_id, callback);
 		});
 		socket.on('set_team_code', function(team_id, code, callback) {
-			database.set_team_code(team_id, code, callback);
+			database.get_user_teams(user_id, function(teams) {
+				var setting_team = null;
+				for(var i = 0, len = teams.length; i<len; i++) {
+					var team = teams[i];
+					if(team.id === team_id) {
+						setting_team = team;
+						break;
+					}
+				}
+				if(setting_team !== null) {
+					var char_limit = team.char_limit;
+					var issues_bit = 0;
+					if(code.length > char_limit) {
+						issues_bit = 1;
+					}
+					database.set_team_code(team_id, code, issues_bit, function(){});
+				}
+			});
 		});
 	};
 
@@ -74,7 +91,7 @@ var BrawlIOServer = function() {
 		, false // Strict mode
 		, []); // List of extensions to enable and include
 
-	var _debug = true;
+	var _debug = false;
 	function render_home(req, res, next) {
 		var session = req.session;
 		if(_debug) {
@@ -185,6 +202,7 @@ var BrawlIOServer = function() {
 				res.render("manage_account.jade", {layout: false, user: user});
 			}
 		});
+
 	};
 
 	//Public members

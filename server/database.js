@@ -53,7 +53,7 @@ var Database = function() {};
 		return user;
 	};
 	var team_factory = function(options) {
-		var team = new Team(options.id, options.active, options.weight_class, options.weight_class_name, options.code);
+		var team = new Team(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit);
 		return team;
 	};
 
@@ -84,7 +84,8 @@ var Database = function() {};
 			"active INTEGER DEFAULT 0, " +
 			"user_fk INTEGER REFERENCES users(pk), " +
 			"weight_class INTEGER, " +
-			"code TEXT)");
+			"code TEXT, " +
+			"issues INTEGER DEFAULT 0)");
 	};
 	this.create_brawls_table = function() {
 		query("CREATE TABLE brawls(" +
@@ -202,6 +203,7 @@ var Database = function() {};
 				, weight_class: row.weight_class
 				, weight_class_name: WeightClasses.get_name(row.weight_class)
 				, code: row.code || ""
+				, char_limit: WeightClasses.get_char_limit(row.weight_class)
 			};
 			
 			var team = team_factory(options);
@@ -212,13 +214,13 @@ var Database = function() {};
 		return;
 	};
 
-	this.set_team_code = function(team_id, code, callback) {
-		query("UPDATE teams SET code = (?) WHERE pk = "+team_id, [code]);
+	this.set_team_code = function(team_id, code, issues, callback) {
+		query("UPDATE teams SET code = (?), issues = (?) WHERE pk = " + team_id, [code, issues]);
 		callback();
 	};
 
 	this.activate_team = function(team_id) {
-		query("UPDATE teams SET active = 1 WHERE pk = "+team_id);
+		query("UPDATE teams SET active = 1 WHERE pk = " + team_id);
 	};
 }).call(Database.prototype);
 

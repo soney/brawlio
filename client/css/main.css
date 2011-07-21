@@ -1,0 +1,21 @@
+body {
+	background-color: #B8B512;
+	background-image: url('../images/noise.png');
+	color: #444;
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 14px;
+}
+
+a {
+	text-decoration: none;
+	color: #0CA0F7;
+}
+
+.body {
+	margin: 0px auto;
+	max-width: 725px;
+}
+
+textarea.warning {
+	background-color: #FEE;
+}
