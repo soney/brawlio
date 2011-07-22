@@ -11,11 +11,3 @@ a {
 	color: #0CA0F7;
 }
 
-.body {
-	margin: 0px auto;
-	max-width: 725px;
-}
-
-textarea.warning {
-	background-color: #FEE;
-}

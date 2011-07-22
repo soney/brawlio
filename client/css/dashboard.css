@@ -1,0 +1,33 @@
+div#dashboard {
+	margin: 0px auto;
+	max-width: 1200px;
+	min-height: 500px;
+	background-color: navy;
+}
+
+div.sidebar {
+	position: relative;
+	float: left;
+	background-color: black;
+	color: white;
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
+	width: 150px;
+	top: 20px;
+}
+
+div.sidebar h2#my_user_name {
+	padding: 0px;
+	margin: 0px;
+}
+div.sidebar div.teams {
+	padding-top: 10px;
+}
+
+div.main_view {
+	padding-left: 150px;
+}
+
+textarea.warning {
+	background-color: #FEE;
+}

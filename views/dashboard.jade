@@ -3,6 +3,7 @@ html(lang="en")
   head
     title Brawl IO
     link(type="text/css", rel="stylesheet", href="client/css/main.css")
+    link(type="text/css", rel="stylesheet", href="client/css/dashboard.css")
     script(src="vendor/require.js")
     script(src="client/require_paths.js")
     script#dashboard_template(type="text/x-handlebars-template")
@@ -41,12 +42,14 @@ html(lang="en")
       require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $("#dashboard"));
+          /*
           window.setTimeout(function() { 
               $("div.team:first").click();
           }, 400);
           window.setTimeout(function() { 
               $("a.test").click();
           }, 500);
+          */
         });
       });
   body
