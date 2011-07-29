@@ -34,8 +34,6 @@ define(function(require, exports, module) {
 				dashboard: get_template("script#dashboard_template")
 				, sidebar_team: get_template("script#sidebar_team_template")
 				, dashboard_team: get_template("script#dashboard_team_template")
-				, team_editor: get_template("script#team_editor")
-				, replay: get_template("script#replay")
 			};
 		};
 

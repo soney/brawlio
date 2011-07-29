@@ -1,4 +1,4 @@
-define(["vendor/jquery", "vendor/jquery-ui"], function() {
+define(["vendor/jquery", "vendor/jquery-ui", "client/widgets/team_tester"], function() {
 	require(["client/widgets/team_editor"]);
 
 	var Tab = {
@@ -7,15 +7,23 @@ define(["vendor/jquery", "vendor/jquery-ui"], function() {
 	};
 	var DashboardTeam = {
 		options: {
-			team: null
+			team_id: undefined
 		}
 
 		, _create: function() {
 			var element = this.element,
 				options = this.options,
-				team = options.team;
+				team = BrawlIO.get_team_by_id(options.team_id);
 
-			var content = $(BrawlIO.templates.dashboard_team());
+
+			var content = $(BrawlIO.templates.dashboard_team({code: team.code}));
+			content	.appendTo(element)
+					.tabs();
+
+			$("#edit", content).team_editor({team_id: options.team_id});
+			$("#test", content).team_tester({team_id: options.team_id});
+
+/*
 			element.html("");
 			var self = this;
 			element.append(content);
@@ -27,6 +35,7 @@ define(["vendor/jquery", "vendor/jquery-ui"], function() {
 				self.set_tab(Tab.edit);
 			});
 			this.set_tab(Tab.edit);
+			*/
 		}
 
 		, destroy: function() {

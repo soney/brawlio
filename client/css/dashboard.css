@@ -1,33 +1,78 @@
 div#dashboard {
 	margin: 0px auto;
 	max-width: 1200px;
-	min-height: 500px;
-	background-color: navy;
 }
 
 div.sidebar {
 	position: relative;
 	float: left;
-	background-color: black;
+	background-color: #DDD;
 	color: white;
 	border-top-left-radius: 10px;
 	border-bottom-left-radius: 10px;
 	width: 150px;
 	top: 20px;
+	border: 1px solid black;
+	border-right: none;
+	z-index: 99;
 }
 
 div.sidebar h2#my_user_name {
 	padding: 0px;
 	margin: 0px;
+	padding-left: 10px;
+	font-size: 24px;
+	padding-bottom: 5px;
+	padding-top: 5px;
 }
+
 div.sidebar div.teams {
+	border-top: 1px solid white;
 	padding-top: 10px;
+	padding-bottom: 10px;
+}
+div.team {
+}
+div.team a {
+	text-align: left;
+	display: block;
+	font-size: 18px;
+}
+div.team a:hover {
+	background-color: orange;
+}
+div.weight_class {
+	padding: 3px;
+	padding-left: 10px;
 }
 
 div.main_view {
 	padding-left: 150px;
 }
-
-textarea.warning {
+#code {
+	width: 100%;
+	font-family: Consolas, Monaco; font-size: 13px;
+	outline: none;
+	box-sizing: border-box;
+	min-height: 300px;
+	border: none;
+	resize: none;
+	bottom: 0px;
+	margin: 0px;
+	position: absolute;
+	width: 500px;
+	height: 400px;
+	top: 60px;
+}
+textarea#code.warning {
 	background-color: #FEE;
+}
+div.editor {
+	background-color: #DDD;
+	border: 1px solid black;
+}
+#tabs.ui-tabs .ui-tabs-hide {
+    position: absolute;
+    left: -10000px;
+	display: inline !important;
 }

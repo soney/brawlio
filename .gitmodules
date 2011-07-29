@@ -10,3 +10,6 @@
 [submodule "vendor/handlebars"]
 	path = vendor/handlebars
 	url = git@github.com:soney/handlebars.js.git
+[submodule "vendor/ace"]
+	path = vendor/ace
+	url = https://github.com/ajaxorg/ace.git

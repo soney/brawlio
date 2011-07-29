@@ -1,4 +1,6 @@
-define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "vendor/jquery-ui"], function(Brawl, Map, Team) {
+define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mode-javascript", "ace/theme-idle_fingers", "vendor/jquery", "vendor/jquery-ui"], function(Brawl, Map, Team, ace) {
+	//var JavaScriptMode = JSMode.Mode;
+    var JavaScriptMode = require("ace/mode/javascript").Mode;
 	var TeamEditor = {
 		options: {
 			team_id: null
@@ -10,21 +12,16 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				, team_id = options.team_id
 				, team = BrawlIO.get_team_by_id(team_id);
 
-			var content = $(BrawlIO.templates.team_editor({code: team.code}));
-			element.append(content);
-
 			var self = this;
-			$("a.save", content).click(function() {
+			$("a.save", element).click(function() {
 				self.save();
-			});
-			$("a.test", content).click(function() {
-				self.test();
 			});
 			var check_length = function() {
 				self.check_length(team);
 			};
-			$("textarea", content).keyup(check_length);
-			this.check_length_interval = window.setInterval(check_length, 9000);
+			this.editor = ace.edit("code");
+			this.editor.setTheme("ace/theme/idle_fingers");
+			this.editor.getSession().setMode(new JavaScriptMode());
 		}
 
 		, destroy: function() {
@@ -95,7 +92,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 		}
 
 		, get_code: function() {
-			return $("textarea#code", this.element).val();
+			return this.editor.getSession().getValue();
 		}
 	};
 

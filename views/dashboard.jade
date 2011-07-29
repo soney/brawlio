@@ -4,40 +4,45 @@ html(lang="en")
     title Brawl IO
     link(type="text/css", rel="stylesheet", href="client/css/main.css")
     link(type="text/css", rel="stylesheet", href="client/css/dashboard.css")
+    link(type="text/css", rel="stylesheet", href="vendor/jquery-ui-1.8.14.custom/css/ui-lightness/jquery-ui-1.8.14.custom.css")
     script(src="vendor/require.js")
     script(src="client/require_paths.js")
     script#dashboard_template(type="text/x-handlebars-template")
       .sidebar
-        h2#my_user_name
-        a(href="/logout") logout
+        a(id ='dashboard', href="javascript:void(0)")
+          h2#my_user_name
         .teams
       .main_view
     script#sidebar_team_template(type="text/x-handlebars-template")
       .team 
         a(href="javascript:void(0)")
           .weight_class
-          .operations
     script#dashboard_team_template(type="text/x-handlebars-template")
-      .tabs
-        a.brawls(href="javascript:void(0)") Brawls
-        a.edit(href="javascript:void(0)") Edit
-      .content
-    script#team_editor(type="text/x-handlebars-template")
-      .editor
-        .toolbar
-          a.save(href="javascript:void(0)") Save
-          a.verify(href="javascript:void(0)") Verify
-          a.test(href="javascript:void(0)") Test
-        .text
-          textarea#code(rows="20", cols="70", style="font-family: Consolas, Monaco; font-size: 13px;") {{code}}
-      .sidebar
-    script#replay(type="text/x-handlebars-template")
-      .replay
-        .controls
-          a.play(href="javascript:void(0)") Play
-          a.stop(href="javascript:void(0)") Stop
-        canvas.viewer(width="300", height="300")
-        .console
+      #tabs
+        ul
+          li
+            a(href="#brawls")
+              span Brawls
+          li
+            a(href="#edit")
+              span Edit
+          li
+            a(href="#test")
+              span Test
+        #brawls Brawls!!!
+        #edit
+          .editor
+            .toolbar
+              a.save(href="javascript:void(0)") Save
+            .text
+              #code {{code}}
+        #test
+          .replay
+            .controls
+              a.play(href="javascript:void(0)") Play
+              a.stop(href="javascript:void(0)") Stop
+            canvas.viewer(width="300", height="300")
+            .console
     script
       require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
