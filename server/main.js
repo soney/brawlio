@@ -77,7 +77,7 @@ var BrawlIOServer = function() {
 					if(code.length > char_limit) {
 						issues_bit = 1;
 					}
-					database.set_team_code(team_id, code, issues_bit, function(){});
+					database.set_team_code(team_id, code, issues_bit, callback);
 				}
 			});
 		});

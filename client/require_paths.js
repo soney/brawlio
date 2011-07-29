@@ -15,8 +15,8 @@
 			, "vendor/jquery-ui": vendor_path + "/jquery-ui-1.8.14.custom/js/jquery-ui-1.8.14.custom.min"
 			, "vendor/socket.io": "/socket.io/socket.io"
 			, "game": game_path
-			//, "ace": ace_path+"/lib/ace"
-			, "ace": ace_build_path
+			, "ace": ace_path+"/lib/ace"
+			//, "ace": ace_build_path
 			, "cockpit": ace_support_path+"/cockpit/lib/cockpit"
 			, "pilot": ace_support_path+"/pilot/lib/pilot"
 			, "text": vendor_path+"/text"

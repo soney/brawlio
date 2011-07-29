@@ -33,7 +33,6 @@ define(function(require, exports, module) {
 				this.set_team_code = function(team_id, code) {
 					socket.emit('set_team_code', team_id, code, function() {
 						var team = self.get_team_by_id(team_id);
-
 						team.code = code;
 					});
 				};

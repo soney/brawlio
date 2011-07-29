@@ -1,4 +1,4 @@
-define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mode-javascript", "ace/theme-idle_fingers", "vendor/jquery", "vendor/jquery-ui"], function(Brawl, Map, Team, ace) {
+define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mode/javascript", "ace/theme/idle_fingers", "vendor/jquery", "vendor/jquery-ui"], function(Brawl, Map, Team, ace) {
 	//var JavaScriptMode = JSMode.Mode;
     var JavaScriptMode = require("ace/mode/javascript").Mode;
 	var TeamEditor = {
@@ -25,9 +25,9 @@ define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mod
 		}
 
 		, destroy: function() {
+			this.editor.destroy();
 			this.element.html("");
 			$.Widget.prototype.destroy.apply(this, arguments);
-			this.check_length_interval = window.clearInterval(this.check_length_interval);
 		}
 
 		, check_length: function(team) {
@@ -47,41 +47,6 @@ define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mod
 
 		, remove_char_limit_warning: function() {
 			$("textarea", this.content).removeClass("warning");
-		}
-
-		, test: function() {
-			var self = this;
-
-			this.save();
-
-			var map = new Map();
-			var my_team = new Team({
-				code: self.get_code()
-			});
-			
-			var other_team = new Team({
-				code: ""
-			});
-
-			var brawl = new Brawl({
-				teams: [my_team, other_team]
-				, map: map
-				, round_limit: 100
-			});
-			var replay = brawl.get_replay();
-			brawl.run();
-			this.show_replay(replay);
-		}
-
-		, show_replay: function(replay) {
-			var element = this.element
-				, sidebar = $(".sidebar", element);
-			sidebar.html(BrawlIO.templates.replay);
-			var replay_element = $(".replay", sidebar);
-
-			replay_element.replay_viewer({
-				replay: replay
-			});
 		}
 
 		, save: function() {
