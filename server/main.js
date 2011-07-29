@@ -111,9 +111,11 @@ var BrawlIOServer = function() {
 		server.get("/", function(req, res, next) {
 			render_home(req, res, next);
 		});
+		/*
 		server.get("/dashboard", function(req, res, next) {
 			render_home(req, res, next);
 		});
+		*/
 		server.get("/authenticate", function(req, res, next) {
 			var parsedUrl = url.parse(req.url);
 			// User supplied identifier

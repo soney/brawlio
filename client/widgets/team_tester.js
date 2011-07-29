@@ -10,6 +10,11 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				, team_id = options.team_id
 				, team = BrawlIO.get_team_by_id(team_id);
 
+			var self = this;
+			$("a#dummy_replay").bind("click.show_dummy_replay", function() {
+				self.test();
+			});
+		
 		}
 
 		, destroy: function() {
@@ -18,13 +23,13 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 		}
 
 		, test: function() {
-			var self = this;
-
-			this.save();
+			var self = this
+				, options = this.options
+				, team = BrawlIO.get_team_by_id(options.team_id);
 
 			var map = new Map();
 			var my_team = new Team({
-				code: self.get_code()
+				code: team.code
 			});
 			
 			var other_team = new Team({
@@ -43,9 +48,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 
 		, show_replay: function(replay) {
 			var element = this.element
-				, sidebar = $(".sidebar", element);
-			sidebar.html(BrawlIO.templates.replay);
-			var replay_element = $(".replay", sidebar);
+				, replay_element = $(".replay", element);
 
 			replay_element.replay_viewer({
 				replay: replay
