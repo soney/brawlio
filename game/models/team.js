@@ -1,4 +1,8 @@
-define(["game/constants", "game/models/player", "vendor/underscore"], function(Constants, PlayerModel) {
+define(function(require, exports, module) {
+	var Constants = require("game/constants");
+	var PlayerModel = require("game/models/player");
+	require("vendor/underscore");
+
 	var Team = function(options) {
 		this.code = options.code;
 		this.player_models = new Array(Constants.TEAM_SIZE);

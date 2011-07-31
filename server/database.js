@@ -53,7 +53,7 @@ var Database = function() {};
 		return user;
 	};
 	var team_factory = function(options) {
-		var team = new Team(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit);
+		var team = new Team(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit, options.user_fk);
 		return team;
 	};
 
@@ -136,30 +136,47 @@ var Database = function() {};
 	};
 
 	this.get_user_with_id = function(id, callback) {
-		var row = one_row_query("SELECT * FROM users WHERE pk==(?) LIMIT 1", [id]);
-		if(row !== undefined) {
-			var user = user_factory({id: row.pk, username: row.username, email: row.email});
-			callback(user);
-			return;
-		}
-		else {
-			callback(null);
-			return;
-		}
+		return this.get_users_with_ids([id], function(result) {
+			if(result.length === 1) { callback(result[0]); }
+			else {callback(null);}
+		});
+	};
+
+	this.get_users_with_ids = function(ids, callback) {
+		var condition = ids.map(function(id) {
+			return "pk == " + id;
+		}).join(" OR ");
+
+		var result = query("SELECT * FROM users WHERE " + condition + " LIMIT " + ids.length);
+
+		var users = this.users_from_rows(result.rows);
+		callback(users);
+		return;
 	};
 
 	this.get_user_with_username = function(username, callback) {
 		var row = one_row_query("SELECT * FROM users WHERE username==(?) LIMIT 1", [username]);
+		var user = this.user_from_row(row);
+		callback(user);
+		return;
+	};
 
-		if(row !== undefined) {
-			var user = user_factory({id: row.pk, username: row.username, email: row.email});
-			callback(user);
-			return;
+	this.users_from_rows = function(rows) {
+		var users = new Array(rows.length);
+		for(var i = 0, len = rows.length; i<len; i++) {
+			users[i] = this.user_from_row(rows.item(i));
 		}
-		else {
-			callback(null);
-			return;
-		}
+
+		return users;
+	};
+	this.user_from_row = function(row) {
+		if(row == null) return null;
+		var user = user_factory( {
+			id: row.pk
+			, username: row.username
+			, email: row.email
+		});
+		return user;
 	};
 
 	this.set_user_details = function(id, options) {
@@ -190,28 +207,32 @@ var Database = function() {};
 		var result = db.query("SELECT * FROM teams WHERE user_fk = " + user_id + " LIMIT " + num_types);
 		close();
 
-		var rows = result.rows;
-
-		var self = this;
-		var teams = [];
-		for(var i = 0, len = rows.length; i<len; i++) {
-			var row = rows.item(i);
-
-			var options = {
-				id: row.pk
-				, active: row.active !== 0
-				, weight_class: row.weight_class
-				, weight_class_name: WeightClasses.get_name(row.weight_class)
-				, code: row.code || ""
-				, char_limit: WeightClasses.get_char_limit(row.weight_class)
-			};
-			
-			var team = team_factory(options);
-			teams.push(team);
-		}
-
+		var teams = this.teams_from_rows(result.rows);
 		callback(teams);
 		return;
+	};
+
+	this.teams_from_rows = function(rows) {
+		var teams = new Array(rows.length);
+		for(var i = 0, len = rows.length; i<len; i++) {
+			teams[i] = this.team_from_row(rows.item(i));
+		}
+
+		return teams;
+	};
+	this.team_from_row = function(row) {
+		var options = {
+			id: row.pk
+			, active: row.active !== 0
+			, weight_class: row.weight_class
+			, weight_class_name: WeightClasses.get_name(row.weight_class)
+			, code: row.code || ""
+			, char_limit: WeightClasses.get_char_limit(row.weight_class)
+			, user_fk: row.user_fk
+		};
+			
+		var team = team_factory(options);
+		return team;
 	};
 
 	this.set_team_code = function(team_id, code, issues, callback) {
@@ -219,8 +240,41 @@ var Database = function() {};
 		callback();
 	};
 
-	this.activate_team = function(team_id) {
+	this.activate_team = function(team_id, callback) {
 		query("UPDATE teams SET active = 1 WHERE pk = " + team_id);
+		callback();
+	};
+
+
+	this.get_teams_with_same_weight_class_as = function(team_id, callback) {
+		var db = open();
+		var result = db.query("SELECT weight_class from teams where pk==(?) LIMIT 1", [team_id]);
+		var rows = result.rows;
+		if(rows.length !== 1) {
+			callback([]);
+			return;
+		}
+		var row = rows.item(0);
+		weight_class = row.weight_class;
+		result = db.query("SELECT * from teams where weight_class==(?)", [weight_class]);
+		close();
+
+		var teams = this.teams_from_rows(result.rows);
+
+		callback(teams);
+		return;
+	};
+
+	this.get_teams = function(ids, callback) {
+		var condition = ids.map(function(id) {
+			return "pk == " + id;
+		}).join(" OR ");
+
+		var result = query("SELECT * FROM teams WHERE " + condition + " LIMIT " + ids.length);
+
+		var teams = this.teams_from_rows(result.rows);
+		callback(teams);
+		return;
 	};
 }).call(Database.prototype);
 

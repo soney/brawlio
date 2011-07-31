@@ -1,4 +1,4 @@
-define(function() {
+define(function(require, exports, module) {
 	return {
 		TEAM_SIZE: 1,
 		PIXEL_TILE_RATIO: 5,

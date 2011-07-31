@@ -52,6 +52,9 @@ var BrawlIOServer = function() {
 				database.get_user_with_id(user_id, callback);
 			}
 		});
+		socket.on('get_users', function(user_ids, callback) {
+			database.get_users_with_ids(user_ids, callback);
+		});
 		socket.on('get_user_teams', function(username, callback) {
 			var teams_for_user_id = user_id;
 			if(username!=null) {
@@ -80,6 +83,45 @@ var BrawlIOServer = function() {
 					database.set_team_code(team_id, code, issues_bit, callback);
 				}
 			});
+		});
+		socket.on('choose_opponents_for_team', function(team_id, callback) {
+			var possible_opponents = database.get_teams_with_same_weight_class_as(team_id, function(teams) {
+				var rv = teams.filter(function(team) {
+					return team.id !== team_id;
+				});
+				callback(rv);
+			});
+		});
+		socket.on('run_brawl', function(my_team_id, opponent_team_id, callback) {
+			database.get_teams([my_team_id, opponent_team_id], function(teams) {
+				var my_team = teams[0]
+					, opponent = teams[1];
+				var errors = [];
+				if(my_team == null) {
+					errors.push("Could not find team with id " + my_team_id);
+				}
+				if(opponent == null) {
+					errors.push("Could not find team with id " + opponent_team_id);
+				}
+				if(my_team != null && opponent != null) {
+					if(my_team.weight_class !== opponent.weight_class) {
+						errors.push("Teams have mismatched weight classes");
+					}
+					if(my_team_id !== user_id) {
+						errors.push("You may only challenge using your own teams");
+					}
+					//TODO: Other checks: code size, active, valid, not the same team, etc
+				}
+
+
+				if(errors.length === 0) {
+					console.log("I need to run a brawl between " + my_team.code + opponent.code);
+				}
+				else {
+					callback({errors: errors});
+				}
+			});
+			
 		});
 	};
 

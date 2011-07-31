@@ -1,4 +1,4 @@
-define(function() {
+define(function(require, exports, module) {
 	var Replay = function(options) {
 		this.options = options;
 		this.update = options.update;

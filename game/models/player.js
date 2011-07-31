@@ -1,5 +1,5 @@
-define(function() {
-	require(["vendor/underscore"]);
+define(function(require, exports, module) {
+	require("vendor/underscore");
 
 	var PlayerModel = function(options) {
 		options = _.extend({

@@ -20,6 +20,12 @@ define(function(require, exports, module) {
 					});
 				};
 
+				this.get_users = function(user_ids, callback) {
+					socket.emit('get_users', user_ids, function(users) {
+						callback(users);
+					});
+				};
+
 				this.get_teams = function(username, callback) {
 					if(arguments.length === 1) {
 						callback = username;
@@ -34,6 +40,17 @@ define(function(require, exports, module) {
 					socket.emit('set_team_code', team_id, code, function() {
 						var team = self.get_team_by_id(team_id);
 						team.code = code;
+					});
+				};
+
+				this.choose_opponents_for_team = function(team_id, callback) {
+					socket.emit('choose_opponents_for_team', team_id, function(team_ids) {
+						callback(team_ids);
+					});
+				};
+
+				this.request_formal_brawl = function(my_team_id, opponent_team_id) {
+					socket.emit('run_brawl', my_team_id, opponent_team_id, function() {
 					});
 				};
 			};

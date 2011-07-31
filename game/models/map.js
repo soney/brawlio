@@ -1,5 +1,5 @@
-define(function() {
-	require(["vendor/underscore"]);
+define(function(require, exports, module) {
+	require("vendor/underscore");
 
 	var Map = function(options) {
 		this.attributes = _.extend({

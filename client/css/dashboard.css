@@ -39,7 +39,7 @@ div.team a {
 	font-size: 18px;
 }
 div.team a:hover {
-	background-color: orange;
+	background-color: #CCC;
 }
 div.weight_class {
 	padding: 3px;

@@ -10,7 +10,6 @@ define(["vendor/jquery", "vendor/jquery-ui"], function() {
 				, team_id = options.team_id
 				, team = BrawlIO.get_team_by_id(team_id);
 
-			$(".weight_class", element).text(team.weight_class_name);
 			$(element).click(function() {
 				BrawlIO.db_do("view_team", team_id);
 			});

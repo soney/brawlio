@@ -1,6 +1,6 @@
 define(function(require, exports, module) {
 	require(["vendor/handlebars"]);
-	require(["client/widgets/dashboard"]);
+	require(["client/widgets/dashboard/dashboard"]);
 	require(["client/widgets/replay_viewer"]);
 
 	var BrawlIO = window.BrawlIO = {
@@ -34,6 +34,7 @@ define(function(require, exports, module) {
 				dashboard: get_template("script#dashboard_template")
 				, sidebar_team: get_template("script#sidebar_team_template")
 				, dashboard_team: get_template("script#dashboard_team_template")
+				, dashboard_me: get_template("script#dashboard_me_user_template")
 			};
 		};
 
@@ -48,6 +49,13 @@ define(function(require, exports, module) {
 		this.set_teams = function(teams) {
 			this.teams = teams;
 			this.db_do("set_teams", teams);
+		};
+		this.get_user_by_id = function(id) {
+			if(id != null) {
+			}
+			else {
+				return this.user;
+			}
 		};
 		this.get_team_by_id = function(id) {
 			for(var i = 0, len = this.teams.length; i < len; i++) {

@@ -16,20 +16,27 @@ html(lang="en")
     script#sidebar_team_template(type="text/x-handlebars-template")
       .team 
         a(href="javascript:void(0)")
-          .weight_class
+          .weight_class {{weight_class_name}}
+    script#dashboard_me_user_template(type="text/x-handlebars-template")
+      p This is me
     script#dashboard_team_template(type="text/x-handlebars-template")
       #tabs
         ul
           li
             a(href="#brawls")
-              span Brawls
+              span Brawl
           li
             a(href="#edit")
               span Edit
           li
             a(href="#test")
               span Test
-        #brawls Brawls!!!
+        #brawls
+          .challenge
+            h2 {{weight_class_name}}
+            h3 Recommended opponents:
+            .possible_opponents
+          .stats
         #edit
           .editor
             .toolbar

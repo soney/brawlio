@@ -1,5 +1,5 @@
 body {
-	background-color: #B8B512;
+	background-color: #333;
 	background-image: url('../images/noise.png');
 	color: #444;
 	font-family: Tahoma, Geneva, sans-serif;
@@ -8,6 +8,6 @@ body {
 
 a {
 	text-decoration: none;
-	color: #0CA0F7;
+	color: #4169E1;
 }
 
