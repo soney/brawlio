@@ -50,6 +50,7 @@ define(function(require, exports, module) {
 
 	var ReplayRenderer = function(replay) {
 		this.replay = replay;
+		this._destroy = false;
 	};
 	(function() {
 		this.play = function(ctx) {
@@ -59,7 +60,7 @@ define(function(require, exports, module) {
 			this.render(ctx);
 			var self = this;
 			this.replay.update();
-			window.setInterval(function() {
+			this.replay_update_interval = window.setInterval(function() {
 				self.replay.update();
 			}, 1000);
 		};
@@ -72,6 +73,7 @@ define(function(require, exports, module) {
 				this.stop();
 				return;
 			}
+			if(this._destroy === true) return;
 			var self = this;
 			window.setTimeout(function() {
 				self.render(ctx);
@@ -118,6 +120,10 @@ define(function(require, exports, module) {
 				}
 			}
 			ctx.restore();
+		};
+		this.destroy = function() {
+			this._destroy = true;
+			window.clearInterval(this.replay_update_interval);
 		};
 	}).call(ReplayRenderer.prototype);
 

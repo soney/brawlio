@@ -35,3 +35,10 @@ var Hash = function() {
 		}
 	};
 }).call(Hash.prototype);
+
+try {
+	if(typeof exports !== undefined) {
+		exports.Hash = Hash;
+	}
+}
+catch(e) {}

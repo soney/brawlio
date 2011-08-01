@@ -13,13 +13,13 @@ define(["game/replay/replay_renderer", "vendor/jquery", "vendor/jquery-ui"], fun
 				, canvas = $("canvas", element);
 
 			var ctx = canvas[0].getContext("2d");
-			var renderer = new ReplayRenderer(replay);
-			renderer.play(ctx);
+			this.renderer = new ReplayRenderer(replay);
+			this.renderer.play(ctx);
 		}
 
 		, destroy: function() {
-			this.element.html("");
 			$.Widget.prototype.destroy.apply(this, arguments);
+			this.renderer.destroy();
 		}
 	};
 

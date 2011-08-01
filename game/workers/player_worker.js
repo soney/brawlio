@@ -1,12 +1,31 @@
-importScripts('game/workers/actions.js');
-importScripts('game/workers/util/worker_utils.js');
+var is_node = typeof importScripts === "undefined";
+if(is_node) {
+	var actions = require(__dirname+'/actions');
+	var Actions = actions.Actions;
+
+	var utils = require(__dirname+'/util/worker_utils');
+	var Hash = utils.Hash;
+}
+else {
+	importScripts('game/workers/actions.js');
+	importScripts('game/workers/util/worker_utils.js');
+}
+
+var post = function() {
+	if(is_node) {
+		return postMessage.apply(self, arguments);
+	}
+	else {
+		return self.postMessage.apply(self, arguments);
+	}
+};
 
 var event_listeners = new Hash();
 
 var addEventListener = function(listener, type, options) {
 	var id = get_random_id();
 	event_listeners.set(id, listener);
-	self.postMessage({
+	post({
 		type: "event_listener"
 		, event_type: type
 		, id: id 
@@ -28,7 +47,7 @@ var player = {};
 	var assoc_ask = function(fn_name, action) {
 		player [fn_name] = function() {
 			var options = Array.prototype.slice.call(arguments);
-			return self.postMessage({
+			return post({
 				type: "action"
 				, action: action
 				, options: options
@@ -68,18 +87,20 @@ var game = {};
 	};
 })(game);
 
+var code;
+
 self.onmessage = function(event) {
 	var data = event.data;
 	var type = data.type;
 
 	if(data.type === "initialize") {
-		self.code = data.code;
+		code = data.code;
 		player.number = data.number;
 	}
 	else if(data.type === "message") {
 		var message = data.message;
 		if(message.type === "game_start") {
-			self.run();
+			run();
 		}
 	}
 	else if(data.type === "event") {
@@ -89,8 +110,7 @@ self.onmessage = function(event) {
 	}
 };
 
-self.run = function() {
-	var code = self.code;
+var run = function() {
 	(function() {
 		var self = undefined; //Prevent code from evaling self
 		eval(code);

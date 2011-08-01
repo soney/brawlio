@@ -1,7 +1,6 @@
 define(function(require, exports, module) {
-	var Constants = require("game/constants");
-	var PlayerModel = require("game/models/player");
-	require("vendor/underscore");
+	var Constants = require("../constants");
+	var PlayerModel = require("./player");
 
 	var Team = function(options) {
 		this.code = options.code;

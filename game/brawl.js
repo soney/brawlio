@@ -1,10 +1,23 @@
 define(function(require, exports, module) {
-if(Worker !== undefined) {
+var AlternativeWorker = require("webworker").Worker;
+
+var is_node = typeof process !== "undefined";
+
+var PLAYER_WORKER_PATH, BRAWL_WORKER_PATH;
+if(is_node) { //We are on Node.js
+	this.Worker = AlternativeWorker;
+	PLAYER_WORKER_PATH = __dirname + "/workers/player_worker.js";
+	BRAWL_WORKER_PATH = __dirname + "/workers/brawl_worker.js";
+}
+else {
+	PLAYER_WORKER_PATH = "game/workers/player_worker.js";
+	BRAWL_WORKER_PATH = "game/workers/brawl_worker.js";
+	//*
+	//console.log("I'm not on node");
+	// https://raw.github.com/davidflanagan/WorkerConsole/master/WorkerConsole.js
 	if (this.console && this.console.log) {
-		// 
-		// If there is already a console.log() function defined, then wrap the
-		// Worker() constructor so that workers get console.log(), too.
-		//
+		 // If there is already a console.log() function defined, then wrap the
+		 // Worker() constructor so that workers get console.log(), too.
 		// Remember the original Worker() constructor
 		this._Worker = Worker;
 
@@ -35,15 +48,13 @@ if(Worker !== undefined) {
 		}
 	}
 	else {
-		//
-		// If there wasn't a console.log() function defined, then we're in a
-		// Worker created with the wrapped Worker() constructor above, and
-		// we need to define the console.
-		// 
-		// Wait until we get the event that delivers the MessagePort sent by the
-		// main thread. Once we get it, we define the console.log() function
-		// and load and run the original file that was passed to the constructor.
-		//
+		 //If there wasn't a console.log() function defined, then we're in a
+		 //Worker created with the wrapped Worker() constructor above, and
+		 //we need to define the console.
+		 //
+		 //Wait until we get the event that delivers the MessagePort sent by the
+		 //main thread. Once we get it, we define the console.log() function
+		 //and load and run the original file that was passed to the constructor.
 		self.onmessage = function(e) {
 			if (e.data === "console") {
 				// Define the console object
@@ -66,10 +77,11 @@ if(Worker !== undefined) {
 			}
 		}
 	}
+	/**/
 }
-var Constants = require("game/constants");
-var Replay = require("game/replay/replay");
-require("vendor/underscore")
+
+var Constants = require("./constants");
+var Replay = require("./replay/replay");
 
 var Brawl = function(options) {
 	this.teams = options.teams;
@@ -95,10 +107,9 @@ var Brawl = function(options) {
 		for(var i = 0, leni = this.teams.length; i<leni; i++) {
 			var team = this.teams[i];
 			team.id = i;
-			_.forEach(team.player_models, function(player_model, number) {
+			team.player_models.forEach(function(player_model, number) {
 				player_model.id = player_id;
-
-				var player_worker = new Worker('game/workers/player_worker.js');
+				var player_worker = new Worker(PLAYER_WORKER_PATH);
 				player_worker.postMessage({
 					type: "initialize"
 					, code: team.code
@@ -120,13 +131,13 @@ var Brawl = function(options) {
 		}
 
 		var self = this;
-		var brawl_worker = new Worker('game/workers/brawl_worker.js');
+		var brawl_worker = new Worker(BRAWL_WORKER_PATH);
 		brawl_worker.onmessage = function(event) {
 			var data = event.data;
 			var type = data.type
 				, message = data.message;
 			if(type === "broadcast") {
-				_.forEach(player_workers, function(player_worker) {
+				player_workers.forEach(function(player_worker) {
 					player_worker.postMessage({
 						type: "message"
 						, message: message
@@ -159,6 +170,7 @@ var Brawl = function(options) {
 				self.on_replay_update = function() {
 					old_on_replay_update.apply(self, arguments);
 					self.terminate();
+					self.on_replay_update = function(){};
 				};
 				self.request_replay_update();
 			}
@@ -210,3 +222,4 @@ var Brawl = function(options) {
 
 return Brawl;
 });
+

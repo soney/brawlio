@@ -31,3 +31,10 @@ var Actions = {
 		}
 	}
 };
+
+try {
+	if(typeof exports !== undefined) {
+		exports.Actions = Actions;
+	}
+}
+catch(e) {}

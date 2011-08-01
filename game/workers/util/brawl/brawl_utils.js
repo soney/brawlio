@@ -130,3 +130,10 @@ Subject 1.02: How do I find the distance from a point to a line?
 
 	return {line: distanceLine, segment: distanceSegment};
 }
+
+try {
+	if(typeof exports !== undefined) {
+		exports.distanceFromLineSegment = distanceFromLineSegment;
+	}
+}
+catch(e) {}

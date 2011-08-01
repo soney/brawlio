@@ -50,6 +50,9 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 			var element = this.element
 				, replay_element = $(".replay", element);
 
+			if(replay_element.data("replay_viewer")) {
+				replay_element.replay_viewer("destroy");
+			}
 			replay_element.replay_viewer({
 				replay: replay
 			});

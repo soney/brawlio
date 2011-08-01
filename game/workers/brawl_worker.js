@@ -1,9 +1,28 @@
-importScripts('game/workers/actions.js');
-importScripts('game/workers/util/worker_utils.js');
-importScripts('game/workers/util/brawl/brawl_utils.js');
+var is_node = typeof importScripts === "undefined";
+if(is_node) {
+	var actions = require(__dirname+'/actions');
+	var Actions = actions.Actions;
+
+	var utils = require(__dirname+'/util/worker_utils');
+	var Hash = utils.Hash;
+
+	var brawl_utils = require(__dirname+'/util/brawl/brawl_utils');
+	var distanceFromLineSegment = brawl_utils.distanceFromLineSegment;
+}
+else {
+	importScripts('game/workers/actions.js');
+	importScripts('game/workers/util/worker_utils.js');
+	importScripts('game/workers/util/brawl/brawl_utils.js');
+}
+
 
 var post = function() {
-	return self.postMessage.apply(self, arguments);
+	if(is_node) {
+		return postMessage.apply(self, arguments);
+	}
+	else {
+		return self.postMessage.apply(self, arguments);
+	}
 };
 
 var _debug = true;
@@ -662,20 +681,21 @@ var Brawl = function(options) {
 
 }).call(Brawl.prototype);
 
+var brawl;
 self.onmessage = function(event) {
 	var data = event.data;
 	var type = data.type;
 	if(type === "run") {
-		self.brawl.start();
+		brawl.start();
 	}
 	else if(type === "get_replay_chunk") {
-		self.brawl.send_replay_chunk(data.from_snapshot);
+		brawl.send_replay_chunk(data.from_snapshot);
 	}
 	else if(type === "stop") {
-		self.brawl.end_game();
+		brawl.end_game();
 	}
 	else if(type === "initialize") {
-		self.brawl = new Brawl({
+		brawl = new Brawl({
 			map: data.map
 			, teams: data.teams
 			, round_limit: data.round_limit
@@ -685,6 +705,6 @@ self.onmessage = function(event) {
 		var player_id = data.player_id;
 		var request = data.request;
 
-		self.brawl.on_player_request(player_id, request);
+		brawl.on_player_request(player_id, request);
 	}
 };
