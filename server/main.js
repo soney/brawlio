@@ -126,12 +126,7 @@ var BrawlIOServer = function() {
 	};
 
 
-	var relyingParty = new openid.RelyingParty(
-		'http://localhost:8000/verify' // Verification URL (yours)
-		, null // Realm (optional, specifies realm for OpenID authentication)
-		, false // Use stateless verification
-		, false // Strict mode
-		, []); // List of extensions to enable and include
+	var relyingParty;
 
 	var _debug = false;
 	function render_home(req, res, next) {
@@ -163,6 +158,12 @@ var BrawlIOServer = function() {
 			// User supplied identifier
 			var query = querystring.parse(parsedUrl.query);
 			var identifier = query.openid_identifier;
+			relyingParty = new openid.RelyingParty(
+								req.headers.referer+'verify' // Verification URL (yours)
+								, null // Realm (optional, specifies realm for OpenID authentication)
+								, false // Use stateless verification
+								, false // Strict mode
+								, []); // List of extensions to enable and include
 
 			// Resolve identifier, associate, and build authentication URL
 			relyingParty.authenticate(identifier, false, function(error, authUrl) {
