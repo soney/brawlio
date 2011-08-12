@@ -12,7 +12,7 @@ if(is_node) { //We are on Node.js
 else {
 	PLAYER_WORKER_PATH = "game/workers/player_worker.js";
 	BRAWL_WORKER_PATH = "game/workers/brawl_worker.js";
-	//*
+	/*
 	//console.log("I'm not on node");
 	// https://raw.github.com/davidflanagan/WorkerConsole/master/WorkerConsole.js
 	if (this.console && this.console.log) {
