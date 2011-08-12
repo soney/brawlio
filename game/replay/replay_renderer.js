@@ -32,7 +32,6 @@ define(function(require, exports, module) {
 		ctx.lineTo(player.radius, 0);
 		ctx.stroke();
 
-
 		ctx.restore();
 	}
 
@@ -85,6 +84,7 @@ define(function(require, exports, module) {
 
 			for(var i = this.snapshot_index, len = this.replay.num_snapshots(); i<len; i++) {
 				var snapshot = this.replay.get_snapshot(i);
+				if(snapshot == null) continue;
 
 				if(snapshot.round > round) {
 					this.snapshot_index = i-1;

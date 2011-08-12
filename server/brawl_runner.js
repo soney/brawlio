@@ -11,10 +11,12 @@ var other_team = new Team({
 	code: ""
 });
 
-var brawl = new Brawl({
-	teams: [my_team, other_team]
-	, map: map
-	, round_limit: 10
-});
+for(var i = 0; i<99; i++) {
+	var brawl = new Brawl({
+		teams: [my_team, other_team]
+		, map: map
+		, round_limit: 10
+	});
 
-brawl.run();
+	brawl.run();
+}

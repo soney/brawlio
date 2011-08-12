@@ -20,7 +20,7 @@
 			, "cockpit": ace_support_path+"/cockpit/lib/cockpit"
 			, "pilot": ace_support_path+"/pilot/lib/pilot"
 			, "text": vendor_path+"/text"
-			, "webworker": "client/null"
+			, "webworker": "client/null_worker"
 		}
 	});
 

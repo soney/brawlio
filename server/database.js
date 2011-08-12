@@ -1,175 +1,51 @@
-var sqlite_path = __dirname+"/../vendor/node-sqlite";
-var sqlite = require(sqlite_path+"/sqlite");
+var sqlite_path = __dirname+"/../vendor/node-sqlite3";
+var sqlite = require(sqlite_path+"/sqlite3").verbose();
 var constants = require("./constants");
 var db_path = __dirname+"/"+constants.db_name;
 
-require.paths.unshift(".");
-var User = require("./user");
 var WeightClasses = require("./weight_class");
-var Team = require("./team");
 
 var Database = function() {};
 
+var DBTeam = function(id, active, weight_class, weight_class_name, code, char_limit, user_fk) {
+	this.id = id;
+	this.active = active;
+	this.weight_class = weight_class;
+	this.weight_class_name = weight_class_name;
+	this.code = code;
+	this.char_limit = char_limit;
+	this.user_fk = user_fk;
+};
 
-(function() {
+var DBUser = function(id, username, email) {
+	this.id = id;
+	this.username = username;
+	this.email = email;
+};
+
+
+(function(my) {
+	var proto = my.prototype;
+	
+	my.ready = false;
 	// Private memebers
-	var _database = undefined;
-	var open = function() {
-		if(_database) {
-			close(_database);
-		}
-		_database = sqlite.openDatabaseSync(db_path);
-		return _database;
-	};
-	var close = function(db) {
-		if(db == null) {
-			db = _database;
-		}
-
-		db.close();
-		_database = undefined;
-	};
-	var query = function() {
-		var db = open();
-		var rv = db.query.apply(db, arguments);
-		close(db);
-		return rv;
-	};
-	var one_row_query = function() {
-		var result = query.apply(this, arguments);
-
-		var rows = result.rows;
-		if(rows.length !== 1) {
-			return undefined;
-		}
-		else {
-			var row = rows.item(0);
-			return row;
-		}
-	};
+	var _database = new sqlite.Database(db_path, function() {
+		my.ready = true;
+	});
 
 	var user_factory = function(options) {
-		var user = new User(options.id, options.username, options.email);
+		var user = new DBUser(options.id, options.username, options.email);
 		return user;
 	};
-	var team_factory = function(options) {
-		var team = new Team(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit, options.user_fk);
-		return team;
-	};
-
-	// Public members
-
-	//User functions
-	this.create_tables = function() {
-		this.create_user_table();
-		this.create_openid_table();
-		this.create_teams_table();
-		this.create_brawls_table();
-	};
-
-	this.create_openid_table = function() {
-		query("CREATE TABLE openid (" +
-			"openid_url TEXT PRIMARY KEY UNIQUE, " +
-			"user_fk INTEGER REFERENCES users(pk))");
-	};
-	this.create_user_table = function() {
-		query("CREATE TABLE users (" +
-			"pk INTEGER PRIMARY KEY UNIQUE, " +
-			"username TEXT, " +
-			"email TEXT)");
-	};
-	this.create_teams_table = function() {
-		query("CREATE TABLE teams(" +
-			"pk INTEGER PRIMARY KEY UNIQUE, " +
-			"active INTEGER DEFAULT 0, " +
-			"user_fk INTEGER REFERENCES users(pk), " +
-			"weight_class INTEGER, " +
-			"code TEXT, " +
-			"issues INTEGER DEFAULT 0)");
-	};
-	this.create_brawls_table = function() {
-		query("CREATE TABLE brawls(" +
-			"pk INTEGER PRIMARY KEY UNIQUE, " +
-			"team_1_fk INTEGER REFERENCES teams(pk), " +
-			"team_2_fk INTEGER REFERENCES teams(pk), " +
-			"code TEXT)");
-	};
-
-	this.drop_tables = function() {
-		var db = open();
-		var table_names = ["users", "openid", "teams", "brawls"];
-		table_names.forEach(function(table_name) {
-			db.query("DROP TABLE IF EXISTS " + table_name);
-		});
-		close();
-	};
-
-	this.user_key_with_openid = function(openid_url) {
-		var row = one_row_query("SELECT user_fk FROM openid WHERE openid_url==(?) LIMIT 1", [openid_url]);
-		if(row === undefined) {
-			return null;
-		}
-		else {
-			return row.user_fk;
-		}
-	};
-
-	this.add_user_with_openid = function(openid_url) {
-		var db = open();
-		//Add the user
-		var user_insert = db.query("INSERT INTO users DEFAULT VALUES");
-		var id = user_insert.insertId;
-
-		//Insert into openid
-		db.query("INSERT INTO openid (openid_url, user_fk) VALUES (?, ?)", [openid_url, id]);
-
-		//Create teams
-		var weight_classes = WeightClasses.enumerate();
-		for(var i = 0, len = weight_classes.length; i<len; i++) {
-			var weight_class = weight_classes[i];
-
-			db.query("INSERT INTO teams (active, user_fk, weight_class) VALUES (?, ?, ?)", [0, id, weight_class]);
-		}
-
-		close();
-		return id;
-	};
-
-	this.get_user_with_id = function(id, callback) {
-		return this.get_users_with_ids([id], function(result) {
-			if(result.length === 1) { callback(result[0]); }
-			else {callback(null);}
-		});
-	};
-
-	this.get_users_with_ids = function(ids, callback) {
-		var condition = ids.map(function(id) {
-			return "pk == " + id;
-		}).join(" OR ");
-
-		var result = query("SELECT * FROM users WHERE " + condition + " LIMIT " + ids.length);
-
-		var users = this.users_from_rows(result.rows);
-		callback(users);
-		return;
-	};
-
-	this.get_user_with_username = function(username, callback) {
-		var row = one_row_query("SELECT * FROM users WHERE username==(?) LIMIT 1", [username]);
-		var user = this.user_from_row(row);
-		callback(user);
-		return;
-	};
-
-	this.users_from_rows = function(rows) {
+	var users_from_rows = function(rows) {
 		var users = new Array(rows.length);
 		for(var i = 0, len = rows.length; i<len; i++) {
-			users[i] = this.user_from_row(rows.item(i));
+			users[i] = user_from_row(rows[i]);
 		}
 
 		return users;
 	};
-	this.user_from_row = function(row) {
+	var user_from_row = function(row) {
 		if(row == null) return null;
 		var user = user_factory( {
 			id: row.pk
@@ -178,49 +54,15 @@ var Database = function() {};
 		});
 		return user;
 	};
-
-	this.set_user_details = function(id, options) {
-		var db = open();
-
-		for(var option_name in options) {
-			var option_value = options[option_name];
-			db.query("UPDATE users SET "+option_name+" = "+option_value+" WHERE pk = "+id);
-		}
-
-		close();
-	};
-
-	this.get_user_teams = function(user_id, callback) {
-		var num_types = WeightClasses.num_types();
-		var db = open();
-
-		if(typeof user_id == "string") {
-			var result = db.query("SELECT pk from users WHERE username==(?) LIMIT 1", [user_id]);
-			var rows = result.rows;
-			if(rows.length !== 1) {
-				callback([]);
-				return;
-			}
-			var row = rows.item(0);
-			user_id = row.pk;
-		}
-		var result = db.query("SELECT * FROM teams WHERE user_fk = " + user_id + " LIMIT " + num_types);
-		close();
-
-		var teams = this.teams_from_rows(result.rows);
-		callback(teams);
-		return;
-	};
-
-	this.teams_from_rows = function(rows) {
+	var teams_from_rows = function(rows) {
 		var teams = new Array(rows.length);
 		for(var i = 0, len = rows.length; i<len; i++) {
-			teams[i] = this.team_from_row(rows.item(i));
+			teams[i] = team_from_row(rows[i]);
 		}
 
 		return teams;
 	};
-	this.team_from_row = function(row) {
+	var team_from_row = function(row) {
 		var options = {
 			id: row.pk
 			, active: row.active !== 0
@@ -235,48 +77,256 @@ var Database = function() {};
 		return team;
 	};
 
-	this.set_team_code = function(team_id, code, issues, callback) {
-		query("UPDATE teams SET code = (?), issues = (?) WHERE pk = " + team_id, [code, issues]);
-		callback();
+	var team_factory = function(options) {
+		var team = new DBTeam(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit, options.user_fk);
+		return team;
 	};
 
-	this.activate_team = function(team_id, callback) {
-		query("UPDATE teams SET active = 1 WHERE pk = " + team_id);
-		callback();
-	};
-
-
-	this.get_teams_with_same_weight_class_as = function(team_id, callback) {
-		var db = open();
-		var result = db.query("SELECT weight_class from teams where pk==(?) LIMIT 1", [team_id]);
-		var rows = result.rows;
-		if(rows.length !== 1) {
-			callback([]);
-			return;
+	proto.close = function(callback) {
+		if(callback === undefined) {
+			callback = function(error) {
+				process.exit(error ? 1 : 0);
+			};
 		}
-		var row = rows.item(0);
-		weight_class = row.weight_class;
-		result = db.query("SELECT * from teams where weight_class==(?)", [weight_class]);
-		close();
-
-		var teams = this.teams_from_rows(result.rows);
-
-		callback(teams);
-		return;
+		_database.close(callback);
 	};
 
-	this.get_teams = function(ids, callback) {
-		var condition = ids.map(function(id) {
+	// Public members
+//User functions
+	proto.create_tables = function(callback) {
+		var commands = ["create_user_table", "create_openid_table", "create_teams_table", "create_brawls_table"];
+		var command_index = 0;
+		
+		var self = this;
+		(function() {
+			if(command_index < commands.length) {
+				var command = commands[command_index];
+				command_index++;
+
+				self[command](arguments.callee);
+			}
+			else {
+				if(callback) {
+					callback();
+				}
+			}
+		})();
+	};
+
+	proto.create_openid_table = function(callback) {
+		_database.run("CREATE TABLE openid ("
+			+ "openid_url TEXT PRIMARY KEY UNIQUE"
+			+ ", user_fk INTEGER REFERENCES users(pk)"
+			+ ")", callback);
+	};
+	proto.create_user_table = function(callback) {
+		_database.run("CREATE TABLE users ("
+			+ "pk INTEGER PRIMARY KEY UNIQUE"
+			+ ", username TEXT"
+			+ ", email TEXT"
+			+ ")", callback);
+	};
+	proto.create_teams_table = function(callback) {
+		_database.run("CREATE TABLE teams("
+			+ "pk INTEGER PRIMARY KEY UNIQUE"
+			+ ", active INTEGER DEFAULT 0"
+			+ ", user_fk INTEGER REFERENCES users(pk)"
+			+ ", weight_class INTEGER"
+			+ ", code TEXT"
+			+ ", issues INTEGER DEFAULT 0"
+			+ ")", callback);
+	};
+	proto.create_brawls_table = function(callback) {
+		_database.run("CREATE TABLE brawls("
+			+ "pk INTEGER PRIMARY KEY UNIQUE"
+			+ ", team_1_fk INTEGER REFERENCES teams(pk)"
+			+ ", user_1_fk INTEGER REFERENCES users(pk)"
+			+ ", team_2_fk INTEGER REFERENCES teams(pk)"
+			+ ", user_2_fk INTEGER REFERENCES users(pk)"
+			+ ", result INTEGER"
+			+ ", status INTEGER"
+			+ ", replay_filename TEXT"
+			+ ")", callback);
+	};
+
+	proto.drop_tables = function(callback) {
+		var table_names = ["users", "openid", "teams", "brawls"];
+		var table_index = 0;
+		
+		var self = this;
+		(function() {
+			if(table_index < table_names.length) {
+				var table_name = table_names[table_index];
+				table_index++;
+
+				_database.run("DROP TABLE IF EXISTS " + table_name, arguments.callee);
+			}
+			else {
+				if(callback) {
+					callback();
+				}
+			}
+		})();
+	};
+
+	proto.user_key_with_openid = function(openid_url, callback) {
+		_database.all("SELECT user_fk FROM openid WHERE openid_url = ? LIMIT 1", openid_url, function(error, rows) {
+			if(rows.length === 0) {
+				callback(null);
+			}
+			else {
+				callback(rows[0].user_fk);
+			}
+		});
+	};
+
+	proto.add_user_with_openid = function(openid_url, callback) {
+			//Add the user
+			_database.run("INSERT INTO users DEFAULT VALUES", function(error) {
+				var id = this.lastID;
+
+				var callback_times = 0;
+				var expected_callback_times = 4;
+				var meta_callback = function() {
+					callback_times++;
+					if(callback_times === expected_callback_times) {
+						callback(id);
+					}
+				};
+
+				_database.parallelize(function() {
+					//Insert into openid
+					_database.run("INSERT INTO openid (openid_url, user_fk) VALUES (?, ?)", [openid_url, id], meta_callback);
+					var weight_classes = WeightClasses.enumerate();
+					for(var i = 0, len = weight_classes.length; i<len; i++) {
+						var weight_class = weight_classes[i];
+
+						_database.run("INSERT INTO teams (active, user_fk, weight_class) VALUES (?, ?, ?)", [0, id, weight_class], meta_callback);
+					}
+				});
+			});
+	};
+
+	proto.get_user_with_id = function(id, callback) {
+		return this.get_users_with_ids([id], function(result) {
+			if(result.length === 1) { callback(result[0]); }
+			else {callback(null);}
+		});
+	};
+
+	proto.get_users_with_ids = function(ids, callback) {
+		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
+			return "pk = " + id;
+		}).join(" OR ");
+
+		_database.all("SELECT * FROM users " + condition + " LIMIT " + ids.length, function(err, rows) {
+			if(err) throw err;
+			var users = users_from_rows(rows);
+			callback(users);
+		});
+	};
+
+	proto.get_user_with_username = function(username, callback) {
+		_database.all("SELECT * FROM users WHERE username==(?) LIMIT 1", username, function(err, rows) {
+			if(err) throw err;
+			if(rows.length === 0) {
+				callback(null);
+			}
+			else {
+				var user = user_from_row(rows[0]);
+				callback(user);
+			}
+		});
+	};
+
+	proto.set_user_details = function(id, options, callback) {
+		var sb = [];
+		for(var option_name in options) {
+			var option_value = options[option_name];
+			sb.push(option_name + " = " + option_value);
+		}
+		_database.run("UPDATE users SET " + sb.join() + " WHERE pk = "+id, callback);
+	};
+
+	proto.get_user_teams = function(user_id, callback) {
+		var num_types = WeightClasses.num_types();
+
+		var do_query = function(user_id) {
+			_database.all("SELECT * FROM teams WHERE user_fk = " + user_id + " LIMIT " + num_types, function(err, rows) {
+				if(err) throw err;
+				var teams = teams_from_rows(rows);
+				callback(teams);
+			});
+		};
+
+
+		if(typeof user_id == "string") {
+			_database.all("SELECT pk from users WHERE username==(?) LIMIT 1", [user_id], function(err, rows) {
+				if(err) throw err;
+
+				if(rows.length !== 1) {
+					callback([]);
+					return;
+				}
+				user_id = rows[0].pk;
+				do_query(user_id);
+			});
+
+		}
+		else {
+			do_query(user_id);
+		}
+	};
+
+	proto.set_team_code = function(team_id, code, issues, callback) {
+		_database.run("UPDATE teams SET code = (?), issues = (?) WHERE pk = " + team_id, [code, issues], callback);
+	};
+
+	proto.activate_team = function(team_id, callback) {
+		_database.run("UPDATE teams SET active = 1 WHERE pk = " + team_id, callback);
+	};
+
+
+	proto.get_teams_with_same_weight_class_as = function(team_id, callback) {
+		_database.all("SELECT weight_class from teams where pk==(?) LIMIT 1", [team_id], function(err, rows) {
+			if(err) throw err;
+
+			if(rows.length !== 1) {
+				callback([]);
+				return;
+			}
+			var weight_class = rows[0].weight_class;
+			_database.all("SELECT * from teams where weight_class = (?)", [weight_class], function(err, rows) {
+				if(err) throw err;
+				var teams = teams_from_rows(rows);
+
+				callback(teams);
+			});
+		});
+	};
+
+	proto.get_teams = function(ids, callback) {
+		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
 			return "pk == " + id;
 		}).join(" OR ");
 
-		var result = query("SELECT * FROM teams WHERE " + condition + " LIMIT " + ids.length);
-
-		var teams = this.teams_from_rows(result.rows);
-		callback(teams);
-		return;
+		_database.all("SELECT * FROM teams " + condition + " LIMIT " + ids.length, function(err, rows) {
+			if(err) throw err;
+			var teams = teams_from_rows(rows);
+			callback(teams);
+		});
 	};
-}).call(Database.prototype);
+})(Database);
 
 var db = new Database();
 exports.database = db;
+
+var stdin = process.openStdin();
+
+process.on('SIGINT', function () {
+	db.close(function(error) {
+		console.log("iao...");
+		process.exit(error ? 1 : 0);
+	});
+});
+

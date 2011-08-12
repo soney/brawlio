@@ -6,6 +6,10 @@ var socket_io = require('socket.io');
 var database = require('./database').database;
 var constants = require('./constants');
 
+var Brawl = require('../game/brawl');
+var Map = require('../game/models/map');
+var Team = require('../game/models/team');
+
 var BrawlIOServer = function() {
 };
 
@@ -53,7 +57,12 @@ var BrawlIOServer = function() {
 			}
 		});
 		socket.on('get_users', function(user_ids, callback) {
-			database.get_users_with_ids(user_ids, callback);
+			if(user_ids.length === 0) {
+				callback([]);
+			}
+			else {
+				database.get_users_with_ids(user_ids, callback);
+			}
 		});
 		socket.on('get_user_teams', function(username, callback) {
 			var teams_for_user_id = user_id;
@@ -115,7 +124,21 @@ var BrawlIOServer = function() {
 
 
 				if(errors.length === 0) {
-					console.log("I need to run a brawl between " + my_team.code + opponent.code);
+					var map = new Map();
+					var team_me = new Team({
+						code: my_team.code 
+					});
+					var team_other = new Team({
+						code: opponent.code
+					});
+
+					var brawl = new Brawl({
+						teams: [team_me, team_other]
+						, map: map
+						, round_limit: 100
+					});
+
+					brawl.run();
 				}
 				else {
 					callback({errors: errors});
@@ -191,17 +214,18 @@ var BrawlIOServer = function() {
 					if(result.authenticated) {
 						var claimed_identifier = result.claimedIdentifier;
 
-						var user_id = database.user_key_with_openid(claimed_identifier);
-
-						if(user_id === null) {
-							user_id = database.add_user_with_openid(claimed_identifier);
-							session.user_id = user_id;
-							res.render("verify/new_user_success.jade", {layout: false, userid: user_id});
-						}
-						else {
-							session.user_id = user_id;
-							res.render("verify/old_user_success.jade", {layout: false});
-						}
+						database.user_key_with_openid(claimed_identifier, function(user_id) {
+							if(user_id === null) {
+								database.add_user_with_openid(claimed_identifier, function(user_id) {
+									session.user_id = user_id;
+									res.render("verify/new_user_success.jade", {layout: false, userid: user_id});
+								});
+							}
+							else {
+								session.user_id = user_id;
+								res.render("verify/old_user_success.jade", {layout: false});
+							}
+						})
 					}
 					else {
 						res.render("verify/fail.jade", {layout: false});
@@ -223,8 +247,9 @@ var BrawlIOServer = function() {
 			if(username) options.username = '"'+username+'"';
 			if(email) options.email = '"'+email+'"';
 
-			database.set_user_details(id, options);
-			res.render("verify/user_init.jade", {layout: false});
+			database.set_user_details(id, options, function() {
+				res.render("verify/user_init.jade", {layout: false});
+			});
 		});
 
 		server.get("/logout", function(req, res, next) {

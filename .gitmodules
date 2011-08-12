@@ -1,12 +1,3 @@
-[submodule "vendor/cloud9"]
-	path = vendor/cloud9
-	url = https://github.com/soney/cloud9
-[submodule "node-sqlite"]
-	path = node-sqlite
-	url = https://github.com/grumdrig/node-sqlite.git
-[submodule "vendor/node-sqlite"]
-	path = vendor/node-sqlite
-	url = https://github.com/grumdrig/node-sqlite.git
 [submodule "vendor/handlebars"]
 	path = vendor/handlebars
 	url = git@github.com:soney/handlebars.js.git
