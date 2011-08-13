@@ -175,12 +175,14 @@ var Brawl = function(options) {
 				self.request_replay_update();
 			}
 		};
+
 		brawl_worker.postMessage({
 			type: "initialize"
 			, teams: this.teams
 			, map: this.map
 			, round_limit: this.round_limit
 		});
+
 		brawl_worker.postMessage({
 			type: "run"
 		});

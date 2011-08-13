@@ -15,7 +15,6 @@ else {
 	importScripts('game/workers/util/brawl/brawl_utils.js');
 }
 
-
 var post = function() {
 	if(is_node) {
 		return postMessage.apply(self, arguments);

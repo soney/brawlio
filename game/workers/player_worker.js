@@ -26,14 +26,30 @@ var post = function() {
 
 var event_listeners = new Hash();
 
-var addEventListener = function(listener, type, options) {
-	var id = get_random_id();
+var addEventListener = function(options, listener) {
+	var type;
+	if(typeof options === "string") {
+		type = options;
+	}
+	else {
+		try {
+			type = options.type
+		}
+		catch(e) {
+			console.error(e);
+			return;
+		}
+	}
+	var repeats = options.repeats || false;
+	var id = get_id();
 	event_listeners.set(id, listener);
 	post({
 		type: "event_listener"
 		, event_type: type
+		, repeats: repeats
 		, id: id 
 		, options: options
+		, time: get_time()
 	});
 	return id;
 };
@@ -41,9 +57,13 @@ var removeEventListener = function(id) {
 	event_listeners.unset(id);
 };
 
-var get_random_id = function() {
-	return (Math.random()+"").slice(2);
-};
+var get_id = (function() {
+	var current_id = 0;
+	return function() {
+		return current_id++;
+	//return (Math.random()+"").slice(2);
+	};
+})();
 
 var player = {};
 
@@ -79,16 +99,25 @@ var player = {};
 var game = {};
 
 (function(game) {
-	game.addEventListener = function(listener, type, options) { return addEventListener.apply(this, arguments); };
+	game.on = game.addEventListener = function(options, listener) { return addEventListener.apply(this, arguments); };
+	game.removeEventListener = function(options, listener) { return removeEventListener.apply(this, arguments); };
+
 	game.onRound = function(listener, round) {
-		game.addEventListener(listener, "round", {round: round});
+		game.addEventListener({
+			type: "round"
+			, round: round
+		}, listener);
 	};
 
 	game.setInterval = function(callback, rounds) {
 	};
+	game.clearInterfal = function(id) {
+	};
 
 	game.setTimeout = function(callback, rounds) {
 		console.log("in " + rounds + " rounds");
+	};
+	game.clearTimeout = function(id) {
 	};
 })(game);
 
