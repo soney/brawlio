@@ -1,4 +1,9 @@
 exports.run = function(db, callback) {
+		db.get_user_brawls(2, function(brawls) {
+			console.log(brawls);
+			callback();
+		});
+/*
 		db.get_user_teams(1, function(teams) {
 			console.log(teams);
 			callback();

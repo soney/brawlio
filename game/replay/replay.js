@@ -1,12 +1,11 @@
 define(function(require, exports, module) {
 	var Replay = function(options) {
-		this.options = options;
 		this.update = options.update;
-		this.map = this.options.map;
+		this.map = options.map;
 		this.last_snapshot_index =	null; 
-		this.snapshots = [];
-		this.objects = [];
-		this.complete = false;
+		this.snapshots = options.snapshots || [];
+		this.objects = options.objects || [];
+		this.complete = options.complete || false;
 	};
 
 	(function() {

@@ -49,10 +49,35 @@ define(function(require, exports, module) {
 					});
 				};
 
-				this.request_formal_brawl = function(my_team_id, opponent_team_id) {
+				this.request_formal_brawl = function(my_team_id, opponent_team_id, callback) {
 					socket.emit('run_brawl', my_team_id, opponent_team_id, function() {
 					});
 				};
+
+				this.get_brawls = function(user_id, callback) {
+					if(arguments.length === 1) {
+						callback = user_id;
+						user_id = null;
+					}
+					socket.emit('get_brawls', user_id, function(brawls) {
+						callback(brawls);
+					});
+				};
+
+				this.get_brawl = function(brawl_id, callback) {
+					socket.emit('get_brawl', brawl_id, function(brawl) {
+						callback(brawl);
+					});
+				};
+
+				socket.on("brawl_done", function(brawl_id) {
+					var brawl = BrawlIO.get_brawl(brawl_id, function(brawl) {
+						BrawlIO.emit({
+							type: "brawl_done"
+							, brawl: brawl
+						});
+					});
+				});
 			};
 			
 			var on_socket_ready = function() {

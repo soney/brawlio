@@ -23,6 +23,16 @@ var DBUser = function(id, username, email) {
 	this.email = email;
 };
 
+var DBBrawl = function(id, team_1_fk, user_1_fk, team_2_fk, user_2_fk, result, status, replay_filename) {
+	this.id = id;
+	this.team_1_fk = team_1_fk;
+	this.user_1_fk = user_1_fk;
+	this.team_2_fk = team_2_fk;
+	this.user_2_fk = user_2_fk;
+	this.result = result;
+	this.status = status;
+	this.replay_filename = replay_filename;
+};
 
 (function(my) {
 	var proto = my.prototype;
@@ -36,6 +46,14 @@ var DBUser = function(id, username, email) {
 	var user_factory = function(options) {
 		var user = new DBUser(options.id, options.username, options.email);
 		return user;
+	};
+	var team_factory = function(options) {
+		var team = new DBTeam(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit, options.user_fk);
+		return team;
+	};
+	var brawl_factory = function(options) {
+		var brawl = new DBBrawl(options.id, options.team_1_fk, options.user_1_fk, options.team_2_fk, options.user_2_fk, options.result, options.status, options.replay_filename)
+		return brawl;
 	};
 	var users_from_rows = function(rows) {
 		var users = new Array(rows.length);
@@ -76,10 +94,28 @@ var DBUser = function(id, username, email) {
 		var team = team_factory(options);
 		return team;
 	};
+	var brawls_from_rows = function(rows) {
+		var brawls = new Array(rows.length);
+		for(var i = 0, len = rows.length; i<len; i++) {
+			brawls[i] = brawl_from_row(rows[i]);
+		}
 
-	var team_factory = function(options) {
-		var team = new DBTeam(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit, options.user_fk);
-		return team;
+		return brawls;
+	};
+	var brawl_from_row = function(row) {
+		var options = {
+			id: row.pk
+			, team_1_fk: row.team_1_fk
+			, user_1_fk: row.user_1_fk
+			, team_2_fk: row.team_2_fk
+			, user_2_fk: row.user_2_fk
+			, result: row.result
+			, status: row.status
+			, replay_filename: row.replay_filename
+		};
+			
+		var brawl = brawl_factory(options);
+		return brawl;
 	};
 
 	proto.close = function(callback) {
@@ -181,30 +217,30 @@ var DBUser = function(id, username, email) {
 	};
 
 	proto.add_user_with_openid = function(openid_url, callback) {
-			//Add the user
-			_database.run("INSERT INTO users DEFAULT VALUES", function(error) {
-				var id = this.lastID;
+		//Add the user
+		_database.run("INSERT INTO users DEFAULT VALUES", function(error) {
+			var id = this.lastID;
 
-				var callback_times = 0;
-				var expected_callback_times = 4;
-				var meta_callback = function() {
-					callback_times++;
-					if(callback_times === expected_callback_times) {
-						callback(id);
-					}
-				};
+			var callback_times = 0;
+			var expected_callback_times = 4;
+			var meta_callback = function() {
+				callback_times++;
+				if(callback_times === expected_callback_times) {
+					callback(id);
+				}
+			};
 
-				_database.parallelize(function() {
-					//Insert into openid
-					_database.run("INSERT INTO openid (openid_url, user_fk) VALUES (?, ?)", [openid_url, id], meta_callback);
-					var weight_classes = WeightClasses.enumerate();
-					for(var i = 0, len = weight_classes.length; i<len; i++) {
-						var weight_class = weight_classes[i];
+			_database.parallelize(function() {
+				//Insert into openid
+				_database.run("INSERT INTO openid (openid_url, user_fk) VALUES (?, ?)", [openid_url, id], meta_callback);
+				var weight_classes = WeightClasses.enumerate();
+				for(var i = 0, len = weight_classes.length; i<len; i++) {
+					var weight_class = weight_classes[i];
 
-						_database.run("INSERT INTO teams (active, user_fk, weight_class) VALUES (?, ?, ?)", [0, id, weight_class], meta_callback);
-					}
-				});
+					_database.run("INSERT INTO teams (active, user_fk, weight_class) VALUES (?, ?, ?)", [0, id, weight_class], meta_callback);
+				}
 			});
+		});
 	};
 
 	proto.get_user_with_id = function(id, callback) {
@@ -314,6 +350,64 @@ var DBUser = function(id, username, email) {
 			if(err) throw err;
 			var teams = teams_from_rows(rows);
 			callback(teams);
+		});
+	};
+	proto.log_brawl = function(options, callback) {
+		var team_1_id = options.team_1
+			, team_2_id = options.team_2
+			, result = options.result
+			, status = 0
+			;
+		this.get_teams([team_1_id, team_2_id], function(teams) {
+			var user_1_id = teams[0].user_fk;
+			var user_2_id = teams[1].user_fk;
+
+			_database.run("INSERT INTO brawls (team_1_fk, user_1_fk, team_2_fk, user_2_fk, result, status) VALUES (?, ?, ?, ?, ?, ?)"
+								, [team_1_id, user_1_id, team_2_id, user_2_id, result, status]
+								, function(err) {
+				if(err) throw err;
+				var id = this.lastID;
+				var replay_filename = "replays/replay-"+id+".json";
+
+				_database.run("UPDATE brawls SET replay_filename = ? WHERE pk = ?", replay_filename, id, function(err) {
+					if(err) throw err;
+					callback({
+						id: id
+						, replay_filename: replay_filename
+					});
+				});
+			});
+		});
+	};
+
+	proto.get_brawl = function(id, callback) {
+		return this.get_brawls([id], function(result) {
+			if(result.length === 1) { callback(result[0]); }
+			else {callback(null);}
+		});
+	};
+
+	proto.get_brawls = function(ids, callback) {
+		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
+			return "pk == " + id;
+		}).join(" OR ");
+
+		_database.all("SELECT * FROM brawls " + condition + " LIMIT " + ids.length, function(err, rows) {
+			if(err) throw err;
+			var brawls = brawls_from_rows(rows);
+			callback(brawls);
+		});
+	};
+
+	proto.get_user_brawls = function(user_id, callback) {
+		var self = this;
+		_database.all("SELECT pk FROM brawls WHERE user_1_fk = ? OR user_2_fk = ?", user_id, user_id, function(err, rows) {
+			if(err) throw err;
+			var brawl_ids = rows.map(function(row) {
+				return row.pk;
+			});
+
+			self.get_brawls(brawl_ids, callback);
 		});
 	};
 })(Database);

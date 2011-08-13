@@ -100,7 +100,7 @@ var Brawl = function(options) {
 };
 
 (function() {
-	this.run = function() {
+	this.run = function(callback) {
 		var player_id = 0;
 		var player_workers = new Array(Constants.TEAM_SIZE*2);
 		var players = new Array(Constants.TEAM_SIZE*2);
@@ -169,7 +169,7 @@ var Brawl = function(options) {
 				var old_on_replay_update = self.on_replay_update;
 				self.on_replay_update = function() {
 					old_on_replay_update.apply(self, arguments);
-					self.terminate();
+					self.terminate(callback);
 					self.on_replay_update = function(){};
 				};
 				self.request_replay_update();
@@ -209,14 +209,17 @@ var Brawl = function(options) {
 		});
 	};
 
-	this.terminate = function(replay_callback) {
+	this.terminate = function(callback) {
 		for(var i = 0, len = this.player_workers.length; i<len; i++) {
 			var player_worker = this.player_workers[i];
 			player_worker.terminate();
 		}
+
 		this.brawl_worker.terminate();
 		this.replay.mark_complete();
-		console.log(this.winner,  " wins!");
+		if(callback) {
+			callback(this.winner === undefined ? undefined : this.winner.id);
+		}
 	};
 }).call(Brawl.prototype);
 

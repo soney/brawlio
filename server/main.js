@@ -1,6 +1,7 @@
 var openid = require('openid');
 var querystring = require('querystring');
 var url = require('url');
+var fs = require('fs');
 var express = require("express");
 var socket_io = require('socket.io');
 var database = require('./database').database;
@@ -13,12 +14,13 @@ var Team = require('../game/models/team');
 var BrawlIOServer = function() {
 };
 
-(function() {
+(function(my) {
+	var proto = my.prototype;
 	//Private memebers
 	var server = undefined,
 		io = undefined;
 
-	var start_server = function(path) {
+	var start_server = function(bio_server, path) {
 		server = express.createServer(
 				express.cookieParser()
 				, express.session({secret: constants.session_secret})
@@ -28,26 +30,26 @@ var BrawlIOServer = function() {
 		io = socket_io.listen(server);
 		io.set("log level", 0);
 
-		initialize_sockets(io);
+		initialize_sockets(bio_server, io);
 
 		server.listen(8000);
 	};
 
 	var session_to_user = {};
-	var initialize_sockets = function(io) {
+	var initialize_sockets = function(bio_server, io) {
 		io.sockets.on('connection', function(socket) {
 			socket.on('session_key', function(key, callback) {
 				var user_id = session_to_user[key];
 				if(user_id) {
 					delete session_to_user[key];
-					initialize_socket(socket, user_id);
+					initialize_socket(bio_server, socket, user_id);
 					callback();
 				}
 			});
 		});
 	};
 
-	var initialize_socket = function(socket, user_id) {
+	var initialize_socket = function(bio_server, socket, user_id) {
 		socket.on('get_user', function(username, callback) {
 			if(username!=null) {
 				database.get_user_with_username(username, callback);
@@ -101,6 +103,19 @@ var BrawlIOServer = function() {
 				callback(rv);
 			});
 		});
+		socket.on('get_brawls', function(for_user_id, callback) {
+			if(arguments.length === 1) {
+				callback = for_user_id;
+				for_user_id = user_id;
+			}
+			else if(for_user_id == null) {
+				for_user_id = user_id;
+			}
+			database.get_user_brawls(for_user_id, callback);
+		});
+		socket.on('get_brawl', function(brawl_id, callback) {
+			database.get_brawl(brawl_id, callback);
+		});
 		socket.on('run_brawl', function(my_team_id, opponent_team_id, callback) {
 			database.get_teams([my_team_id, opponent_team_id], function(teams) {
 				var my_team = teams[0]
@@ -124,21 +139,18 @@ var BrawlIOServer = function() {
 
 
 				if(errors.length === 0) {
-					var map = new Map();
-					var team_me = new Team({
-						code: my_team.code 
+					console.log("Running brawl - " + my_team.id + " vs. " + opponent.id + "...");
+					bio_server.do_run_brawl(my_team, opponent, function(brawl_info) {
+						socket.emit("brawl_done", brawl_info.id);
+						if(brawl_info.winner === my_team.id) {
+							console.log("I won!");
+						} else if(brawl_info.winner === opponent.id) {
+							console.log("I lost.");
+						} else {
+							console.log("Draw.");
+						}
+						callback(brawl_info.id);
 					});
-					var team_other = new Team({
-						code: opponent.code
-					});
-
-					var brawl = new Brawl({
-						teams: [team_me, team_other]
-						, map: map
-						, round_limit: 100
-					});
-
-					brawl.run();
 				}
 				else {
 					callback({errors: errors});
@@ -250,18 +262,24 @@ var BrawlIOServer = function() {
 			database.set_user_details(id, options, function() {
 				res.render("verify/user_init.jade", {layout: false});
 			});
+		}); 
+
+		server.get("/replay/:filename", function(req, res, next) {
+			var filename = req.params.filename;
+			fs.readFile(filename, function (err, data) {
+				if (err) {
+					next(err);
+					return;
+				}
+				res.send(data);
+			});
 		});
+		
 
 		server.get("/logout", function(req, res, next) {
 			var session = req.session;
 			session.destroy();
 			res.render("logout.jade", {layout: false});
-		});
-
-		server.get("/user/:username", function(req, res, next) {
-			var username = req.params.username;
-			var user = database.get_user_with_username(username);
-			res.render("user.jade", {layout: false, user: user, requested_username: username});
 		});
 
 		server.get("/manage_account", function(req, res, next) {
@@ -276,14 +294,68 @@ var BrawlIOServer = function() {
 	};
 
 	//Public members
-	this.start = function(path, message) {
+	proto.start = function(path, message) {
 		if(!path) path = __dirname;
-		start_server(path);
+		start_server(this, path);
 		if(message) {
 			console.log(message);
 		}
 	};
 
-}).call(BrawlIOServer.prototype);
+	proto.do_run_brawl = function(my_team, opponent, callback) {
+		var map = new Map();
+		var team_me = new Team({
+			code: my_team.code 
+			, id: my_team.id
+		});
+		var team_other = new Team({
+			code: opponent.code
+			, id: opponent.id
+		});
+
+		var brawl = new Brawl({
+			teams: [team_me, team_other]
+			, map: map
+			, round_limit: 100
+		});
+
+		brawl.run(function(winner) {
+			var db_winner;
+			
+			if(winner === my_team.id) {
+				db_winner = 1;
+			} else if(winner === opponent.id) {
+				db_winner = 2;
+			} else {
+				db_winner = 0;
+			}
+
+			database.log_brawl({
+				team_1: my_team.id
+				, team_2: opponent.id
+				, result: db_winner 
+			}, function(log_info) {
+				var replay_filename = log_info.replay_filename;
+				var replay = brawl.replay;
+				var replay_string = JSON.stringify(replay);
+
+				fs.writeFile(replay_filename, replay_string, function(err) {
+					if(err) {
+						console.error(err);
+					} else {
+						if(callback) {
+							callback({
+								winner: winner
+								, id: log_info.id
+								, replay_filename: replay_filename
+							});
+						}
+					}
+				}); 
+			});
+		});
+	};
+
+})(BrawlIOServer);
 
 module.exports = BrawlIOServer;

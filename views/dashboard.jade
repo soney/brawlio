@@ -37,6 +37,14 @@ html(lang="en")
             h2 {{weight_class_name}}
             h3 Recommended opponents:
             .possible_opponents
+
+          h3 Brawl History:
+          .brawl_history
+          .replay
+            .controls
+              a.play(href="javascript:void(0)") Play
+              a.stop(href="javascript:void(0)") Stop
+            canvas.viewer(width="300", height="300")
           .stats
         #edit
           .editor
@@ -56,14 +64,6 @@ html(lang="en")
       require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $("#dashboard"));
-          /*
-          window.setTimeout(function() { 
-              $("div.team:first").click();
-          }, 400);
-          window.setTimeout(function() { 
-              $("a.test").click();
-          }, 500);
-          */
         });
       });
   body

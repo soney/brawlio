@@ -11,6 +11,10 @@ else {
 	importScripts('game/workers/util/worker_utils.js');
 }
 
+var get_time = function() {
+	return new Date().getTime();
+};
+
 var post = function() {
 	if(is_node) {
 		return postMessage.apply(self, arguments);
@@ -51,6 +55,7 @@ var player = {};
 				type: "action"
 				, action: action
 				, options: options
+				, time: get_time()
 			});
 		};
 	};

@@ -58,9 +58,13 @@ define(function(require, exports, module) {
 			
 			this.render(ctx);
 			var self = this;
-			this.replay.update();
+			if(!this.replay.is_complete()) {
+				this.replay.update();
+			}
 			this.replay_update_interval = window.setInterval(function() {
-				self.replay.update();
+				if(!self.replay.is_complete()) {
+					self.replay.update();
+				}
 			}, 1000);
 		};
 		this.stop = function() {
@@ -100,15 +104,16 @@ define(function(require, exports, module) {
 		};
 		this.render_snapshot = function(snapshot_index, ctx) {
 			var snapshot = this.replay.get_snapshot(snapshot_index);
-			if(snapshot === undefined) return;
+			if(snapshot == null) return;
 			var round = snapshot.round;
 
 			ctx.save();
 			ctx.scale(PIXELS_PER_TILE, PIXELS_PER_TILE);
 			var map = this.replay.get_map();
 			draw_map(map, ctx);
-			for(var i in snapshot.object_states) {
+			for(var i = 0, len = snapshot.object_states.length; i<len; i++) {
 				var object_index = i;
+				if(snapshot.object_states[i] == null) continue;
 				var object = this.replay.get_object(object_index);
 
 				var object_state = snapshot.object_states[i];

@@ -63,5 +63,35 @@ define(function(require, exports, module) {
 			}
 			return null;
 		};
+		var event_listeners = [];
+		var event_listener_id = 0;
+		this.on = this.add_event_listener = function(type, callback) {
+			var id = event_listener_id;
+			var event_listener = {
+				type: type
+				, callback: callback
+				, id: id
+			}
+			event_listeners.push(event_listener);
+			event_listener_id++;
+			return id;
+		};
+		this.remove_event_listener = function(id) {
+			for(var i = 0; i<event_listeners.length; i++) {
+				var event_listener = event_listeners[i];
+				if(id === event_listener.id || id === event_listener.callback) {
+					event_listeners.splice(i, 1);
+					i--;
+				}
+			}
+		};
+		this.emit = function(event) {
+			for(var i = 0, len = event_listeners.length; i<len; i++) {
+				var event_listener = event_listeners[i];
+				if(event_listener.type === event.type) {
+					event_listener.callback(event);
+				}
+			}
+		};
 	}).call(BrawlIO);
 });

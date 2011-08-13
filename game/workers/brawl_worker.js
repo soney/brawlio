@@ -66,6 +66,7 @@ var Player = function(options) {
 	this.theta = 0;
 	this.health = this.get_max_health();
 	this.last_fired_round = null;
+	this.last_update = null;
 };
 (function() {
 	var ROUNDS_BETWEEN_FIRING = 1;
@@ -154,6 +155,7 @@ var Player = function(options) {
 		var game = this.game;
 
 		var round = game.get_round();
+		var rv = false;
 		var can_fire = true;
 		if(this.last_fired_round !== null) {
 			if(round-this.last_fired_round < ROUNDS_BETWEEN_FIRING) {
@@ -161,11 +163,14 @@ var Player = function(options) {
 			}
 		}
 		if(can_fire) {
-			game.on_player_fire(this);
+			rv = game.on_player_fire(this);
 
 			this.last_fired_round = round;
 		}
+		return rv;
 	};
+	this.get_last_update_round = function() { return this.last_update; };
+	this.set_last_update_round = function(round) { this.last_update = round; };
 }).call(Player.prototype);
 
 var Projectile = function(options) {
@@ -178,6 +183,7 @@ var Projectile = function(options) {
 		radius: 1 //Tiles
 		, speed: 15 //Tiles per round
 	};
+	this.last_update = null;
 };
 (function() {
 	this.get_new_position = function(delta_rounds) {
@@ -197,6 +203,8 @@ var Projectile = function(options) {
 	this.get_movement_speed = function() { return this.attributes.speed; };
 	this.get_radius = function() { return this.attributes.radius; };
 	this.get_source = function() { return this.options.source; };
+	this.get_last_update_round = function() { return this.last_update; };
+	this.set_last_update_round = function(round) { this.last_update = round; };
 }).call(Projectile.prototype);
 
 var Snapshot = function(data) {
@@ -356,7 +364,6 @@ var Brawl = function(options) {
 			}
 		}
 
-		this.round = 0;
 		this.start_time = get_time();
 		this.running = true;
 
@@ -406,9 +413,8 @@ var Brawl = function(options) {
 	this.do_update = function() {
 		if(!this.running) return false;
 
-		var old_round = this.round;
-		this.round = this.get_round();
-		if(this.round_limit >= 0 && this.round >= this.round_limit) {
+		var round = this.get_round();
+		if(this.round_limit > 0 && round >= this.round_limit) {
 			this.end_game(null);
 			return false;
 		}
@@ -421,18 +427,16 @@ var Brawl = function(options) {
 			return false;
 		}
 
-		var delta_rounds = this.round - old_round;
-
 		for(var i = 0, len = this.players.length; i<len; i++) {
 			var player = this.players[i];
 			if(player.is_alive()) {
-				this.update_player(player, delta_rounds);
+				this.update_player(player);
 			}
 		}
 		for(var i = 0, len = this.projectiles.length; i<len; i++) {
 			var projectile = this.projectiles[i];
 			if(projectile == null) continue;
-			this.update_projectile(projectile, delta_rounds);
+			this.update_projectile(projectile);
 		}
 		this.take_snapshot();
 		return true;
@@ -449,9 +453,16 @@ var Brawl = function(options) {
 		});
 		this.projectiles.push(projectile);
 		this.replay.add_object(projectile);
+		return projectile;
 	};
 
-	this.update_projectile = function(projectile, delta_rounds) {
+	this.update_projectile = function(projectile, current_round) {
+		var current_round = this.get_round();
+		var last_update_round = projectile.get_last_update_round() || current_round;
+		if(current_round < last_update_round) last_update_round = current_round;
+		projectile.set_last_update_round(current_round);
+		var delta_rounds = current_round - last_update_round;
+
 		var old_pos = {x: projectile.x, y: projectile.y};
 		var new_pos = projectile.get_new_position(delta_rounds);
 
@@ -465,6 +476,7 @@ var Brawl = function(options) {
 				hit_other_player = true;
 			}
 		}
+
 
 		if(left_map || hit_other_player) {
 			projectile.in_play = false;
@@ -484,7 +496,13 @@ var Brawl = function(options) {
 		}
 	};
 
-	this.update_player = function(player, delta_rounds) {
+	this.update_player = function(player, current_round) {
+		var current_round = current_round || this.get_round();
+		var last_update_round = player.get_last_update_round() || current_round;
+		if(current_round < last_update_round) last_update_round = current_round;
+		player.set_last_update_round(current_round);
+		var delta_rounds = current_round - last_update_round;
+
 		var old_pos = {x: player.x, y: player.y, theta: player.theta};
 		var new_pos = player.get_new_position(delta_rounds);
 
@@ -627,15 +645,22 @@ var Brawl = function(options) {
 		if(type === "action") {
 			var action = request.action;
 			var action_type = Actions.get_type(action);
+			var time = request.time;
+			var action_round = this.get_round(time);
 
 			if(action_type === Actions.move_type ||
 				action_type === Actions.rotate_type) {
 				player.actions[action_type] = action;
+
+				this.update_player(player, action_round);
 			}
 			else if(action_type === Actions.instantaneous_type) {
 				var options = request.options;
 				if(action === Actions.fire) {
-					player.fire(options);
+					var projectile = player.fire(options);
+					if(projectile) {
+						this.update_projectile(projectile, action_round);
+					}
 				}
 			}
 		}
