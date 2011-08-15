@@ -114,6 +114,7 @@ var Brawl = function(options) {
 					type: "initialize"
 					, code: team.code
 					, number: number
+					, team_id: team.id
 				});
 				player_worker.onmessage = function(event) {
 					var data = event.data;
@@ -158,6 +159,7 @@ var Brawl = function(options) {
 					player_worker.postMessage({
 						type: "event"
 						, event_id: event_id
+						, event: data.event
 					});
 				}
 			}

@@ -36,9 +36,15 @@ var Hash = function() {
 	};
 }).call(Hash.prototype);
 
+var CONST = {
+	ROUNDS_PER_MS: 1/100.0
+	, ROUNDS_PER_UPDATE: 0.001
+};
+
 try {
 	if(typeof exports !== undefined) {
 		exports.Hash = Hash;
+		exports.CONST = CONST;
 	}
 }
 catch(e) {}

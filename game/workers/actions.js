@@ -17,7 +17,8 @@ var Actions = {
 
 	, instantaneous_type: 2
 	, fire: 20
-	, sense: 21
+	, stop_firing: 21
+	, sense: 22
 
 	, get_type: function(action) {
 		if(action >= 00 && action <= 09) {

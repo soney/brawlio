@@ -103,29 +103,22 @@ Subject 1.02: How do I find the distance from a point to a line?
 	var xx = px;
 	var yy = py;
 
-	if ( (r >= 0) && (r <= 1) )
-	{
+	if ((r >= 0) && (r <= 1)) {
 		distanceSegment = distanceLine;
 	}
-	else
-	{
-
+	else {
 		var dist1 = (cx-ax)*(cx-ax) + (cy-ay)*(cy-ay);
 		var dist2 = (cx-bx)*(cx-bx) + (cy-by)*(cy-by);
-		if (dist1 < dist2)
-		{
+		if (dist1 < dist2) {
 			xx = ax;
 			yy = ay;
 			distanceSegment = Math.sqrt(dist1);
 		}
-		else
-		{
+		else {
 			xx = bx;
 			yy = by;
 			distanceSegment = Math.sqrt(dist2);
 		}
-
-
 	}
 
 	return {line: distanceLine, segment: distanceSegment};
