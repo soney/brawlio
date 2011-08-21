@@ -1,4 +1,4 @@
-var player = {}
+var controller = {}
 	, game = {};
 
 var is_node = typeof importScripts === "undefined";
@@ -27,199 +27,198 @@ var get_time = function() {
 	return new Date().getTime();
 };
 
-(function(player) {
-	var assoc_ask = function(fn_name, action, arg_names, option_defaults, callback_aliases) {
-		player [fn_name] = function() {
-			var args = Array.prototype.slice.call(arguments);
-			var options = {};
-			for(var option_name in option_defaults) {
-				options[option_name] = option_defaults[option_name]
-			}
+(function(controller) {
+	controller.move = function(direction, options) {
+		var action = undefined;
+		if(direction.match(/back(ward(s)?)?/i)) {
+			action = Actions.move.backward;
+		} else if(direction.match(/left/i)) {
+			action = Actions.move.left;
+		} else if(direction.match(/right/i)) {
+			action = Actions.move.right;
+		} else if(direction.match(/stop/i)) {
+			action = Actions.move.stop;
+		} else {
+			action = Actions.move.forward;
+		}
 
-			if(args.length === 1 && typeof args[0] === "object") {
-				for(var option_name in args[0]) {
-					options[option_name] = args[0][option_name];
-				}
-			}
-			else {
-				for(var i = 0, len = args.length; i<len; i++) {
-					var arg_name = arg_names[i];
-					if(arg_name != null) {
-						options[arg_name] = args[i];
-					}
-				}
-			}
-
-			var has_callback = options.callback != null;
-			if(!has_callback) {
-				if(callback_aliases) {
-					for(var callback_type in callback_aliases) {
-						var callback_alias = callback_aliases[callback_type];
-						if(options[callback_alias] != null) {
-							has_callback = true;
-							break;
-						}
-					}
-				}
-			}
-
-			if(has_callback) {
-				var callback = options.callback;
-				//Don't try to send the callback over to the game...
-				//just set the callback as an event listener
-				//addEventListener(); TODO
-				options.callback_id = game.addEventListener({
+		options = options || {};
+		if(options.callback != null) {
+			var user_callback = options.callback;
+			options.callback = true;
+			options.callback_id = game.addEventListener({
 					type: "action_callback"
-					, action: action
 					, options: options
 				}, function(event) {
-					if(callback != null) {
-						callback(event);
+					if(options.callback != null) {
+						user_callback(event);
 					}
-					if(callback_aliases) {
-						var type = event.type;
-						for(var callback_type in callback_aliases) {
-							if(type === callback_type) {
-								var callback_alias = callback_aliases[callback_type];
-								if(options[callback_alias] != null) {
-									options[callback_alias](event);
-								}
-							}
-						}
+					var type = event.type;
+					if(type === "start" && options.onStart != null) {
+						options.onStart(event);
+					}
+					if(type === "stop" && options.onStop != null) {
+						options.onStop(event);
 					}
 				});
-			}
-			options.callback = has_callback;
+		}
+		return post({
+			type: "action"
+			, action: action
+			, options: options
+			, time: get_time()
+		});
+	};
+	controller.turn = function(direction, options) {
+		var action = undefined;
+		if(direction.match(/(right)|(clockwise)/i)) {
+			action = Actions.rotate.clockwise;
+		} else if(direction.match(/stop/i)) {
+			action = Actions.rotate.stop;
+		} else {
+			action = Actions.rotate.counter_clockwise;
+		}
 
-			return post({
-				type: "action"
-				, action: action
-				, options: options
-				, time: get_time()
-			});
+		options = options || {};
+		if(options.callback != null) {
+			var user_callback = options.callback;
+			options.callback = true;
+			options.callback_id = game.addEventListener({
+					type: "action_callback"
+					, options: options
+				}, function(event) {
+					if(options.callback != null) {
+						user_callback(event);
+					}
+					var type = event.type;
+					if(type === "start" && options.onStart != null) {
+						options.onStart(event);
+					}
+					if(type === "stop" && options.onStop != null) {
+						options.onStop(event);
+					}
+				});
+		}
+		return post({
+			type: "action"
+			, action: action
+			, options: options
+			, time: get_time()
+		});
+	};
+	controller.fire = function(param, options) {
+		var action = undefined;
+		var options = undefined;
+		options = options || {};
+		if(param === "stop") {
+			action = Actions.stop_firing;
+		}
+		else if(param === "automatic") {
+			action = Actions.fire;
+			options.automatic = true;
+		} else {
+			action = Actions.fire;
+		}
+		if(options.callback != null) {
+			var user_callback = options.callback;
+			options.callback = true;
+			options.callback_id = game.addEventListener({
+					type: "action_callback"
+					, options: options
+				}, function(event) {
+					if(options.callback != null) {
+						user_callback(event);
+					}
+					var type = event.type;
+					if(type === "fire" && options.onStart != null) {
+						options.onFire(event);
+					}
+					if(type === "ready" && options.onStop != null) {
+						options.onReady(event);
+					}
+				});
+		}
+
+		return post({
+			type: "action"
+			, action: action
+			, options: options
+			, time: get_time()
+		});
+	};
+	controller.sense = function(options) {
+		var action = Actions.sense;
+		if(typeof options === "function") {
+			var callback = options;
+			options = arguments[1] || {};
+			options.callback = callback;
+		}
+		options = options || {};
+
+		if(options.callback != null) {
+			var user_callback = options.callback;
+			options.callback = true;
+			options.callback_id = game.addEventListener({
+					type: "action_callback"
+					, options: options
+				}, function(event) {
+					var data = event.data;
+					data.players = data.players.map(function(pi) {
+						return new Player(pi.number, pi.team_id, {x: pi.x, y: pi.y, theta: pi.theta});
+					});
+					data.projectiles = data.projectiles.map(function(pi) {
+						return new Projectile();
+					});
+					data.map = new Map({width: data.map.width, height: data.map.height});
+
+					user_callback(event);
+				});
+		}
+
+		return post({
+			type: "action"
+			, action: action
+			, options: options
+			, time: get_time()
+		});
+	};
+
+	var Map = function(dimensions) {
+	}; (function(my) {
+		var proto = my.prototype;
+	})(Map);
+
+	var Projectile = function() {
+	}; (function(my) {
+		var proto = my.prototype;
+	})(Projectile);
+
+	var Player = function(number, team_id, position) {
+		this.number = number;
+		this.team_id = team_id;
+		this.position = position;
+	}; (function(my) {
+		var proto = my.prototype;
+		proto.isAlly = function() {
+			return this.team_id === controller.team_id; 
+		}; proto.isOpponent = function() {
+			return !this.isAlly();
 		};
-	};
 
-	assoc_ask('stopMoving', Actions.move.stop, ["delay"], {
-		delay: 0
-		, callback: undefined
-	});
-	assoc_ask('moveForward', Actions.move.forward, ["duration"], {
-		duration: null
-		, delay: 0
-		, callback: undefined
-		, speed: undefined
-		, on_start: undefined
-		, on_stop: undefined
-	}, {
-		start: "on_start"
-		, stop: "on_stop"
-	});
-	assoc_ask('moveBackward', Actions.move.backward, ["duration"], {
-		duration: null
-		, delay: 0
-		, callback: undefined
-		, speed: undefined
-		, on_start: undefined
-		, on_stop: undefined
-	}, {
-		start: "on_start"
-		, stop: "on_stop"
-	});
-	assoc_ask('moveLeft', Actions.move.left, ["duration"], {
-		duration: null
-		, delay: 0
-		, callback: undefined
-		, speed: undefined
-		, on_start: undefined
-		, on_stop: undefined
-	}, {
-		start: "on_start"
-		, stop: "on_stop"
-	});
-	assoc_ask('moveRight', Actions.move.right, ["duration"], {
-		duration: null
-		, delay: 0
-		, callback: undefined
-		, speed: undefined
-		, on_start: undefined
-		, on_stop: undefined
-	}, {
-		start: "on_start"
-		, stop: "on_stop"
-	});
+		proto.isMe = function() {
+			return this.number === controller.number;
+		}; proto.isNotMe = function() {
+			return !this.isMe();
+		};
+	})(Player);
+})(controller);
 
-	assoc_ask('stopRotating', Actions.rotate.stop, ["delay"], {
-		delay: 0
-		, callback: undefined
-	});
-	assoc_ask('rotateClockwise', Actions.rotate.clockwise, ["duration"], {
-		duration: null
-		, delay: 0
-		, callback: undefined
-		, speed: undefined
-		, on_start: undefined
-		, on_stop: undefined
-	}, {
-		start: "on_start"
-		, stop: "on_stop"
-	});
-	assoc_ask('rotateCounterClockwise', Actions.rotate.counter_clockwise, ["duration"], {
-		duration: null
-		, delay: 0
-		, callback: undefined
-		, speed: undefined
-		, on_start: undefined
-		, on_stop: undefined
-	}, {
-		start: "on_start"
-		, stop: "on_stop"
-	});
-
-	assoc_ask('fire', Actions.fire, ["angle_offset", "automatic"], {
-		angle_offset: 0
-		, delay: 0
-		, duration: null
-		, automatic: false
-		, callback: undefined
-		, on_fire: undefined
-		, on_ready: undefined
-	}, {
-		start: "on_start"
-		, stop: "on_stop"
-	});
-	assoc_ask('stopFiring', Actions.stop_firing, ["delay"], {
-		delay: 0
-		, callback: undefined
-	});
-	assoc_ask('sense', Actions.sense, ["callback"], {
-		callback: undefined
-	});
-
-	player.stopTurning = player.stopRotating;
-	player.turnRight = player.rotateClockwise;
-	player.turnLeft = player.rotateCounterClockwise;
-
-	player.isAlly = function(other_player) {
-		return other_player.team_id === this.team_id;
-	};
-	player.isOpponent = function(other_player) {
-		return !player.isAlly(other_player);
-	};
-	player.isMe = function(other_player) {
-		return other_player.number === this.number;
-	};
-	player.isNotMe = function(other_player) {
-		return !this.isMe(other_player);
-	};
-})(player);
 
 (function(game) {
 	var get_id = (function() {
 		var current_id = 0;
 		return function() {
 			return current_id++;
-		//return (Math.random()+"").slice(2);
 		};
 	})();
 
@@ -233,8 +232,7 @@ var get_time = function() {
 		else {
 			try {
 				type = options.type
-			}
-			catch(e) {
+			} catch(e) {
 				console.error(e);
 				return;
 			}
@@ -260,10 +258,13 @@ var get_time = function() {
 	game.removeEventListener = function(options, listener) { return removeEventListener.apply(this, arguments); };
 
 	game.onRound = function(listener, round) {
-		game.addEventListener({
-			type: "round"
-			, round: round
-		}, listener);
+		var run_time = game.start_time + round/CONST.ROUNDS_PER_MS;
+		var time_diff = run_time - get_time();
+		if(time_diff <= 0) {
+			listener();
+		} else {
+			setTimeout(listener, time_diff);
+		}
 	};
 
 	game.setInterval = function(callback, rounds) {
@@ -292,18 +293,17 @@ self.onmessage = function(event) {
 	var data = event.data;
 	var type = data.type;
 
-	if(data.type === "initialize") {
+	if(type === "initialize") {
 		code = data.code;
-		player.number = data.number;
-		player.team_id = data.team_id;
-	}
-	else if(data.type === "message") {
+		controller.number = data.number;
+		controller.team_id = data.team_id;
+	} else if(type === "message") {
 		var message = data.message;
 		if(message.type === "game_start") {
+			game.start_time = message.start_time;
 			run();
 		}
-	}
-	else if(data.type === "event") {
+	} else if(type === "event") {
 		game.on_event(data);
 	}
 };
@@ -312,6 +312,16 @@ var run = function() {
 	(function() {
 		var self = undefined; //Prevent code from evaling self
 		var post = undefined; //...and from changing post
+		var onRound = game.onRound
+			, setTimeout = game.setTimeout
+			, clearTimeout = game.clearTimeout
+			, setInterval = game.setInterval
+			, clearInterval = game.clearInterval
+			, move = controller.move
+			, turn = controller.turn
+			, fire = controller.fire
+			, sense = controller.sense
+			;
 		eval(code);
 	}).call();
 };

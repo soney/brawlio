@@ -23,11 +23,9 @@ var Actions = {
 	, get_type: function(action) {
 		if(action >= 00 && action <= 09) {
 			return Actions.move_type;
-		}
-		else if(action >= 10 && action <= 19) {
+		} else if(action >= 10 && action <= 19) {
 			return Actions.rotate_type;
-		}
-		else if(action >= 20 && action <= 29) {
+		} else if(action >= 20 && action <= 29) {
 			return Actions.instantaneous_type;
 		}
 	}

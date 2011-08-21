@@ -216,6 +216,9 @@ var BrawlIOServer = function() {
 				}
 			});
 		});
+		server.get("/api", function(req, res, next) {
+			res.render("api.jade", {layout: false});
+		});
 
 		server.get("/verify", function(req, res, next) {
 			var session = req.session;

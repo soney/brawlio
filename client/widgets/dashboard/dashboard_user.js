@@ -22,7 +22,6 @@ define(["vendor/jquery", "vendor/jquery-ui", "client/widgets/team/team_tester"],
 			this.element.html("");
 			$.Widget.prototype.destroy.apply(this, arguments);
 		}
-
 	};
 
 	$.widget("brawlio.dashboard_user", DashboardUser);

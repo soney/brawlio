@@ -3,7 +3,162 @@ html(lang="en")
   head
     title Brawl IO
     link(type="text/css", rel="stylesheet", href="client/css/main.css")
+    link(type="text/css", rel="stylesheet", href="client/css/api.css")
   body
     .body
-      API: Hello!
+      h1 Brawl.IO
+      h2 v0.1 API
+      .content
+        .section_header Overview
+        .section
+          p As a competitor, your mission is to write the best code possible. These are your set of tools. Use them well.
+          h3 Terminology
+          span.term Round
+          | Universal unit of time (about one second in replays)
+          br
+          span.term Tile
+          | Universal unit of distance (about 40 pixels in replays)
 
+
+        .section_header Moving
+        .section
+          .quote
+            .words A journey of a thousand miles begins with a single step.
+            .author Lao Tzu
+
+          .method#move
+            .signature move(direction, [options])
+            .description Sets an interval
+            .param
+              span.name direction
+              span.description Some direction
+            .param
+              span.name options
+              span.description (see below)
+            .returns.undefined (undefined)
+            .options
+            .doc 
+            .examples
+              .example 
+
+          .method#turn
+            .signature turn(direction, [options])
+            .description Sets an interval
+            .param
+              span.name direction
+              span.description Some direction
+            .param
+              span.name options
+              span.description (see below)
+            .returns.undefined (undefined)
+            .options
+            .doc 
+            .examples
+              .example 
+
+
+        .section_header Attacking
+        .section
+          .quote
+            .words The hand which strikes, also blocks.
+            .author Wing Chun maxim
+          .method#fire
+            .signature fire([command], [options])
+            .description Sets an interval
+            .returns.undefined (undefined)
+            .options
+            .doc 
+            .examples
+              .example 
+
+
+        .section_header Timing
+        .section
+          .quote
+            .words When the strike of a hawk breaks the body of its prey, it is because of timing.
+            .author Sun Tzu
+          .method#onRound
+            .signature onRound(callback, round)
+            .description Runs something on a round
+            .param
+              span.name callback
+              span.description The function to call back
+            .param
+              span.name round
+              span.description The number of rounds to call back in
+            .returns.undefined (undefined)
+            .doc 
+            .examples
+              .example 
+
+          .method#setTimeout
+            .signature setTimeout(callback, rounds)
+            .description Sets a timeout
+            .param
+              span.name callback
+              span.description The function to call back
+            .param
+              span.name rounds
+              span.description The number of rounds to call back in
+            .returns
+              span.value
+                span.name id
+                span.type (int)
+              span.description An integer that represents the callback id
+            .doc 
+            .examples
+              .example 
+
+          .method#clearTimeout
+            .signature clearTimeout(id)
+            .description Clears a timeout
+            .param
+              span.name id
+              span.description The id of the timeout we are getting rid of
+            .returns.undefined (undefined)
+            .doc 
+            .examples
+              .example 
+            
+          .method#setInteval
+            .signature setInterval(callback, rounds)
+            .description Sets an interval
+            .param
+              span.name callback
+              span.description The function to call back every rounds rounds
+            .param
+              span.name rounds
+              span.description The delay between rounds
+            .returns
+              span.value
+                span.name id
+                span.type (int)
+              span.description An integer that represents the callback id
+            .doc 
+            .examples
+              .example 
+
+          .method#clearInteval
+            .signature clearInterval(id)
+            .description Sets an interval
+            .param
+              span.name id
+              span.description The id of the interval we are getting rid of
+            .returns.undefined (undefined)
+            .doc
+            .examples
+              .example
+
+        .section_header Sensing
+        .section
+          .quote
+            .words ...if you know your enemies and know yourself, you can win a thousand battles without a single loss.
+            .author Sun Tzu
+          .method#sense
+            .signature sense([callback], [options])
+            .description Sets an interval
+            .returns.undefined (undefined)
+            .options
+            .doc 
+            .examples
+              .example 

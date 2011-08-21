@@ -12,6 +12,7 @@ if(is_node) { //We are on Node.js
 else {
 	PLAYER_WORKER_PATH = "game/workers/player_worker.js";
 	BRAWL_WORKER_PATH = "game/workers/brawl_worker.js";
+
 	//*
 	//console.log("I'm not on node");
 	// https://raw.github.com/davidflanagan/WorkerConsole/master/WorkerConsole.js
@@ -97,12 +98,17 @@ var Brawl = function(options) {
 			self.request_replay_update();
 		}
 	});
+	this.initialize_workers();
 };
 
-(function() {
-	this.run = function(callback) {
+(function(my) {
+	var proto = my.prototype;
+
+	proto.initialize_workers = function() {
+		var self = this;
 		var player_id = 0;
-		var player_workers = new Array(Constants.TEAM_SIZE*2);
+		this.player_workers = new Array(Constants.TEAM_SIZE*2);
+		this.brawl_worker = new Worker(BRAWL_WORKER_PATH);
 		var players = new Array(Constants.TEAM_SIZE*2);
 		for(var i = 0, leni = this.teams.length; i<leni; i++) {
 			var team = this.teams[i];
@@ -118,7 +124,7 @@ var Brawl = function(options) {
 				});
 				player_worker.onmessage = function(event) {
 					var data = event.data;
-					brawl_worker.postMessage({
+					self.brawl_worker.postMessage({
 						type: "player_request"
 						, player_id: player_model.id //don't just use player_id here...
 						, request: data
@@ -126,94 +132,103 @@ var Brawl = function(options) {
 				};
 
 				players[player_id] = player_model;
-				player_workers[player_id] = player_worker;
+				self.player_workers[player_id] = player_worker;
 				player_id++;
 			});
 		}
 
-		var self = this;
-		var brawl_worker = new Worker(BRAWL_WORKER_PATH);
-		brawl_worker.onmessage = function(event) {
-			var data = event.data;
-			var type = data.type
-				, message = data.message;
-			if(type === "broadcast") {
-				player_workers.forEach(function(player_worker) {
-					player_worker.postMessage({
-						type: "message"
-						, message: message
-					});
-				});
-			}
-			else if(type === "replay_chunk") {
-				var replay_chunk = data.replay_chunk;
-				self.on_replay_update(replay_chunk);
-			}
-			else if(type === "event") {
-				var audience = data.audience
-					, event_id = data.event_id;
+		this.brawl_worker.onmessage = function(event) {
+			var data = event.data; var type = data.type;
 
-				for(var i = 0, len = audience.length; i<len; i++) {
-					var player_id = audience[i];
-					var player_worker = player_workers[player_id];
-					player_worker.postMessage({
-						type: "event"
-						, event_id: event_id
-						, event: data.event
-					});
-				}
-			}
-			else if(type === "game_over") {
-				var winning_id = data.winner;
-				if(winning_id !== null) {
-					self.winner = self.teams[winning_id];
-				}
-				var old_on_replay_update = self.on_replay_update;
-				self.on_replay_update = function() {
-					old_on_replay_update.apply(self, arguments);
-					self.terminate(callback);
-					self.on_replay_update = function(){};
-				};
-				self.request_replay_update();
+			if(type === "game_start") {
+				self.on_game_start(data.start_time);
+			} else if(type === "broadcast") {
+				self.broadcast(data.message);
+			} else if(type === "event") {
+				self.on_game_event(data.audience, data.event_id, data.event);
+			} else if(type === "replay_chunk") {
+				self.on_replay_chunk(data.replay_chunk);
+			} else if(type === "game_over") {
+				self.on_game_over(data.winner);
 			}
 		};
 
-		brawl_worker.postMessage({
+		this.brawl_worker.postMessage({
 			type: "initialize"
 			, teams: this.teams
 			, map: this.map
 			, round_limit: this.round_limit
 		});
+	};
 
-		brawl_worker.postMessage({
-			type: "run"
+	proto.on_game_start = function(start_time) {
+		this.player_workers.forEach(function(player_worker) {
+			player_worker.postMessage({
+				type: "game_start"
+				, start_time: start_time
+			});
 		});
-
-		this.player_workers = player_workers;
-		this.brawl_worker = brawl_worker;
+	};
+	proto.broadcast = function(message) {
+		this.player_workers.forEach(function(player_worker) {
+			player_worker.postMessage({
+				type: "message"
+				, message: message
+			});
+		});
+	};
+	proto.on_game_event = function(audience, event_id, event) {
+		for(var i = 0, len = audience.length; i<len; i++) {
+			var player_id = audience[i];
+			var player_worker = this.player_workers[player_id];
+			player_worker.postMessage({
+				type: "event"
+				, event_id: event_id
+				, event: event
+			});
+		}
+	};
+	proto.on_replay_chunk = function(replay_chunk) {
+		this.replay.concat_chunk(replay_chunk);
+	};
+	proto.on_game_over = function(winning_id) {
+		var self = this;
+		if(winning_id !== null) {
+			this.winner = this.teams[winning_id];
+		}
+		var old_on_replay_update = this.on_replay_update;
+		this.on_replay_update = function() {
+			old_on_replay_update.apply(self, arguments);
+			this.terminate(callback);
+			this.on_replay_update = function(){};
+		};
 		this.request_replay_update();
 	};
 
-	this.get_replay = function() {
+	proto.run = function(callback) {
+		this.brawl_worker.postMessage({
+			type: "run"
+		});
+		this.request_replay_update();
+	};
+
+	proto.get_replay = function() {
 		return this.replay;
 	};
-	this.request_replay_update = function() {
+	proto.request_replay_update = function() {
 		this.brawl_worker.postMessage({
 			type: "get_replay_chunk"
 			, from_snapshot: this.replay.get_last_snapshot_index() + 1
 		});
 	};
-	this.on_replay_update = function(replay_chunk) {
-		this.replay.concat_chunk(replay_chunk);
-	};
 
-	this.stop = function() {
+	proto.stop = function() {
 		this.brawl_worker.postMessage({
 			type: "stop"
 		});
 	};
 
-	this.terminate = function(callback) {
+	proto.terminate = function(callback) {
 		for(var i = 0, len = this.player_workers.length; i<len; i++) {
 			var player_worker = this.player_workers[i];
 			player_worker.terminate();
@@ -225,7 +240,7 @@ var Brawl = function(options) {
 			callback(this.winner === undefined ? undefined : this.winner.id);
 		}
 	};
-}).call(Brawl.prototype);
+})(Brawl);
 
 return Brawl;
 });

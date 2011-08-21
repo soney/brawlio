@@ -364,6 +364,7 @@ var Brawl = function(options) {
 	this.players = [];
 	this.initialize();
 	this.running = false;
+	this.start_time = undefined;
 };
 
 (function() {
@@ -409,6 +410,7 @@ var Brawl = function(options) {
 			, message: {
 				map: this.map
 			}
+			, start_time: this.start_time
 		});
 	};
 
@@ -816,8 +818,7 @@ var Brawl = function(options) {
 					}
 				};
 				this.do_at_time(do_action, request_timing.start_time_ms);
-			}
-			else if(action_type === Actions.instantaneous_type) {
+			} else if(action_type === Actions.instantaneous_type) {
 				if(action === Actions.fire) {
 					var on_weapon_ready = function() {
 						callback({
@@ -837,8 +838,7 @@ var Brawl = function(options) {
 								, fired: false
 								, action: action
 							});
-						}
-						else {
+						} else {
 							callback({
 								type: "fire"
 								, fired: false
@@ -847,52 +847,19 @@ var Brawl = function(options) {
 						}
 					};
 					this.do_at_time(do_fire, request_timing.start_time_ms);
-				}
-				else if(action === Actions.stop_firing) {
+				} else if(action === Actions.stop_firing) {
 					var do_stop_firing = function() {
 						player.auto_fire = false;
 					};
 					this.do_at_time(do_stop_firing, request_timing.start_time_ms);
-				}
-				else if(action === Actions.sense) {
+				} else if(action === Actions.sense) {
 					callback({
 						type: "sense"
 						, data: this.get_snapshot_data()
 					});
 				}
 			}
-		}
-		else if(type === "event_listener") {
-			var event_type = request.event_type
-				, options = request.options;
-			if(event_type === "round") {
-				var current_time = get_time()
-					, current_round = this.get_round(current_time)
-					, round = options.round
-					, callback_delay = (round - current_round)/CONST.ROUNDS_PER_MS;
-
-
-				var self = this
-					, do_notify = function() {
-						self.broadcast_event({
-							event_id: request.id
-							, player_id: player_id
-							, event: {
-								type: "round"
-								, round: self.get_round()
-							}
-						});
-					}
-					;
-
-				if(callback_delay > 0) {
-					setTimeout(do_notify, callback_delay);
-				} else {
-					do_notify();
-				}
-			}
-		}
-		else {
+		} else {
 			console.log("Unknown player request type", type);
 		}
 	};
@@ -918,21 +885,17 @@ self.onmessage = function(event) {
 	var type = data.type;
 	if(type === "run") {
 		brawl.start();
-	}
-	else if(type === "get_replay_chunk") {
+	} else if(type === "get_replay_chunk") {
 		brawl.send_replay_chunk(data.from_snapshot);
-	}
-	else if(type === "stop") {
+	} else if(type === "stop") {
 		brawl.end_game();
-	}
-	else if(type === "initialize") {
+	} else if(type === "initialize") {
 		brawl = new Brawl({
 			map: data.map
 			, teams: data.teams
 			, round_limit: data.round_limit
 		});
-	}
-	else if(type === "player_request") {
+	} else if(type === "player_request") {
 		var player_id = data.player_id;
 		var request = data.request;
 
