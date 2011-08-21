@@ -21,10 +21,14 @@ html(lang="en")
       h1 Brawl.IO
       h2 API
         span.version (v0.1)
+      .tabs
+        .tab#home
+          a(href="/") Home
+        .tab#dashboard
+          a(href="javascript:void(0)") Dashboard
+        .tab.selected#reference
+          a(href="api") Reference
       .content
-        .section_header 
-          span.numeral 1
-          | Overview
         .section
           p As a competitor, your mission is to write the best code possible. These are your set of tools. Use them well.
           h3 Terminology
@@ -37,7 +41,7 @@ html(lang="en")
           span.term Player
           | The object you are controlling
         .section_header
-          span.numeral 2
+          span.numeral 1
           | Moving
         .quote
           .words A journey of a thousand miles begins with a single step.
@@ -150,7 +154,7 @@ html(lang="en")
                     turn("stop");
                   }, 5);
         .section_header
-          span.numeral 3
+          span.numeral 2
           | Attacking
         .quote
           .words The hand which strikes also blocks.
@@ -205,7 +209,7 @@ html(lang="en")
                       }
                   });
         .section_header
-          span.numeral 4
+          span.numeral 3
           | Timing
         .quote
           .words When the strike of a hawk breaks the body of its prey, it is because of timing.
@@ -306,7 +310,7 @@ html(lang="en")
                   var id = setInterval(function() { fire(); }, 2.5);
                   clearInterval(id);
         .section_header
-          span.numeral 5
+          span.numeral 4
           | Sensing
         .quote
           .words ...if you know your enemies and know yourself, you can win a thousand battles without a single loss.

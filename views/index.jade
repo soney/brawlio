@@ -1,18 +1,15 @@
 !!! 5
 html(lang="en")
   head
-    title Brawl IO
+    title Brawl.IO
     link(type="text/css", rel="stylesheet", href="client/css/main.css")
     link(type="text/css", rel="stylesheet", href="client/css/index.css")
-    script(src="vendor/require.js")
-    script(src="client/require_paths.js")
+    script(src="vendor/jquery-1.6.2.min.js")
     script
-      require(["vendor/jquery"], function() {
-        var google_identifier = "https://www.google.com/accounts/o8/id";
-        $(function() {
-          $("a#google_login").click(function() {
-            window.location = "/authenticate?"+$.param({openid_identifier: google_identifier});
-          });
+      var google_identifier = "https://www.google.com/accounts/o8/id";
+      $(function() {
+        $("a#google_login").click(function() {
+          window.location = "/authenticate?"+$.param({openid_identifier: google_identifier});
         });
       });
   body
@@ -21,6 +18,13 @@ html(lang="en")
     .body
       h1 Brawl.IO
       h2 asynchronous kung fu
+      .tabs
+        .tab.selected#home
+          a(href="/") Home
+        .tab#dashboard
+          a(href="javascript:void(0)") Dashboard
+        .tab#reference
+          a(href="api") Reference
       .content
         p Brawl IO is currently under development. If I have spoken to you personally, you may 
           a#google_login(href="javascript:void(0)") log in with your Google account
