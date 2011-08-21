@@ -145,11 +145,9 @@ var Player = function(options) {
 				var distance = delta_rounds * rotation_speed;
 				if(action === Actions.rotate.stop) {
 					d_theta = 0;
-				}
-				else if(action === Actions.rotate.clockwise) {
+				} else if(action === Actions.rotate.clockwise) {
 					d_theta = distance;
-				}
-				else if(action === Actions.rotate.counter_clockwise) {
+				} else if(action === Actions.rotate.counter_clockwise) {
 					d_theta = -distance;
 				}
 
@@ -321,8 +319,7 @@ var Replay = function(options) {
 				serialized_object.type = "player";
 				serialized_object.radius = object.get_radius();
 				serialized_object.health = object.get_health();
-			}
-			else if(object instanceof Projectile) {
+			} else if(object instanceof Projectile) {
 				serialized_object.type = "projectile";
 				serialized_object.radius = object.get_radius();
 			}

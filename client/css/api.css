@@ -1,6 +1,7 @@
 .body {
 	margin: 0px auto;
 	max-width: 725px;
+	font-family: Georgia, "Times New Roman", Times, serif;
 }
 
 .body h1 {
@@ -8,8 +9,8 @@
 	font-family: "Courier New", Courier, monospace;
 	font-size: 70px;
 	color: white;
-	margin-top: 20px;
-	text-shadow: #333 1px 1px 8px;
+	margin-top: 50px;
+	text-shadow: #000 2px 2px 12px;
 	margin-bottom: 0px;
 	opacity: 0.95;
 }
@@ -17,34 +18,50 @@
 .body h2 {
 	text-align: center;
 	font-family: "Courier New", Courier, monospace;
-	font-size: 24px;
+	font-size: 36px;
 	color: #FFF;
 	position: relative;
 	top: -8px;
 	margin-top: 0px;
-	text-shadow: #333 1px 1px 5px;
+	text-shadow: #000 1px 1px 5px;
 	opacity: 0.95;
 	font-weight: normal;
+	margin-bottom: 70px;
+}
+
+code, .code {
+	font-family: "Courier New", Courier, monospace;
+}
+code {
+	display: block;
 }
 
 .body .content {
 	border-radius: 10px;
 	background-color: white;
-	box-shadow: 0px 0px 10px #555;
+	box-shadow: 0px 0px 70px #000;
 	padding-bottom: 7px;
+	boder: 1px solid black;
+	margin-bottom: 70px;
 }
 
 
 .section_header {
-	background-color: #333;
-	color: #EEE;
-	text-shadow: 1px 1px 3px #111;
+	background-color: #D9D9D9;
 	font-weight: bold;
+	color: #A5A5A5;
 	font-size: 36px;
 	padding: 5px;
-	padding-left: 10px;
-	border-top: 1px solid #333;
-	border-bottom: 1px solid #333;
+	padding-left: 30px;
+	border-top: 3px solid #DDD;
+}
+
+.section_header .numeral {
+	position: relative;
+	top: -4px;
+	margin-right: 8px;
+	color: white;
+	font-weight: normal;
 }
 
 .section_header:first-child {
@@ -54,7 +71,7 @@
 }
 
 .method {
-	background-color: #F8F8F8;
+	background-color: #F0F0F0;
 	border: 1px solid #EEE;
 	border-radius: 4px;
 	padding: 7px;
@@ -64,11 +81,22 @@
 
 .method .signature {
 	font-family: "Courier New", Courier, monospace;
-	font-size: 140%;
+	font-size: 170%;
 	font-weight: bold;
 	border-bottom: 1px solid #E0E0E0;
 	padding-bottom: 10px;
 	margin-bottom: 10px;
+	color: #555;
+	text-shadow: #AAA 0px 0px 2px;
+}
+
+.param {
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.method .doc {
+	margin-top: 20px;
 }
 
 .param span.name {
@@ -79,8 +107,8 @@
 }
 
 .method > .description {
-	margin-top: 5px;
-	margin-bottom: 5px;
+	margin-top: 20px;
+	margin-bottom: 20px;
 	font-style: italic;
 }
 
@@ -92,12 +120,13 @@
 
 h3 {
 	font-size: 20px;
-	color: #333;
+	color: #888;
 	border-bottom: 1px solid #EEE;
 	margin: 0px;
 	margin-top: 10px;
 	margin-bottom: 5px;
 	padding-bottom: 3px;
+	font-weight: normal;
 }
 
 span.term {
@@ -107,13 +136,19 @@ span.term {
 }
 
 .quote {
-	margin-top: 10px;
+	padding-bottom: 10px;
+	padding-top: 10px;
+	margin-top: 0px;
 	margin-bottom: 20px;
 	font-family: Georgia, "Times New Roman", Times, serif;
+	padding-left: 30px;
+	padding-right: 30px;
+	background-color: #FBFBFB;
+	border-bottom: 1px solid #EEE;
 }
 .quote .words {
 	font-size: 120%;
-	color: #999;
+	color: #AAA;
 }
 .quote .words:before {
     content: "“ ";
@@ -129,12 +164,101 @@ span.term {
 	color: #DDD;
 }
 .quote .author:before {
-    content: "-";
+    content: "- ";
 }
 .quote .author {
 	font-size: 16px;
 	color: #CCC;
-	padding-left: 30px;
+	padding-left: 37px;
 	margin-top: 5px;
 }
 
+.options > .name {
+	font-family: "Courier New", Courier, monospace;
+	font-weight: bold;
+}
+
+.options .option {
+	padding-left: 90px;
+}
+
+.option {
+}
+
+.option .header {
+	background-color: #E9E9E9;
+	border-bottom: 1px solid #CCC;
+	border-top: 1px solid #CCC;
+
+	padding: 2px;
+}
+
+.option .header .name {
+	font-family: "Courier New", Courier, monospace;
+}
+.option .header .type {
+	font-style: italic;
+	padding-left: 7px;
+	font-size: 90%;
+	color: #888;
+}
+
+.option .header .default:before {
+    content: "Default: ";
+	font-family: Georgia, "Times New Roman", Times, serif;
+	color: #888;
+	font-size: 90%;
+}
+.option .header .default {
+	float: right;
+	font-family: "Courier New", Courier, monospace;
+	padding-right: 10px;
+}
+.option .description {
+	color: #888;
+	padding: 5px;
+	font-size: 90%;
+	background-color: #EEE;
+}
+
+.example {
+	margin-top: 12px;
+	margin-bottom: 12px;
+}
+.example .code {
+	margin-top: 2px;
+	margin-left: 20px;
+}
+
+.returns:before {
+	margin-left: 20px;
+	content: " > ";
+	color: #999;
+}
+
+.returns .name {
+	font-family: "Courier New", Courier, monospace;
+}
+.returns .type {
+	padding-left: 5px;
+	font-style: italic;
+}
+.returns .description {
+	padding-left: 10px;
+}
+
+.doc .param .name {
+	padding-left: 50px;
+	width: 150px;
+}
+.param_methods {
+	padding-left: 20px;
+}
+.doc .param_methods .name {
+	width: 150px;
+	font-weight: normal;
+	color: #888;
+}
+.doc .param_methods .description {
+	color: #888;
+}

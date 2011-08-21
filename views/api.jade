@@ -7,9 +7,12 @@ html(lang="en")
   body
     .body
       h1 Brawl.IO
-      h2 v0.1 API
+      h2 API
+        span.version (v0.1)
       .content
-        .section_header Overview
+        .section_header 
+          span.numeral 1
+          | Overview
         .section
           p As a competitor, your mission is to write the best code possible. These are your set of tools. Use them well.
           h3 Terminology
@@ -17,97 +20,231 @@ html(lang="en")
           | Universal unit of time (about one second in replays)
           br
           span.term Tile
-          | Universal unit of distance (about 40 pixels in replays)
-
-
-        .section_header Moving
+          | Universal unit of distance (about 5 pixels in replays)
+          br
+          span.term Player
+          | The object you are controlling
+        .section_header
+          span.numeral 2
+          | Moving
+        .quote
+          .words A journey of a thousand miles begins with a single step.
+          .author Lao Tzu
         .section
-          .quote
-            .words A journey of a thousand miles begins with a single step.
-            .author Lao Tzu
-
           .method#move
             .signature move(direction, [options])
-            .description Sets an interval
+            .description Move your player in one of four directions or tell your player to stop moving.
             .param
               span.name direction
-              span.description Some direction
+              span.description.code "forward" | "backward" | "left" | "right" | "stop"
             .param
               span.name options
-              span.description (see below)
-            .returns.undefined (undefined)
             .options
-            .doc 
+              .option
+                .header
+                  span.name delay
+                  span.type rounds
+                  span.default 0
+                .description The number of rounds before the move command is executed
+              .option
+                .header
+                  span.name duration
+                  span.type rounds
+                  span.default undefined
+                .description The number of rounds the player will move in this direction. If left undefined (default), the player will move until it is issued another move command. If the direction is "stop", duration has no effect.
+              .option
+                .header
+                  span.name speed
+                  span.type tiles per round
+                  span.default undefined
+                .description The speed at which the player will move, limited by the player's maximum speed. This value may be negative, in which case, the player will move in the opposite direction.
+              .option
+                .header
+                  span.name onStart
+                  span.type function(event)
+                  span.default undefined
+                .description Called when the player begins to perform this movement command.
+              .option
+                .header
+                  span.name onStop
+                  span.type function(event)
+                  span.default undefined
+                .description Called when the player stops this movement command (only called if direction is not "stop" and if a duration is set).
             .examples
-              .example 
-
+              h3 Examples
+              .example Moving backward:
+                .code move("backward");
+              .example Moving forward for 5 rounds after a delay of 3 rounds:
+                .code move("forward", {delay: 3, duration: 5});
+              .example Moving forward for 5 rounds after a delay of 3 rounds (equivalent alternative):
+                .code move("forward", {delay: 3});
+                  br
+                  | //...then stop after 5 rounds:
+                  br
+                  | setTimeout(function() {
+                  br
+                  |       move("stop");
+                  br
+                  | }, 5);
           .method#turn
             .signature turn(direction, [options])
-            .description Sets an interval
+            .description Change the direction your player is facing
             .param
               span.name direction
-              span.description Some direction
+              span.description.code "left" | "right" | "stop"
             .param
               span.name options
-              span.description (see below)
-            .returns.undefined (undefined)
             .options
-            .doc 
+              .option
+                .header
+                  span.name delay
+                  span.type rounds
+                  span.default 0
+                .description The number of rounds before the turn command is executed
+              .option
+                .header
+                  span.name duration
+                  span.type rounds
+                  span.default undefined
+                .description The number of rounds the player will turn in this direction. If left undefined (default), the player will turn until it is issued another turn command. If the direction is "stop", duration has no effect.
+              .option
+                .header
+                  span.name speed
+                  span.type radians per round
+                  span.default undefined
+                .description The speed at which the player will turn, limited by the player's maximum turning speed. This value may be negative, in which case, the player will turn in the opposite direction.
+              .option
+                .header
+                  span.name onStart
+                  span.type function(event)
+                  span.default undefined
+                .description Called when the player begins to performthis turn command.
+              .option
+                .header
+                  span.name onStop
+                  span.type function(event)
+                  span.default undefined
+                .description Called when the player stops this turn command (only called if direction is not "stop" and if a duration is set).
             .examples
-              .example 
+              h3 Examples
+              .example Turning counterclockwise (left):
+                .code turn("left");
+              .example Turning clockwise(right) for 5 rounds after a delay of 3 rounds:
+                .code turn("right", {delay: 3, duration: 5});
+              .example Turning clockwise(right) for 5 rounds after a delay of 3 rounds (equivalent alternative):
+                .code turn("right", {delay: 3});
+                  br
+                  | //...then stop after 5 rounds:
+                  br
+                  | setTimeout(function() {
+                  br
+                  |       turn("stop");
+                  br
+                  | }, 5);
 
-
-        .section_header Attacking
+        .section_header
+          span.numeral 3
+          | Attacking
+        .quote
+          .words The hand which strikes also blocks.
+          .author Wing Chun maxim
         .section
-          .quote
-            .words The hand which strikes, also blocks.
-            .author Wing Chun maxim
           .method#fire
             .signature fire([command], [options])
-            .description Sets an interval
-            .returns.undefined (undefined)
+            .description Fires off a bullet (maximum frequency of once per round)
+            .param
+              span.name command
+              span.description.code "automatic" | "stop"
+            .param
+              span.name options
             .options
-            .doc 
+              .option
+                .header
+                  span.name automatic
+                  span.type boolean
+                  span.default false
+                .description Whether the weapon should continue to fire whenever it's ready, until 
+                  span.code fire("stop") 
+                  |  is called
+              .option
+                .header
+                  span.name onFire
+                  span.type function(event)
+                  span.default undefined
+                .description Called after the player tries to fire. 
+                  span.code event.fired
+                  |  is true if the successful and false otherwise.
+              .option
+                .header
+                  span.name onReady
+                  span.type function(event)
+                  span.default undefined
+                .description Called when the weapon is ready to be fired again.
             .examples
-              .example 
+              h3 Examples
+              .example Fire once:
+                .code fire();
+              .example Fire on automatic for 10 rounds:
+                .code fire("automatic");
+                  br
+                  | setTimeout(function() {
+                  | fire("stop");
+                  | }, 10);
+              .example Fire and turn fire when ready to fire again:
+                .code fire({onReady: function(event) {
+                  | fire();
+                  | }});
 
-
-        .section_header Timing
+        .section_header
+          span.numeral 4
+          | Timing
+        .quote
+          .words When the strike of a hawk breaks the body of its prey, it is because of timing.
+          .author Sun Tzu
         .section
-          .quote
-            .words When the strike of a hawk breaks the body of its prey, it is because of timing.
-            .author Sun Tzu
           .method#onRound
             .signature onRound(callback, round)
-            .description Runs something on a round
+            .description Runs 
+              span.code callback
+              |  on round 
+              span.code round
             .param
               span.name callback
               span.description The function to call back
             .param
               span.name round
-              span.description The number of rounds to call back in
-            .returns.undefined (undefined)
+              span.description The round to call back on
             .doc 
+              | Note: If round has already passed, the callback is called immediately.
             .examples
-              .example 
+              h3 Examples
+              .example Fire on round 10.5:
+                .code onRound(function() { fire(); }, 10.5);
 
           .method#setTimeout
             .signature setTimeout(callback, rounds)
-            .description Sets a timeout
+            .description Runs 
+              span.code callback
+              |  in
+              span.code round
+              |  rounds
             .param
               span.name callback
               span.description The function to call back
             .param
               span.name rounds
               span.description The number of rounds to call back in
-            .returns
+            .returns Returns: 
               span.value
                 span.name id
                 span.type (int)
-              span.description An integer that represents the callback id
+              span.description An integer that represents the timeout id
             .doc 
+              | Note: Whereas onRound fires on the absolute round, setTimeout fires on a round relative to the current.
             .examples
-              .example 
+              h3 Examples
+              .example Fire in 2.5 rounds:
+                .code setTimeout(function() { fire(); }, 2.5);
 
           .method#clearTimeout
             .signature clearTimeout(id)
@@ -115,50 +252,120 @@ html(lang="en")
             .param
               span.name id
               span.description The id of the timeout we are getting rid of
-            .returns.undefined (undefined)
             .doc 
             .examples
-              .example 
+              h3 Examples
+              .example Set & clear a timeout (so that the callback never fires):
+                .code var timeout_id = setTimeout(function() { fire(); }, 2.5);
+                  br
+                  | clearTimeout(timeout_id);
             
           .method#setInteval
             .signature setInterval(callback, rounds)
-            .description Sets an interval
+            .description Runs 
+              span.code callback
+              |  every
+              span.code rounds
+              |  rounds
             .param
               span.name callback
-              span.description The function to call back every rounds rounds
+              span.description The function to call 
             .param
               span.name rounds
-              span.description The delay between rounds
+              span.description The delay between calls
             .returns
               span.value
                 span.name id
                 span.type (int)
-              span.description An integer that represents the callback id
-            .doc 
+              span.description An integer that represents the interval id
+            .doc setInterval runs callback until the interval is cleared.
             .examples
-              .example 
+              h3 Examples
+              .example Fire every 2.5 rounds:
+                .code setInterval(function() { fire(); }, 2.5);
 
           .method#clearInteval
             .signature clearInterval(id)
-            .description Sets an interval
+            .description Clears an interval
             .param
               span.name id
-              span.description The id of the interval we are getting rid of
-            .returns.undefined (undefined)
-            .doc
+              span.description The id of the interval being removed
             .examples
-              .example
+              h3 Examples
+              .example Fire every 2.5 rounds for 20 rounds:
+                .code var id = setInterval(function() { fire(); }, 2.5);
+                  br
+                  | clearInterval(id);
+                  
 
-        .section_header Sensing
+        .section_header
+          span.numeral 5
+          | Sensing
+        .quote
+          .words ...if you know your enemies and know yourself, you can win a thousand battles without a single loss.
+          .author Sun Tzu
         .section
-          .quote
-            .words ...if you know your enemies and know yourself, you can win a thousand battles without a single loss.
-            .author Sun Tzu
           .method#sense
-            .signature sense([callback], [options])
-            .description Sets an interval
-            .returns.undefined (undefined)
-            .options
-            .doc 
+            .signature sense(callback)
+            .description Get information about every object on screen
+            .param
+              span.name callback
+              span.description A function that will be called, with the information passed in as a parameter.
+            .doc The callback is passed one parameter, data:
+              .param
+                span.name data.map
+                span.description Map information
+                .param_methods
+                  .param_method
+                    span.name getWidth()
+                    span.description Returns the width of the map in tiles
+                  .param_method
+                    span.name getHeight()
+                    span.description Returns the height of the map in tiles
+                  .param_method
+                    span.name getDimensions()
+                    span.description Returns the dimensions of the map in tiles properties: width & height
+              .param
+                span.name data.players
+                span.description A list of players, each of which has the following methods:
+                .param_methods
+                  .param_method
+                    span.name isMe()
+                    span.description If the player is me
+                  .param_method
+                    span.name isOpponent()
+                    span.description If the player is my opponent
+                  .param_method
+                    span.name getLocation()
+                    span.description Returns the opponent's location
+              .param
+                span.name data.projectiles
+                span.description Projectiles on the screen
             .examples
-              .example 
+              h3 Examples
+              .example Put the map width into a variable:
+                .code var width;
+                  br
+                  | sense(function(data) {
+                  br
+                  | width = data.map.get_width();
+                  br
+                  | });
+              .example Get the location of your enemy:
+                div.code var enemy_location;
+                  br
+                  | sense(function(data) {
+                  br
+                  | for(var i = 0; i<data.players.length; i++) {
+                  br
+                  | var player = data.players[i]; 
+                  br
+                  | if(player.isOpponent()) {
+                  br
+                  | enemy_location = player.get_location();
+                  br
+                  | }
+                  br
+                  | }
+                  br
+                  | });

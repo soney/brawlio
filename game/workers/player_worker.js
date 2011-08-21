@@ -43,25 +43,24 @@ var get_time = function() {
 		}
 
 		options = options || {};
-		if(options.callback != null) {
-			var user_callback = options.callback;
-			options.callback = true;
-			options.callback_id = game.addEventListener({
-					type: "action_callback"
-					, options: options
-				}, function(event) {
-					if(options.callback != null) {
-						user_callback(event);
-					}
-					var type = event.type;
-					if(type === "start" && options.onStart != null) {
-						options.onStart(event);
-					}
-					if(type === "stop" && options.onStop != null) {
-						options.onStop(event);
-					}
-				});
-		}
+		var user_callback = options.callback;
+		options.callback = true;
+		options.callback_id = game.addEventListener({
+				type: "action_callback"
+				, options: options
+			}, function(event) {
+				if(options.callback != null) {
+					user_callback(event);
+				}
+				var type = event.type;
+				if(type === "start" && options.onStart != null) {
+					options.onStart(event);
+				}
+				if(type === "stop" && options.onStop != null) {
+					options.onStop(event);
+				}
+			});
+
 		return post({
 			type: "action"
 			, action: action
@@ -80,25 +79,20 @@ var get_time = function() {
 		}
 
 		options = options || {};
-		if(options.callback != null) {
-			var user_callback = options.callback;
-			options.callback = true;
-			options.callback_id = game.addEventListener({
-					type: "action_callback"
-					, options: options
-				}, function(event) {
-					if(options.callback != null) {
-						user_callback(event);
-					}
-					var type = event.type;
-					if(type === "start" && options.onStart != null) {
-						options.onStart(event);
-					}
-					if(type === "stop" && options.onStop != null) {
-						options.onStop(event);
-					}
-				});
-		}
+		options.callback = true;
+		options.callback_id = game.addEventListener({
+				type: "action_callback"
+				, options: options
+			}, function(event) {
+				var type = event.type;
+				if(type === "start" && options.onStart != null) {
+					options.onStart(event);
+				}
+				if(type === "stop" && options.onStop != null) {
+					options.onStop(event);
+				}
+			});
+
 		return post({
 			type: "action"
 			, action: action
@@ -119,25 +113,18 @@ var get_time = function() {
 		} else {
 			action = Actions.fire;
 		}
-		if(options.callback != null) {
-			var user_callback = options.callback;
-			options.callback = true;
-			options.callback_id = game.addEventListener({
-					type: "action_callback"
-					, options: options
-				}, function(event) {
-					if(options.callback != null) {
-						user_callback(event);
-					}
-					var type = event.type;
-					if(type === "fire" && options.onStart != null) {
-						options.onFire(event);
-					}
-					if(type === "ready" && options.onStop != null) {
-						options.onReady(event);
-					}
+		options.callback = true;
+		options.callback_id = game.addEventListener({
+				type: "action_callback"
+				, options: options
+			}, function(event) {
+				var type = event.type;
+				if(type === "fire" && options.onStart != null) {
+					options.onFire(event);
+				}
+				if(type === "weapon_ready" && options.onStop != null) {
+					options.onReady(event);
 				});
-		}
 
 		return post({
 			type: "action"
@@ -146,34 +133,26 @@ var get_time = function() {
 			, time: get_time()
 		});
 	};
-	controller.sense = function(options) {
+	controller.sense = function(callback) {
 		var action = Actions.sense;
-		if(typeof options === "function") {
-			var callback = options;
-			options = arguments[1] || {};
-			options.callback = callback;
-		}
-		options = options || {};
+		var options = {};
 
-		if(options.callback != null) {
-			var user_callback = options.callback;
-			options.callback = true;
-			options.callback_id = game.addEventListener({
-					type: "action_callback"
-					, options: options
-				}, function(event) {
-					var data = event.data;
-					data.players = data.players.map(function(pi) {
-						return new Player(pi.number, pi.team_id, {x: pi.x, y: pi.y, theta: pi.theta});
-					});
-					data.projectiles = data.projectiles.map(function(pi) {
-						return new Projectile();
-					});
-					data.map = new Map({width: data.map.width, height: data.map.height});
-
-					user_callback(event);
+		options.callback = true;
+		options.callback_id = game.addEventListener({
+				type: "action_callback"
+				, options: options
+			}, function(event) {
+				var data = event.data;
+				data.players = data.players.map(function(pi) {
+					return new Player(pi.number, pi.team_id, {x: pi.x, y: pi.y, theta: pi.theta});
 				});
-		}
+				data.projectiles = data.projectiles.map(function(pi) {
+					return new Projectile();
+				});
+				data.map = new Map({width: data.map.width, height: data.map.height});
+
+				callback(data);
+			});
 
 		return post({
 			type: "action"
@@ -184,8 +163,12 @@ var get_time = function() {
 	};
 
 	var Map = function(dimensions) {
+		this.dimensions = dimensions;
 	}; (function(my) {
 		var proto = my.prototype;
+		proto.getWidth = function() { return this.dimensions.width; };
+		proto.getHeight = function() { return this.dimensions.height; };
+		proto.getDimensions = function() { return {width: this.getWidth(), height: this.getHeight()}; };
 	})(Map);
 
 	var Projectile = function() {
@@ -199,17 +182,13 @@ var get_time = function() {
 		this.position = position;
 	}; (function(my) {
 		var proto = my.prototype;
-		proto.isAlly = function() {
-			return this.team_id === controller.team_id; 
-		}; proto.isOpponent = function() {
-			return !this.isAlly();
-		};
+		proto.isAlly = function() { return this.team_id === controller.team_id; };
+		proto.isOpponent = function() { return !this.isAlly(); };
 
-		proto.isMe = function() {
-			return this.number === controller.number;
-		}; proto.isNotMe = function() {
-			return !this.isMe();
-		};
+		proto.isMe = function() { return this.number === controller.number; };
+		proto.isNotMe = function() { return !this.isMe(); };
+
+		proto.getLocation = function() { return this.position; };
 	})(Player);
 })(controller);
 
