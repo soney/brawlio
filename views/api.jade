@@ -4,6 +4,18 @@ html(lang="en")
     title Brawl IO
     link(type="text/css", rel="stylesheet", href="client/css/main.css")
     link(type="text/css", rel="stylesheet", href="client/css/api.css")
+    script(src="vendor/jquery-1.6.2.min.js")
+    script(src="vendor/jquery.snippet/jquery.snippet.js")
+    link(type="text/css", rel="stylesheet", href="vendor/jquery.snippet/jquery.snippet.css")
+    script
+      $(function() {
+        $("pre.code").snippet("javascript", {
+          showNum: false
+          , transparent: true
+          , style: "matlab"
+          , clipboard: "vendor/jquery.snippet/ZeroClipboard.swf"
+        });
+      });
   body
     .body
       h1 Brawl.IO
@@ -73,19 +85,17 @@ html(lang="en")
             .examples
               h3 Examples
               .example Moving backward:
-                .code move("backward");
+                pre.code move("backward");
               .example Moving forward for 5 rounds after a delay of 3 rounds:
-                .code move("forward", {delay: 3, duration: 5});
+                pre.code move("forward", {delay: 3, duration: 5});
               .example Moving forward for 5 rounds after a delay of 3 rounds (equivalent alternative):
-                .code move("forward", {delay: 3});
-                  br
-                  | //...then stop after 5 rounds:
-                  br
-                  | setTimeout(function() {
-                  br
-                  |       move("stop");
-                  br
-                  | }, 5);
+                pre.code.
+                  move("forward", {delay: 3});
+
+                  //...then stop after 5 rounds:
+                  setTimeout(function() {
+                    move("stop");
+                  }, 5);
           .method#turn
             .signature turn(direction, [options])
             .description Change the direction your player is facing
@@ -128,20 +138,17 @@ html(lang="en")
             .examples
               h3 Examples
               .example Turning counterclockwise (left):
-                .code turn("left");
+                pre.code turn("left");
               .example Turning clockwise(right) for 5 rounds after a delay of 3 rounds:
-                .code turn("right", {delay: 3, duration: 5});
+                pre.code turn("right", {delay: 3, duration: 5});
               .example Turning clockwise(right) for 5 rounds after a delay of 3 rounds (equivalent alternative):
-                .code turn("right", {delay: 3});
-                  br
-                  | //...then stop after 5 rounds:
-                  br
-                  | setTimeout(function() {
-                  br
-                  |       turn("stop");
-                  br
-                  | }, 5);
+                pre.code.
+                  turn("right", {delay: 3});
 
+                  //...then stop after 5 rounds:
+                  setTimeout(function() {
+                    turn("stop");
+                  }, 5);
         .section_header
           span.numeral 3
           | Attacking
@@ -183,18 +190,20 @@ html(lang="en")
             .examples
               h3 Examples
               .example Fire once:
-                .code fire();
+                pre.code fire();
               .example Fire on automatic for 10 rounds:
-                .code fire("automatic");
-                  br
-                  | setTimeout(function() {
-                  | fire("stop");
-                  | }, 10);
-              .example Fire and turn fire when ready to fire again:
-                .code fire({onReady: function(event) {
-                  | fire();
-                  | }});
-
+                pre.code.
+                  fire("automatic");
+                  setTimeout(function() {
+                    fire("stop");
+                  }, 10);
+              .example Fire twice manually:
+                pre.code.
+                  fire({
+                    onReady: function(event) {
+                        fire();
+                      }
+                  });
         .section_header
           span.numeral 4
           | Timing
@@ -219,7 +228,7 @@ html(lang="en")
             .examples
               h3 Examples
               .example Fire on round 10.5:
-                .code onRound(function() { fire(); }, 10.5);
+                pre.code onRound(function() { fire(); }, 10.5);
 
           .method#setTimeout
             .signature setTimeout(callback, rounds)
@@ -244,7 +253,7 @@ html(lang="en")
             .examples
               h3 Examples
               .example Fire in 2.5 rounds:
-                .code setTimeout(function() { fire(); }, 2.5);
+                pre.code setTimeout(function() { fire(); }, 2.5);
 
           .method#clearTimeout
             .signature clearTimeout(id)
@@ -256,9 +265,9 @@ html(lang="en")
             .examples
               h3 Examples
               .example Set & clear a timeout (so that the callback never fires):
-                .code var timeout_id = setTimeout(function() { fire(); }, 2.5);
-                  br
-                  | clearTimeout(timeout_id);
+                pre.code.
+                  var timeout_id = setTimeout(function() { fire(); }, 2.5);
+                  clearTimeout(timeout_id);
             
           .method#setInteval
             .signature setInterval(callback, rounds)
@@ -282,7 +291,7 @@ html(lang="en")
             .examples
               h3 Examples
               .example Fire every 2.5 rounds:
-                .code setInterval(function() { fire(); }, 2.5);
+                pre.code setInterval(function() { fire(); }, 2.5);
 
           .method#clearInteval
             .signature clearInterval(id)
@@ -293,11 +302,9 @@ html(lang="en")
             .examples
               h3 Examples
               .example Fire every 2.5 rounds for 20 rounds:
-                .code var id = setInterval(function() { fire(); }, 2.5);
-                  br
-                  | clearInterval(id);
-                  
-
+                pre.code.
+                  var id = setInterval(function() { fire(); }, 2.5);
+                  clearInterval(id);
         .section_header
           span.numeral 5
           | Sensing
@@ -338,34 +345,22 @@ html(lang="en")
                   .param_method
                     span.name getLocation()
                     span.description Returns the opponent's location
-              .param
-                span.name data.projectiles
-                span.description Projectiles on the screen
             .examples
               h3 Examples
               .example Put the map width into a variable:
-                .code var width;
-                  br
-                  | sense(function(data) {
-                  br
-                  | width = data.map.get_width();
-                  br
-                  | });
+                pre.code.
+                  var width;
+                  sense(function(data) {
+                    width = data.map.get_width();
+                  });
               .example Get the location of your enemy:
-                div.code var enemy_location;
-                  br
-                  | sense(function(data) {
-                  br
-                  | for(var i = 0; i<data.players.length; i++) {
-                  br
-                  | var player = data.players[i]; 
-                  br
-                  | if(player.isOpponent()) {
-                  br
-                  | enemy_location = player.get_location();
-                  br
-                  | }
-                  br
-                  | }
-                  br
-                  | });
+                pre.code.
+                  var enemy_location;
+                  sense(function(data) {
+                    for(var i = 0; i<data.players.length; i++) {
+                      var player = data.players[i]; 
+                      if(player.isOpponent()) {
+                        enemy_location = player.get_location();
+                      }
+                    }
+                  });
