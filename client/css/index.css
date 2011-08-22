@@ -1,0 +1,60 @@
+.content {
+	padding: 30px;
+}
+
+.login_button {
+	float: left;
+	font-size: 16px;
+}
+
+.login_button a {
+	color: #111;
+	display: block;
+	border: 1px solid #333;
+	border-radius: 5px;
+	padding: 10px;
+	text-align: center;
+	background-color: #666;
+	text-shadow: #999 0px 1px 2px;
+	box-shadow: 0px 0px 7px #000;
+	-webkit-transition: all 0.12s ease-in-out;
+	margin: 10px;
+	margin-top: 0px;
+	margin-left: 15px;
+	background-image: url('../images/noise.png');
+}
+
+.login_button a:hover {
+	background-color: #707070;
+	color: #222;
+	box-shadow: 0px 0px 8px #000;
+	border: 1px solid #4169E1;
+}
+
+.login_buton a:active {
+	background-color: #CCC;
+}
+
+.login_button a .google {
+	font-size: 150%;
+	font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+.header {
+	min-height: 85px;
+	padding: 10px;
+	background-color: #CCC;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border: 1px solid #888;
+	color: #444;
+	font-size: 130%;
+	text-shadow: #FFF 0px 1px 1px;
+	padding-top: 15px;
+	text-align: justify;
+	margin-bottom: 5px;
+}
+
+.body .content {
+	padding-top: 10px;
+}

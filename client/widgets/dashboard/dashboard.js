@@ -8,8 +8,9 @@ define(["vendor/jquery", "vendor/jquery-ui", "client/widgets/dashboard/sidebar/s
 
 		, _create: function() {
 			var element = this.element;
+			$("#editor", element).team_editor();
 
-			element.html(BrawlIO.templates.dashboard());
+//			element.html(BrawlIO.templates.dashboard());
 		}
 
 		, destroy: function() {

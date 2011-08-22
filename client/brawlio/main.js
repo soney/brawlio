@@ -31,10 +31,12 @@ define(function(require, exports, module) {
 			};
 
 			this.templates = {
+			/*
 				dashboard: get_template("script#dashboard_template")
 				, sidebar_team: get_template("script#sidebar_team_template")
 				, dashboard_team: get_template("script#dashboard_team_template")
 				, dashboard_me: get_template("script#dashboard_me_user_template")
+				*/
 			};
 		};
 
@@ -52,8 +54,7 @@ define(function(require, exports, module) {
 		};
 		this.get_user_by_id = function(id) {
 			if(id != null) {
-			}
-			else {
+			} else {
 				return this.user;
 			}
 		};

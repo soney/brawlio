@@ -1,8 +1,6 @@
 var WeightClasses = {
 	classes: {
-		light: 1,
-		middle: 2,
-		heavy: 3
+		standard: 0
 	}
 	, get_prefix: function(weight_class) {
 		if(weight_class == WeightClasses.classes.light) {

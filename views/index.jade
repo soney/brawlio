@@ -21,21 +21,30 @@ html(lang="en")
       .tabs
         .tab.selected#home
           a(href="/") Home
-        .tab#dashboard
-          a(href="javascript:void(0)") Dashboard
         .tab#reference
           a(href="api") Reference
       .content
-        p Brawl IO is currently under development. If I have spoken to you personally, you may 
-          a#google_login(href="javascript:void(0)") log in with your Google account
-          | .
-          br
-          br
-          | If you somehow stumbled on this page, but don't have an invite, feel free to e-mail me at
-          a(href="mailto:tsoney@gmail.com") tsoney@gmail.com
-          |  or just 
-          a(href="http://github.com/soney/brawlio") fork my Github repo
-          br
-          br
-          | ~Stephen
+        .header 
+          span.login_button
+            a#google_login(href="javascript:void(0)")
+              i invite-only
+              br
+              | log in with
+              br
+              span.google Google
+          | Brawl.IO is a game that pits Javascript robots against each other.
+          strong Brawl.IO is currently invite-only
+          | , but we hope to open up soon, but until then, you can always 
+          a(href="http://github.com/soney/brawlio") fork our Github repository
+          |  and run a Brawl.IO server locally.
+        | If you are interested in obtaining an invite, please send an e-mail to Stephen Oney at 
+        a(href="mailto:tsoney@gmail.com") tsoney@gmail.com
+        | .
+        br
+        br
+        | Brawl.IO is indebted to 
+        a(target="_blank", href="http://robocode.sourceforge.net/") Robocode
+        |  and
+        a(target="_blank", href="http://www.battlecode.org/") MIT 6.370
+        | .
 

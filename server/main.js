@@ -11,8 +11,7 @@ var Brawl = require('../game/brawl');
 var Map = require('../game/models/map');
 var Team = require('../game/models/team');
 
-var BrawlIOServer = function() {
-};
+var BrawlIOServer = function() {};
 
 (function(my) {
 	var proto = my.prototype;

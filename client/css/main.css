@@ -9,6 +9,10 @@ body {
 a {
 	text-decoration: none;
 	color: #4169E1;
+	-webkit-transition: color 0.2s ease-in-out;
+}
+a:hover {
+	color: navy;
 }
 
 .tabs {
@@ -24,9 +28,10 @@ a {
 	left: -100px;
 	text-align: left;
 	font-family: Tahoma, Geneva, sans-serif;
+	overflow: hidden;
 }
 
-.tab a {
+.tab > a {
 	font-size: 16px;
 	display: block;
 	text-decoration: none;
@@ -37,35 +42,41 @@ a {
 	-webkit-transition: all 0.2s ease-in-out;
 	border-right: 1px solid #AAA;
 	text-shadow: #FFF 0px 1px 1px;
-	box-shadow: -2px 1px 2px #000;
 	position: relative;
 }
-.tab a:hover {
+.tab > a:hover {
 	color: #686868;
 }
-.tab.selected a {
-	color: #333;
+.tab.selected {
+}
+.tab.selected > a {
+	color: #555;
 	border-right: 0px;
-	border-bottom: 1px solid #AAA;
-	border-top: 1px solid #AAA;
 	cursor: pointer;
 	background-color: white;
 	cursor: default;
-	text-shadow: #AAA 1px 1px 2px;
+	text-shadow: #BBB 0px 1px 1px;
 }
-.tab.selected a:hover {
+
+.tab.selected > a:hover {
 	color: #444;
 	background-color: white;
 }
 
-.tabs > .tab:first-child a  {
+.tabs > .tab:first-child > a  {
 	border-top-left-radius: 5px;
 	padding-top: 3px;
 	border-top: 0px;
 }
-.tabs > .tab:last-child a {
+.tabs > .tab:last-child > a {
 	border-bottom-left-radius: 5px;
 	padding-bottom: 3px;
+}
+
+.subtab a {
+	display: block;
+	padding-left: 25px;
+	background-color: white;
 }
 
 .body {
@@ -96,6 +107,11 @@ a {
 	margin-bottom: 70px;
 }
 
+
+pre, code, .code {
+	font-family: "Courier New", Courier, monospace;
+}
+
 .body .content {
 	border-radius: 10px;
 	border-top-left-radius: 0px;
@@ -103,9 +119,4 @@ a {
 	box-shadow: 0px 0px 70px #000;
 	padding-bottom: 7px;
 	margin-bottom: 70px;
-	padding-top: 10px;
-}
-
-pre, code, .code {
-	font-family: "Courier New", Courier, monospace;
 }
