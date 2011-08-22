@@ -182,22 +182,21 @@ var BrawlIOServer = function() {};
 		server.get("/", function(req, res, next) {
 			render_home(req, res, next);
 		});
-		/*
-		server.get("/dashboard", function(req, res, next) {
-			render_home(req, res, next);
-		});
-		*/
+
 		server.get("/authenticate", function(req, res, next) {
 			var parsedUrl = url.parse(req.url);
 			// User supplied identifier
 			var query = querystring.parse(parsedUrl.query);
 			var identifier = query.openid_identifier;
+			var ax = new openid.AttributeExchange({
+				"http://axschema.org/contact/email": "required"
+			});
 			relyingParty = new openid.RelyingParty(
 								req.headers.referer+'verify' // Verification URL (yours)
 								, null // Realm (optional, specifies realm for OpenID authentication)
 								, false // Use stateless verification
 								, false // Strict mode
-								, []); // List of extensions to enable and include
+								, [ax]); // List of extensions to enable and include
 
 			// Resolve identifier, associate, and build authentication URL
 			relyingParty.authenticate(identifier, false, function(error, authUrl) {
@@ -227,12 +226,23 @@ var BrawlIOServer = function() {};
 				if(result) {
 					if(result.authenticated) {
 						var claimed_identifier = result.claimedIdentifier;
+						var email = result.email;
 
 						database.user_key_with_openid(claimed_identifier, function(user_id) {
 							if(user_id === null) {
-								database.add_user_with_openid(claimed_identifier, function(user_id) {
-									session.user_id = user_id;
-									res.render("verify/new_user_success.jade", {layout: false, userid: user_id});
+								fs.readFile("invited_emails.txt", "ascii", function (err, data) {
+									if (err) throw err;
+									if(data.match(email) === null) {
+										res.render("verify/not_invited.jade", {layout: false});
+									}
+									else {
+										database.add_user_with_openid(claimed_identifier, function(user_id) {
+											session.user_id = user_id;
+											database.set_user_details(user_id, {username: '"'+email+'"', email: '"'+email+'"'}, function() {
+												res.render("verify/user_init.jade", {layout: false});
+											});
+										});
+									}
 								});
 							}
 							else {
@@ -250,21 +260,6 @@ var BrawlIOServer = function() {};
 				}
             });
 		});
-
-		server.get("/user_init", function(req, res, next) {
-			var query = req.query;
-			var id = query.id;
-			var username = query.username;
-			var email = query.email;
-
-			var options = {};
-			if(username) options.username = '"'+username+'"';
-			if(email) options.email = '"'+email+'"';
-
-			database.set_user_details(id, options, function() {
-				res.render("verify/user_init.jade", {layout: false});
-			});
-		}); 
 
 		server.get("/replay/:filename", function(req, res, next) {
 			var filename = req.params.filename;

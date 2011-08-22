@@ -14,7 +14,6 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 			$("a#dummy_replay").bind("click.show_dummy_replay", function() {
 				self.test();
 			});
-		
 		}
 
 		, destroy: function() {

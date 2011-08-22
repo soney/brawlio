@@ -222,7 +222,7 @@ var DBBrawl = function(id, team_1_fk, user_1_fk, team_2_fk, user_2_fk, result, s
 			var id = this.lastID;
 
 			var callback_times = 0;
-			var expected_callback_times = 4;
+			var expected_callback_times = 1 + WeightClasses.num_types();
 			var meta_callback = function() {
 				callback_times++;
 				if(callback_times === expected_callback_times) {

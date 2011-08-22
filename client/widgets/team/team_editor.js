@@ -19,9 +19,13 @@ define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mod
 			var check_length = function() {
 				self.check_length(team);
 			};
-			this.editor = ace.edit("code");
-			this.editor.setTheme("ace/theme/idle_fingers");
-			this.editor.getSession().setMode(new JavaScriptMode());
+			var editor = this.editor = ace.edit("ace_editor");
+			var session = editor.getSession();
+
+			editor.setTheme("ace/theme/idle_fingers");
+			session.setValue(team.code);
+			session.setMode(new JavaScriptMode());
+			editor.renderer.setHScrollBarAlwaysVisible(false);
 		}
 
 		, destroy: function() {

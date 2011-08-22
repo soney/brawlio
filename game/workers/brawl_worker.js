@@ -856,6 +856,10 @@ var Brawl = function(options) {
 					});
 				}
 			}
+		} else if(type === "event_listener") {
+			var event_type = request.event_type
+				, options = request.options;
+			if(event_type === "action_callback") { } //Do nothing...
 		} else {
 			console.log("Unknown player request type", type);
 		}

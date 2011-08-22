@@ -1,6 +1,6 @@
-define(["vendor/jquery", "vendor/jquery-ui", "client/widgets/dashboard/sidebar/sidebar_team"], function() {
-	require(["client/widgets/dashboard/dashboard_team"]);
-	require(["client/widgets/dashboard/dashboard_user"]);
+define(["vendor/jquery", "vendor/jquery-ui"], function() {
+	require(["client/widgets/team/team_editor"]);
+	require(["client/widgets/team/team_tester"]);
 
 	var Dashboard = {
 		options: {
@@ -8,9 +8,9 @@ define(["vendor/jquery", "vendor/jquery-ui", "client/widgets/dashboard/sidebar/s
 
 		, _create: function() {
 			var element = this.element;
-			$("#editor", element).team_editor();
-
-//			element.html(BrawlIO.templates.dashboard());
+			var team_id = BrawlIO.teams[0].id;
+			$("#edit_tab", element).team_editor({team_id: team_id});
+			$("#test_tab", element).team_tester({team_id: team_id});
 		}
 
 		, destroy: function() {

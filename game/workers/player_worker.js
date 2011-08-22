@@ -49,9 +49,6 @@ var get_time = function() {
 				type: "action_callback"
 				, options: options
 			}, function(event) {
-				if(options.callback != null) {
-					user_callback(event);
-				}
 				var type = event.type;
 				if(type === "start" && options.onStart != null) {
 					options.onStart(event);
@@ -124,7 +121,8 @@ var get_time = function() {
 				}
 				if(type === "weapon_ready" && options.onStop != null) {
 					options.onReady(event);
-				});
+				}
+			});
 
 		return post({
 			type: "action"

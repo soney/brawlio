@@ -3,11 +3,11 @@ define(function(require, exports, module) {
 		(function() {
 			var self = this;
 
-			this.initialize_socket = function(key) {
+			this.initialize_socket = function(key, callback) {
 				var socket = io.connect();
 
 				socket.emit('session_key', key, function() {
-					on_socket_ready();
+					on_socket_ready(callback);
 				});
 
 				this.get_user = function(username, callback) {
@@ -80,12 +80,23 @@ define(function(require, exports, module) {
 				});
 			};
 			
-			var on_socket_ready = function() {
+			var on_socket_ready = function(callback) {
+				var has_user = false;
+				var has_teams = false;
+				var on_got = function() {
+					if(has_user && has_teams) {
+						callback();
+					}
+				};
 				self.get_user(function(user) {
 					self.set_user(user);
+					has_user = true;
+					on_got();
 				});
 				self.get_teams(function(teams) {
 					self.set_teams(teams);
+					has_teams = true;
+					on_got();
 				});
 			};
 		}).call(BrawlIO);

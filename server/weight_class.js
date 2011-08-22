@@ -17,22 +17,14 @@ var WeightClasses = {
 		return WeightClasses.get_prefix(weight_class)+"weight";
 	}
 	, enumerate: function() {
-		return [WeightClasses.classes.light,
-				WeightClasses.classes.middle,
-				WeightClasses.classes.heavy];
+		return [WeightClasses.classes.standard];
 	}
 	, num_types: function() {
 		return WeightClasses.enumerate().length;
 	}
 	, get_char_limit: function(weight_class) {
-		if(weight_class === WeightClasses.classes.light) {
-			return 500;
-		}
-		else if(weight_class === WeightClasses.classes.middle) {
-			return 1000;
-		}
-		else {
-			return 2000;
+		if(weight_class === WeightClasses.classes.standard) {
+			return 5000;
 		}
 	}
 };

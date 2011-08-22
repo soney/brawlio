@@ -7,63 +7,10 @@ html(lang="en")
     link(type="text/css", rel="stylesheet", href="vendor/jquery-ui-1.8.14.custom/css/ui-lightness/jquery-ui-1.8.14.custom.css")
     script(src="vendor/require.js")
     script(src="client/require_paths.js")
-    //
-      script#dashboard_template(type="text/x-handlebars-template")
-        .sidebar
-          a(id ='dashboard', href="javascript:void(0)")
-            h2#my_user_name
-          .teams
-        .main_view
-      script#sidebar_team_template(type="text/x-handlebars-template")
-        .team 
-          a(href="javascript:void(0)")
-            .weight_class {{weight_class_name}}
-      script#dashboard_me_user_template(type="text/x-handlebars-template")
-        p This is me
-      script#dashboard_team_template(type="text/x-handlebars-template")
-        #tabs
-          ul
-            li
-              a(href="#brawls")
-                span Brawl
-            li
-              a(href="#edit")
-                span Edit
-            li
-              a(href="#test")
-                span Test
-          #brawls
-            .challenge
-              h2 {{weight_class_name}}
-              h3 Recommended opponents:
-              .possible_opponents
-
-            h3 Brawl History:
-            .brawl_history
-            .replay
-              .controls
-                a.play(href="javascript:void(0)") Play
-                a.stop(href="javascript:void(0)") Stop
-              canvas.viewer(width="300", height="300")
-            .stats
-          #edit
-            .editor
-              .toolbar
-                a.save(href="javascript:void(0)") Save
-              .text
-                #code {{code}}
-          #test
-            a#dummy_replay(href="javascript:void(0)") Show replay vs. dummy
-            .replay
-              .controls
-                a.play(href="javascript:void(0)") Play
-                a.stop(href="javascript:void(0)") Stop
-              canvas.viewer(width="300", height="300")
-              .console
     script
       require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
-          BrawlIO.initialize("#{session_key}", $("#dashboard"));
+          BrawlIO.initialize("#{session_key}", $(".content"));
         });
       });
   body
@@ -72,8 +19,6 @@ html(lang="en")
       .tabs
         .tab.selected#home
           a(href="/") Home
-          .subtab#brawls
-            a(href="javascript:void(0)") Brawls
           .subtab#edit
             a(href="javascript:void(0)") Edit
           .subtab#test
@@ -86,5 +31,14 @@ html(lang="en")
         #edit_tab
           #editor
             #toolbar
+              a.save(href="javascript:void(0)") Save
             #code
+              #ace_editor
         #test_tab
+          a#dummy_replay(href="javascript:void(0)") Show replay vs. dummy
+          .replay
+            .controls
+              a.play(href="javascript:void(0)") Play
+              a.stop(href="javascript:void(0)") Stop
+            canvas.viewer(width="250", height="250")
+            .console

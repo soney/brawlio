@@ -1,6 +1,6 @@
 define(function(require, exports, module) {
 	require(["vendor/handlebars"]);
-	require(["client/widgets/dashboard/dashboard"]);
+	require(["client/widgets/dashboard"]);
 	require(["client/widgets/replay_viewer"]);
 
 	var BrawlIO = window.BrawlIO = {
@@ -17,9 +17,10 @@ define(function(require, exports, module) {
 		this.initialize = function(key, dashboard_tag) {
 			this.initialize_templates();
 			this.dashboard_tag = dashboard_tag;
-			this.dashboard_tag.dashboard();
 
-			this.initialize_socket(key);
+			this.initialize_socket(key, function() {
+				dashboard_tag.dashboard();
+			});
 		};
 
 		this.initialize_templates = function() {

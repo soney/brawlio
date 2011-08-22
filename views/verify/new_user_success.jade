@@ -1,23 +1,37 @@
 !!! 5
 html(lang="en")
   head
-    title Brawl IO
-    script(src="vendor/require.js")
-    script(src="client/require_paths.js")
+    title Brawl.IO
+    link(type="text/css", rel="stylesheet", href="client/css/main.css")
+    script(src="vendor/jquery-1.6.2.min.js")
     script
-      require(["vendor/jquery"], function() {
-        var user_id = #{userid};
-        $(function() {
-          $("a#do_submit").click(function() {
-            var username = $("input#desired_username").val();
-            var email = $("input#user_email").val();
-            window.location = "/user_init?"+$.param({id: user_id, username: username, email: email});
-          });
+      var user_id = #{userid};
+      $(function() {
+        $("a#do_submit").click(function() {
+          var username = $("input#desired_username").val();
+          var email = $("input#user_email").val();
+          window.location = "/user_init?"+$.param({id: user_id, username: username, email: email});
         });
       });
+    style
+      h1 {
+        font-size: 60px;
+        margin-bottom: 30px;
+      }
+      .content {
+        border-top-left-radius: 10px;
+      }
   body
-    label(for="desired_username") Desired Username:
-    input(type="text", id="desired_username", name="desired_username")
-    label(for="user_email") E-mail (optional):
-    input(type="text", id="user_email", name="user_email")
-    a#do_submit(href="javascript:void(0)") Submit
+    .body
+      h1 Brawl.IO
+      .content
+        table
+          tr
+            td
+              label(for="desired_username") Desired Username:
+            td
+              input(type="text", id="desired_username", name="desired_username")
+          tr
+            td
+            td
+              a#do_submit(href="javascript:void(0)") Submit
