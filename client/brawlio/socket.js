@@ -78,6 +78,23 @@ define(function(require, exports, module) {
 						});
 					});
 				});
+
+				this.get_king_code = function(callback) {
+					socket.emit('get_king_code', function(code) {
+						callback(code);
+					});
+				};
+				this.claim_crown = function(callback) {
+					socket.emit('claim_crown', function() {
+						callback();
+					});
+					$(".crown").show();
+				};
+				this.check_is_king = function(callback) {
+					socket.emit('is_king', function(is_king) {
+						callback(is_king);
+					});
+				};
 			};
 			
 			var on_socket_ready = function(callback) {
@@ -98,6 +115,17 @@ define(function(require, exports, module) {
 					has_teams = true;
 					on_got();
 				});
+				var check_if_king = function() {
+					BrawlIO.check_is_king(function(is_king) {
+						if(is_king) {
+							$(".crown").show();
+						} else {
+							$(".crown").hide();
+						}
+					});
+				};
+				check_if_king();
+				window.setInterval(check_if_king, 10000);
 			};
 		}).call(BrawlIO);
 	});

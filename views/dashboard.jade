@@ -15,14 +15,16 @@ html(lang="en")
       });
   body
     .body
-      h1 Brawl.IO
+      .crown(style="display: none; text-align:center")
+        img(src='client/images/crown.png', height='90px')
+      h1(style="margin-top: 5px") Brawl.IO
       .tabs
         .tab.selected#home
           a(href="/") Home
           .subtab#edit
-            a(href="javascript:void(0)") Edit
+            a(href="#edit_tab") Edit
           .subtab#test
-            a(href="javascript:void(0)") Test
+            a(href="#challenge_tab") Challenge
         .tab#reference
           a(href="api") Reference
       .content
@@ -34,11 +36,12 @@ html(lang="en")
               a.save(href="javascript:void(0)") Save
             #code
               #ace_editor
-        #test_tab
-          a#dummy_replay(href="javascript:void(0)") Show replay vs. dummy
-          .replay
-            .controls
-              a.play(href="javascript:void(0)") Play
-              a.stop(href="javascript:void(0)") Stop
-            canvas.viewer(width="250", height="250")
-            .console
+        #challenge_tab(style="margin-top: 20px")
+          center
+            a#king_challenge(href="javascript:void(0)", style="font-size: 32px;") Challenge the king
+            .replay
+              .controls(style="display:none")
+                a.play(href="javascript:void(0)") Play
+                a.stop(href="javascript:void(0)") Stop
+              canvas.viewer(width="400", height="400")
+              .console

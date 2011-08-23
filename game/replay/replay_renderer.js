@@ -1,5 +1,5 @@
 define(function(require, exports, module) {
-	var PIXELS_PER_TILE = 5;
+	var PIXELS_PER_TILE = 8;
 
 	var FPS = 5;
 	var MS_PER_ROUND = 1000;

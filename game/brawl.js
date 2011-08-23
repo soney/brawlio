@@ -196,11 +196,11 @@ var Brawl = function(options) {
 		if(winning_id !== null) {
 			this.winner = this.teams[winning_id];
 		}
-		var old_on_replay_update = this.on_replay_update;
-		this.on_replay_update = function() {
-			old_on_replay_update.apply(self, arguments);
-			this.terminate(callback);
-			this.on_replay_update = function(){};
+		var old_on_replay_chunk = this.on_replay_chunk;
+		this.on_replay_chunk = function() {
+			old_on_replay_chunk.apply(self, arguments);
+			this.terminate(this.callback);
+			this.on_replay_chunk = function(){};
 		};
 		this.request_replay_update();
 	};
@@ -210,6 +210,7 @@ var Brawl = function(options) {
 			type: "run"
 		});
 		this.request_replay_update();
+		this.callback = callback;
 	};
 
 	proto.get_replay = function() {

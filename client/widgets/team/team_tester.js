@@ -11,7 +11,8 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				, team = BrawlIO.get_team_by_id(team_id);
 
 			var self = this;
-			$("a#dummy_replay").bind("click.show_dummy_replay", function() {
+			$("a#king_challenge").bind("click.show_dummy_replay", function() {
+				$("a.save").click();
 				self.test();
 			});
 		}
@@ -26,23 +27,30 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				, options = this.options
 				, team = BrawlIO.get_team_by_id(options.team_id);
 
-			var map = new Map();
-			var my_team = new Team({
-				code: team.code
-			});
-			
-			var other_team = new Team({
-				code: ""
-			});
 
-			var brawl = new Brawl({
-				teams: [my_team, other_team]
-				, map: map
-				, round_limit: 100
+			BrawlIO.get_king_code(function(king_code) {
+				var map = new Map();
+				var my_team = new Team({
+					code: team.code
+				});
+
+				var other_team = new Team({
+					code: king_code 
+				});
+
+				var brawl = new Brawl({
+					teams: [my_team, other_team]
+					, map: map
+					, round_limit: 100
+				});
+				var replay = brawl.get_replay();
+				brawl.run(function(winner) {
+					if(winner === team.id) {
+						BrawlIO.claim_crown();
+					}
+				});
+				self.show_replay(replay);
 			});
-			var replay = brawl.get_replay();
-			brawl.run();
-			this.show_replay(replay);
 		}
 
 		, show_replay: function(replay) {

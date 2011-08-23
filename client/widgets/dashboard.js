@@ -10,7 +10,7 @@ define(["vendor/jquery", "vendor/jquery-ui"], function() {
 			var element = this.element;
 			var team_id = BrawlIO.teams[0].id;
 			$("#edit_tab", element).team_editor({team_id: team_id});
-			$("#test_tab", element).team_tester({team_id: team_id});
+			$("#challenge_tab", element).team_tester({team_id: team_id});
 		}
 
 		, destroy: function() {

@@ -2,6 +2,7 @@ var sqlite_path = __dirname+"/../vendor/node-sqlite3";
 var sqlite = require(sqlite_path+"/sqlite3").verbose();
 var constants = require("./constants");
 var db_path = __dirname+"/"+constants.db_name;
+var fs = require('fs');
 
 var WeightClasses = require("./weight_class");
 
@@ -408,6 +409,21 @@ var DBBrawl = function(id, team_1_fk, user_1_fk, team_2_fk, user_2_fk, result, s
 			});
 
 			self.get_brawls(brawl_ids, callback);
+		});
+	};
+
+	proto.set_king = function(user_id, callback) {
+		fs.writeFile(__dirname+"/king.txt", user_id+"", function(err) {
+			if (err) throw err;
+			callback();
+		});
+	};
+
+	proto.get_king = function(callback) {
+		fs.readFile(__dirname+"/king.txt", function(err, data) {
+			if (err) throw err;
+			var id = parseInt(data);
+			callback(id);
 		});
 	};
 })(Database);

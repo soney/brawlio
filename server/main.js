@@ -52,16 +52,14 @@ var BrawlIOServer = function() {};
 		socket.on('get_user', function(username, callback) {
 			if(username!=null) {
 				database.get_user_with_username(username, callback);
-			}
-			else {
+			} else {
 				database.get_user_with_id(user_id, callback);
 			}
 		});
 		socket.on('get_users', function(user_ids, callback) {
 			if(user_ids.length === 0) {
 				callback([]);
-			}
-			else {
+			} else {
 				database.get_users_with_ids(user_ids, callback);
 			}
 		});
@@ -106,14 +104,31 @@ var BrawlIOServer = function() {};
 			if(arguments.length === 1) {
 				callback = for_user_id;
 				for_user_id = user_id;
-			}
-			else if(for_user_id == null) {
+			} else if(for_user_id == null) {
 				for_user_id = user_id;
 			}
 			database.get_user_brawls(for_user_id, callback);
 		});
 		socket.on('get_brawl', function(brawl_id, callback) {
 			database.get_brawl(brawl_id, callback);
+		});
+		socket.on('get_king_code', function(callback) {
+			database.get_king(function(king_id) {
+				database.get_user_teams(king_id, function(teams) {
+					var team = teams[0];
+					callback(team.code);
+				});
+			});
+		});
+		socket.on('claim_crown', function(callback) {
+			database.set_king(user_id, function() {
+				callback();
+			});
+		});
+		socket.on('is_king', function(callback) {
+			database.get_king(function(king_id) {
+				callback(king_id===user_id);
+			});
 		});
 		socket.on('run_brawl', function(my_team_id, opponent_team_id, callback) {
 			database.get_teams([my_team_id, opponent_team_id], function(teams) {
@@ -158,7 +173,6 @@ var BrawlIOServer = function() {};
 			
 		});
 	};
-
 
 	var relyingParty;
 
@@ -234,8 +248,7 @@ var BrawlIOServer = function() {};
 									if (err) throw err;
 									if(data.match(email) === null) {
 										res.render("verify/not_invited.jade", {layout: false});
-									}
-									else {
+									} else {
 										database.add_user_with_openid(claimed_identifier, function(user_id) {
 											session.user_id = user_id;
 											database.set_user_details(user_id, {username: '"'+email+'"', email: '"'+email+'"'}, function() {
@@ -244,18 +257,15 @@ var BrawlIOServer = function() {};
 										});
 									}
 								});
-							}
-							else {
+							} else {
 								session.user_id = user_id;
 								res.render("verify/old_user_success.jade", {layout: false});
 							}
 						})
-					}
-					else {
+					} else {
 						res.render("verify/fail.jade", {layout: false});
 					}
-				}
-				else {
+				} else {
 					res.render("index.jade", {layout: false});
 				}
             });
