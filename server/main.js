@@ -11,7 +11,7 @@ var Brawl = require('../game/brawl');
 var Map = require('../game/models/map');
 var Team = require('../game/models/team');
 
-var BrawlIOServer = function() {};
+var BrawlIOServer = function() { };
 
 (function(my) {
 	var proto = my.prototype;
@@ -19,7 +19,7 @@ var BrawlIOServer = function() {};
 	var server = undefined,
 		io = undefined;
 
-	var start_server = function(bio_server, path) {
+	var start_server = function(bio_server, port, path) {
 		server = express.createServer(
 				express.cookieParser()
 				, express.session({secret: constants.session_secret})
@@ -31,7 +31,7 @@ var BrawlIOServer = function() {};
 
 		initialize_sockets(bio_server, io);
 
-		server.listen(8000);
+		server.listen(port);
 	};
 
 	var session_to_user = {};
@@ -301,9 +301,9 @@ var BrawlIOServer = function() {};
 	};
 
 	//Public members
-	proto.start = function(path, message) {
+	proto.start = function(path, port, message) {
 		if(!path) path = __dirname;
-		start_server(this, path);
+		start_server(this, port||8000, path);
 		if(message) {
 			console.log(message);
 		}
