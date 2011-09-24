@@ -1,5 +1,28 @@
-{ "name": "Brawl_IO"
+{
+"name": "Brawl.IO"
 , "description": "Asyncronous Kung Fu."
 , "version": "0.0.1"
-, "author": "Stephen Oney (soney@cs.cmu.edu)"
+, "author": "Stephen Oney (Carnegie Mellon)"
+, "maintainers": [
+	{
+	"name": "Stephen Oney"
+	, "email": "swloney@gmail.com"
+	, "web": "http://www.stephenoney.com/"
+	}
+]
+, "licenses": [
+	{
+	"type": "MIT"
+	}
+]
+, "private": true
+, "dependencies": {
+	"socket.io": ">= 0.8"
+	, "express": ">= 2.4.3"
+	, "express": ">= 2.4.3"
+	, "openid": ">= 0.3.0"
+	, "querystring": ">=0.0.4"
+	, "sqlite3": ">=2.0.17"
+}
+, "engines": {"node": ">= 0.4.7"}
 }
