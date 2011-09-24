@@ -1,2 +1,3 @@
 *.sqp
 node_modules
+server/brawlio_db.sqlite3

@@ -7,11 +7,13 @@ var socket_io = require('socket.io');
 var database = require('./database').database;
 var constants = require('./constants');
 
-var Brawl = require('../game/brawl');
-var Map = require('../game/models/map');
-var Team = require('../game/models/team');
+//var Brawl = require('../game/brawl');
+//var Map = require('../game/models/map');
+//var Team = require('../game/models/team');
 
-var BrawlIOServer = function() { };
+var BrawlIOServer = function(production) {
+	this.check_invite = production === true;
+};
 
 (function(my) {
 	var proto = my.prototype;
@@ -244,19 +246,26 @@ var BrawlIOServer = function() { };
 
 						database.user_key_with_openid(claimed_identifier, function(user_id) {
 							if(user_id === null) {
-								fs.readFile("invited_emails.txt", "ascii", function (err, data) {
-									if (err) throw err;
-									if(data.match(email) === null) {
-										res.render("verify/not_invited.jade", {layout: false});
-									} else {
-										database.add_user_with_openid(claimed_identifier, function(user_id) {
-											session.user_id = user_id;
-											database.set_user_details(user_id, {username: '"'+email+'"', email: '"'+email+'"'}, function() {
-												res.render("verify/user_init.jade", {layout: false});
-											});
+								var add_user = function() {
+									database.add_user_with_openid(claimed_identifier, function(user_id) {
+										session.user_id = user_id;
+										database.set_user_details(user_id, {username: '"'+email+'"', email: '"'+email+'"'}, function() {
+											res.render("verify/user_init.jade", {layout: false});
 										});
-									}
-								});
+									});
+								};
+								if(server.check_invite) {
+									fs.readFile("invited_emails.txt", "ascii", function (err, data) {
+										if (err) throw err;
+										if(data.match(email) === null) {
+											res.render("verify/not_invited.jade", {layout: false});
+										} else {
+											add_user();
+										}
+									});
+								} else {
+									add_user();
+								}
 							} else {
 								session.user_id = user_id;
 								res.render("verify/old_user_success.jade", {layout: false});

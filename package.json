@@ -21,8 +21,10 @@
 	, "express": ">= 2.4.3"
 	, "express": ">= 2.4.3"
 	, "openid": ">= 0.3.0"
-	, "querystring": ">=0.0.4"
-	, "sqlite3": ">=2.0.17"
+	, "querystring": ">= 0.0.4"
+	, "sqlite3": ">= 2.0.17"
+	, "requirejs": ">= 0.26.0"
+	, "jade": ">= 0.15.4"
 }
 , "engines": {"node": ">= 0.4.7"}
 }

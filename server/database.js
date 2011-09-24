@@ -1,5 +1,4 @@
-var sqlite_path = __dirname+"/../vendor/node-sqlite3";
-var sqlite = require(sqlite_path+"/sqlite3").verbose();
+var sqlite = require("sqlite3").verbose();
 var constants = require("./constants");
 var db_path = __dirname+"/"+constants.db_name;
 var fs = require('fs');
