@@ -38,7 +38,7 @@ var get_time = function() {
 };
 
 (function(controller) {
-	controller.move = function(direction, options) {
+	controller.move = function(direction, user_options) {
 		var action = undefined;
 		if(direction.match(/back(ward(s)?)?/i)) {
 			action = Actions.move.backward;
@@ -52,21 +52,24 @@ var get_time = function() {
 			action = Actions.move.forward;
 		}
 
-		options = options || {};
-		var user_callback = options.callback;
-		options.callback = true;
-		options.callback_id = game.addEventListener({
+		var options = {
+			delay: user_options.delay
+			, duration: user_options.duration
+			, speed: user_options.speed
+			, callback: user_options != null && (user_options.onStart != null || user_options.onStop != null)
+			, callback_id:  game.addCallback({
 				type: "action_callback"
 				, options: options
 			}, function(event) {
 				var type = event.type;
-				if(type === "start" && options.onStart != null) {
-					options.onStart(event);
+				if(type === "start" && user_options.onStart != null) {
+					user_options.onStart(event);
 				}
-				if(type === "stop" && options.onStop != null) {
-					options.onStop(event);
+				if(type === "stop" && user_options.onStop != null) {
+					user_options.onStop(event);
 				}
-			});
+			})
+		};
 
 		return post({
 			type: "action"
@@ -75,7 +78,7 @@ var get_time = function() {
 			, time: get_time()
 		});
 	};
-	controller.turn = function(direction, options) {
+	controller.turn = function(direction, user_options) {
 		var action = undefined;
 		if(direction.match(/(right)|(clockwise)/i)) {
 			action = Actions.rotate.clockwise;
@@ -85,20 +88,24 @@ var get_time = function() {
 			action = Actions.rotate.counter_clockwise;
 		}
 
-		options = options || {};
-		options.callback = true;
-		options.callback_id = game.addEventListener({
-				type: "action_callback"
-				, options: options
-			}, function(event) {
-				var type = event.type;
-				if(type === "start" && options.onStart != null) {
-					options.onStart(event);
-				}
-				if(type === "stop" && options.onStop != null) {
-					options.onStop(event);
-				}
-			});
+		var options = {
+			delay: user_options.delay
+			, duration: user_options.duration
+			, speed: user_options.speed
+			, callback: user_options != null && (user_options.onStart != null || user_options.onStop != null)
+			, callback_id: game.addCallback({
+					type: "action_callback"
+					, options: options
+				}, function(event) {
+					var type = event.type;
+					if(type === "start" && user_options.onStart != null) {
+						user_options.onStart(event);
+					}
+					if(type === "stop" && user_options.onStop != null) {
+						user_options.onStop(event);
+					}
+				})
+		};
 
 		return post({
 			type: "action"
@@ -107,32 +114,36 @@ var get_time = function() {
 			, time: get_time()
 		});
 	};
-	controller.fire = function(param, options) {
+	controller.fire = function(param, user_options) {
 		var action = undefined;
-		var options = undefined;
-		options = options || {};
+		var automatic = false;
+
 		if(param === "stop") {
 			action = Actions.stop_firing;
 		}
 		else if(param === "automatic") {
 			action = Actions.fire;
-			options.automatic = true;
+			automatic = true;
 		} else {
 			action = Actions.fire;
 		}
-		options.callback = true;
-		options.callback_id = game.addEventListener({
-				type: "action_callback"
-				, options: options
-			}, function(event) {
-				var type = event.type;
-				if(type === "fire" && options.onStart != null) {
-					options.onFire(event);
-				}
-				if(type === "weapon_ready" && options.onStop != null) {
-					options.onReady(event);
-				}
-			});
+
+		var options = {
+			automatic: automatic
+			, callback: user_options != null && (user_options.onFire != null || user_options.onReady != null)
+			, callback_id: game.addCallback({
+					type: "action_callback"
+					, options: options
+				}, function(event) {
+					var type = event.type;
+					if(type === "fire" && user_options.onFire != null) {
+						user_options.onFire(event);
+					}
+					if(type === "weapon_ready" && user_options.onReady != null) {
+						user_options.onReady(event);
+					}
+				})
+		};
 
 		return post({
 			type: "action"
@@ -211,38 +222,15 @@ var get_time = function() {
 
 	var event_listeners = new Hash();
 
-	var addEventListener = function(options, listener) {
-		var type;
-		if(typeof options === "string") {
-			type = options;
-		}
-		else {
-			try {
-				type = options.type
-			} catch(e) {
-				console.error(e);
-				return;
-			}
-		}
-		var repeats = options.repeats || false;
+	var addCallback = function(options, listener) {
 		var id = get_id();
 		event_listeners.set(id, listener);
-		post({
-			type: "event_listener"
-			, event_type: type
-			, repeats: repeats
-			, id: id 
-			, options: options
-			, time: get_time()
-		});
 		return id;
 	};
-	var removeEventListener = function(id) {
-		event_listeners.unset(id);
-	};
 
-	game.on = game.addEventListener = function(options, listener) { return addEventListener.apply(this, arguments); };
-	game.removeEventListener = function(options, listener) { return removeEventListener.apply(this, arguments); };
+	game.addCallback = function(options, listener) {
+		return addCallback.apply(this, arguments);
+	};
 
 	game.onRound = function(listener, round) {
 		var run_time = game.start_time + round/CONST.ROUNDS_PER_MS;
@@ -287,7 +275,7 @@ self.onmessage = function(event) {
 	} else if(type === "game_start") {
 		game.start_time = data.start_time;
 		run();
-	} else if(type === "event") {
+	} else if(type === "callback") {
 		game.on_event(data);
 	}
 };

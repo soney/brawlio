@@ -125,7 +125,7 @@ define(['game/util/listenable'], function(make_listenable) {
 		proto.on_fire = function(options) {
 			this.set_next_fireable_round();
 			this.emit({
-				type: "fired"
+				type: "fire"
 			});
 		};
 		proto.on_fire_fail = function(options) {

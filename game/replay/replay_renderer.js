@@ -41,7 +41,7 @@ define(function(require, exports, module) {
 		ctx.translate(state.x, state.y);
 		ctx.fillStyle = "red";
 		ctx.beginPath();
-		ctx.arc(0, 0, projectile.radius, 0, Math.PI*2, true);
+		ctx.arc(0, 0, projectile.get_radius(), 0, Math.PI*2, true);
 		ctx.fill();
 
 		ctx.restore();

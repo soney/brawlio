@@ -1,4 +1,4 @@
-define(['game/util/listenable'], function(make_listenable) {
+define(['game/util/listenable', 'game/models/projectile'], function(make_listenable, Projectile) {
 	var Game = function(options) {
 		this.teams = options.teams;
 		this.map = options.map;
@@ -37,10 +37,17 @@ define(['game/util/listenable'], function(make_listenable) {
 					player._set_x(player_start_position.x);
 					player._set_y(player_start_position.y);
 					player._set_theta(player_start_position.theta);
+					this.initialize_player(player);
 					this.players.push(player);
 				}
 				unique_object_id++;
 			}
+		};
+		proto.initialize_player = function(player) {
+			var self = this;
+			player.on("fire", function() {
+				self.on_player_fire(player);
+			});
 		};
 		proto.get_players = function() {
 			return this.players;
@@ -75,6 +82,23 @@ define(['game/util/listenable'], function(make_listenable) {
 			return time * this.rounds_per_ms;
 		};
 		proto.get_map = function() { return this.map; };
+
+		proto.on_player_fire = function(player) {
+			var player_position = player.get_position();
+			var projectile = new Projectile();
+
+			var dist = player.get_radius() + projectile.get_radius();
+			projectile.set_position({
+				x: player_position.x + dist*Math.cos(player_position.theta)
+				, y: player_position.y + dist*Math.sin(player_position.theta)
+			});
+			projectile.set_velocity(1, player_position.theta);
+			projectile.set_game(this);
+			this.add_projectile(projectile);
+		};
+		proto.add_projectile = function(projectile) {
+			this.projectiles.push(projectile);
+		};
 
 
 		//Update functions
@@ -122,7 +146,7 @@ define(['game/util/listenable'], function(make_listenable) {
 		proto.update_projectile = function(projectile) {
 			var old_pos = projectile.get_position();
 			var new_pos = projectile.get_updated_position();
-			projectile.set_updated_position(new_pos);
+			projectile.set_position(new_pos);
 		};
 		proto.check_player_collisions = function(new_pos) {
 			return new_pos;
@@ -139,7 +163,7 @@ define(['game/util/listenable'], function(make_listenable) {
 				};
 			});
 			var projectiles = this.projectiles.map(function(projectile) {
-				var positon = projectile.get_position();
+				var position = projectile.get_position();
 				return {
 					x: position.x
 					, y: position.y

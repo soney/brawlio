@@ -41,7 +41,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				var brawl = new Brawl({
 					teams: [my_team, other_team]
 					, map: map
-					, round_limit: 100
+					, round_limit: 40
 				});
 				var replay = brawl.get_replay();
 				brawl.run(function(winner) {

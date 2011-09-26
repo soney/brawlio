@@ -84,6 +84,10 @@ var Brawl = function(options) {
 			var snapshot = self.game.get_snapshot();
 			self.replay.concat_snapshot(snapshot);
 		});
+		this.game.on("end", function(event) {
+			var winner = event.winner;
+			self.terminate();
+		});
 		this.game.start();
 		var start_time = this.game.get_start_time();
 		this.player_workers.forEach(function(player_worker) {
@@ -92,11 +96,12 @@ var Brawl = function(options) {
 				, start_time: start_time
 			});
 		});
-		window.setInterval(function() {
+		this.game_update_interval = window.setInterval(function() {
 			self.game.update();
 		}, this.ms_per_round / this.updates_per_round);
 	};
 	proto.terminate = function() {
+		window.clearInterval(this.game_update_interval);
 		this.terminate_player_workers();
 	};
 	proto.get_replay = function() {
@@ -173,10 +178,11 @@ var Brawl = function(options) {
 
 			if(options.callback) {
 				var callback_id = options.callback_id;
+				var worker = player.worker;
 				callback = function(event) {
-					self.broadcast_event({
-						event_id: callback_id
-						, player_id: player_id
+					worker.postMessage({
+						type: "callback"
+						, event_id: callback_id
 						, event: event
 					});
 				};
@@ -195,11 +201,19 @@ var Brawl = function(options) {
 
 					self.game.update();
 					player.set_velocity(speed, angle);
+					callback({
+						type: "start"
+						, action: action
+					});
 
 					if(request_timing.stop_time_ms) {
 						var stop_action = function(round) {
 							self.game.update();
 							player.set_velocity(0, 0);
+							callback({
+								type: "stop"
+								, action: action
+							});
 						};
 						self.do_at_time(stop_action, request_timing.stop_time_ms);
 					}
@@ -213,16 +227,68 @@ var Brawl = function(options) {
 
 					self.game.update();
 					player.set_rotation_speed(speed);
+					callback({
+						type: "start"
+						, action: action
+					});
 
 					if(request_timing.stop_time_ms) {
 						var stop_action = function(round) {
 							self.game.update();
 							player.set_rotation_speed(0);
+							callback({
+								type: "stop"
+								, action: action
+							});
 						};
 						self.do_at_time(stop_action, request_timing.stop_time_ms);
 					}
 				};
 				this.do_at_time(do_action, request_timing.start_time_ms);
+			} else if(action_type === Actions.instantaneous_type) {
+				if(action === Actions.fire) {
+					var on_weapon_ready = function() {
+						callback({
+							type: "weapon_ready"
+							, action: action
+						});
+					};
+					var do_fire = function() {
+						player.fire();
+					/*
+						player.auto_fire = options.automatic;
+						var projectile = player.fire({
+							on_weapon_ready: on_weapon_ready
+							, angle_offset: options.angle_offset
+						});
+						if(projectile) {
+							callback({
+								type: "fire"
+								, fired: false
+								, action: action
+							});
+						} else {
+							callback({
+								type: "fire"
+								, fired: false
+								, action: action
+							});
+						}
+						*/
+					};
+					this.do_at_time(do_fire, request_timing.start_time_ms);
+				}/* else if(action === Actions.stop_firing) {
+					var do_stop_firing = function() {
+						player.auto_fire = false;
+					};
+					this.do_at_time(do_stop_firing, request_timing.start_time_ms);
+				} else if(action === Actions.sense) {
+					callback({
+						type: "sense"
+						, data: this.get_snapshot_data()
+					});
+				}
+				*/
 			}
 		}
 	};
