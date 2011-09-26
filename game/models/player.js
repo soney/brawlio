@@ -108,6 +108,12 @@ define(['game/util/listenable'], function(make_listenable) {
 		};
 
 		//Firing-related
+		proto.is_auto_fire = function() {
+			return this.get_state("auto_fire");
+		};
+		proto.set_auto_fire = function(auto_fire) {
+			return this.set_state("auto_fire", auto_fire);
+		};
 		proto.can_fire = function() {
 			var round = this.get_round();
 			return round > this.get_next_fireable_round();
@@ -126,11 +132,13 @@ define(['game/util/listenable'], function(make_listenable) {
 			this.set_next_fireable_round();
 			this.emit({
 				type: "fire"
+				, fired: true
 			});
 		};
 		proto.on_fire_fail = function(options) {
 			this.emit({
-				type: "fire_fail"
+				type: "fire"
+				, fired: false
 			});
 		};
 		proto.fire = function(options) {
@@ -139,6 +147,12 @@ define(['game/util/listenable'], function(make_listenable) {
 			} else {
 				this.on_fire_fail();
 			}
+			var self = this;
+			this.game.on_round(function() {
+				if(self.is_auto_fire()) {
+					self.fire();
+				}
+			}, this.get_next_fireable_round());
 		};
 
 		//Update-related

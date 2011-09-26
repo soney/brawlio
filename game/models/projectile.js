@@ -6,12 +6,15 @@ define(['game/util/listenable'], function(make_listenable) {
 
 		this.attributes = {
 			radius: 1 //Radius in tiles
+			, source: options.source
 		};
 		this.state = {
 			position: {x: -1, y: -1}
 			, velocity: {speed: 0, angle: 0}
 			, last_update_round: 0
 		};
+		this.set_game(options.game);
+		this.update_last_update_round();
 	};
 
 	(function(my) {
@@ -25,6 +28,9 @@ define(['game/util/listenable'], function(make_listenable) {
 
 		proto.get_radius = function() { return this.attributes.radius; };
 
+		proto.get_source = function() {
+			return this.attributes.source;
+		};
 
 		//Movement related
 		proto.get_x = function() { return this.state.position.x; };
@@ -46,13 +52,14 @@ define(['game/util/listenable'], function(make_listenable) {
 		proto.get_updated_position = function() {
 			var delta_rounds = this.get_round() - this.get_last_update_round();
 			var velocity = this.get_velocity();
-
-			return {x: this.get_x() + velocity.x * delta_rounds
-					, y: this.get_y() + velocity.y * delta_rounds };
+			var position = this.get_position();
+			return {x: position.x + velocity.x * delta_rounds
+					, y: position.y + velocity.y * delta_rounds };
 		};
 		proto.set_position = function(position) {
 			this.state.position.x = position.x;
-			this.state.position.y = position.x;
+			this.state.position.y = position.y;
+			this.update_last_update_round();
 		};
 		proto.set_velocity = function(speed, angle) {
 			this.state.velocity.speed = speed;

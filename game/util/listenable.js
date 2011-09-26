@@ -20,7 +20,6 @@ define(function(require, exports, module) {
 				var listener = listeners[i];
 				if(listener.id === id || listener.callback === id) {
 					listeners.splice(i, 1);
-					i--;
 					return true;
 				}
 			}
@@ -41,6 +40,20 @@ define(function(require, exports, module) {
 				callback.apply(obj, arguments);
 				obj.remove_event_listener(callback_id);
 			});
+		};
+
+		obj.clear_listeners = function(type) {
+			if(arguments.lenth === 0) {
+				listeners = [];
+			} else {
+				for(var i = 0; i<listeners.length; i++) {
+					var listener = listeners[i];
+					if(listener.type === type) {
+						listeners.splice(i, 1);
+						i--;
+					}
+				}
+			}
 		};
 	};
 

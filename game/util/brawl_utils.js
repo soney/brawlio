@@ -1,3 +1,4 @@
+define(function() {
 //http://www.codeguru.com/forum/showthread.php?t=194400
 function distanceFromLineSegment(to_point, point_1, point_2) {
 	var cx = to_point.x
@@ -130,3 +131,5 @@ try {
 	}
 }
 catch(e) {}
+return distanceFromLineSegment;
+});

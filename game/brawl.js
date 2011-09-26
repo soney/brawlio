@@ -90,6 +90,11 @@ var Brawl = function(options) {
 		});
 		this.game.start();
 		var start_time = this.game.get_start_time();
+		this.game.players.forEach(function(player) {
+			player.on("fire", function(event) {
+				self.on_player_fire(player, event);
+			});
+		});
 		this.player_workers.forEach(function(player_worker) {
 			player_worker.postMessage({
 				type: "game_start"
@@ -158,6 +163,22 @@ var Brawl = function(options) {
 		at_time(function() {
 			callback(at_round);
 		}, time);
+	};
+	proto.on_player_fire = function(player, event) {
+		var callback = this._fire_callback;
+		if(callback) {
+			if(event.type === "fire") {
+				callback({
+					type: "fire"
+					, fired: event.fired
+				});
+			}
+			this.game.on_round(function() {
+				callback({
+					type: "weapon_ready"
+				});
+			}, player.get_next_fireable_round());
+		}
 	};
 	proto.on_player_message = function(player, event) {
 		var data = event.data;
@@ -247,48 +268,31 @@ var Brawl = function(options) {
 				this.do_at_time(do_action, request_timing.start_time_ms);
 			} else if(action_type === Actions.instantaneous_type) {
 				if(action === Actions.fire) {
-					var on_weapon_ready = function() {
-						callback({
-							type: "weapon_ready"
-							, action: action
-						});
-					};
 					var do_fire = function() {
+						player.set_auto_fire(options.automatic);
 						player.fire();
-					/*
-						player.auto_fire = options.automatic;
-						var projectile = player.fire({
-							on_weapon_ready: on_weapon_ready
-							, angle_offset: options.angle_offset
-						});
-						if(projectile) {
-							callback({
-								type: "fire"
-								, fired: false
-								, action: action
-							});
-						} else {
-							callback({
-								type: "fire"
-								, fired: false
-								, action: action
-							});
-						}
-						*/
 					};
+
+					this._fire_callback = callback;
 					this.do_at_time(do_fire, request_timing.start_time_ms);
-				}/* else if(action === Actions.stop_firing) {
+				} else if(action === Actions.stop_firing) {
 					var do_stop_firing = function() {
-						player.auto_fire = false;
+						player.set_auto_fire(false);
 					};
 					this.do_at_time(do_stop_firing, request_timing.start_time_ms);
 				} else if(action === Actions.sense) {
+					var snapshot_data = this.game.get_snapshot();
+					snapshot_data.projectiles.forEach(function(projectile) {
+						delete projectile.projectile;
+					});
+					snapshot_data.players.forEach(function(player) {
+						delete player.player;
+					});
 					callback({
 						type: "sense"
-						, data: this.get_snapshot_data()
+						, data: snapshot_data
 					});
 				}
-				*/
 			}
 		}
 	};

@@ -11,6 +11,7 @@ define(['../constants', './player'], function(Constants, Player) {
 
 			this.players.push(player);
 		}
+		this.id = options.id;
 	};
 
 	(function(my) {
@@ -25,6 +26,8 @@ define(['../constants', './player'], function(Constants, Player) {
 		proto.is_dead = function() { return !this.is_alive(); };
 		proto.get_players = function() { return this.players; };
 		proto.num_players = function() { return this.get_players().length; };
+		proto.get_id = function() { return this.id; };
+		proto.set_id = function(id) { this.id = id; };
 	})(Team);
 
 	return Team;

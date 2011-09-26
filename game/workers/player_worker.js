@@ -154,24 +154,24 @@ var get_time = function() {
 	};
 	controller.sense = function(callback) {
 		var action = Actions.sense;
-		var options = {};
-
-		options.callback = true;
-		options.callback_id = game.addEventListener({
+		var options = {
+			callback: true
+			, callback_id: game.addCallback({
 				type: "action_callback"
 				, options: options
-			}, function(event) {
-				var data = event.data;
-				data.players = data.players.map(function(pi) {
-					return new Player(pi.number, pi.team_id, {x: pi.x, y: pi.y, theta: pi.theta});
-				});
-				data.projectiles = data.projectiles.map(function(pi) {
-					return new Projectile();
-				});
-				data.map = new Map({width: data.map.width, height: data.map.height});
+				}, function(event) {
+					var data = event.data;
+					data.players = data.players.map(function(pi) {
+						return new Player(pi.number, pi.team_id, {x: pi.x, y: pi.y, theta: pi.theta});
+					});
+					data.projectiles = data.projectiles.map(function(pi) {
+						return new Projectile();
+					});
+					data.map = new Map({width: data.map.width, height: data.map.height});
 
-				callback(data);
-			});
+					callback(data);
+				})
+		};
 
 		return post({
 			type: "action"
@@ -271,7 +271,7 @@ self.onmessage = function(event) {
 	if(type === "initialize") {
 		code = data.info.code;
 		controller.number = data.info.number;
-		controller.team_id = data.team_id;
+		controller.team_id = data.info.team_id;
 	} else if(type === "game_start") {
 		game.start_time = data.start_time;
 		run();

@@ -46,6 +46,17 @@ define(function(require, exports, module) {
 		proto.get_start_positions = function() {
 			return this.attributes.start_positions;
 		};
+		proto.projectile_left = function(projectile, old_pos, new_pos) {
+			var map_width = this.get_width();
+			var map_height = this.get_height();
+			var radius = projectile.get_radius();
+
+			var min_x = new_pos.x - radius;
+			var max_x = new_pos.x + radius;
+			var min_y = new_pos.y - radius;
+			var max_y = new_pos.y + radius;
+			return max_x <= 0 || max_y <= 0 || min_x >= map_height || min_y >= map_height;
+		};
 	})(Map);
 
 	return Map;
