@@ -11,7 +11,7 @@ define(function(require, exports, module) {
 	function draw_map(map, ctx) {
 		ctx.save();
 		ctx.fillStyle = "rgb(0, 0, 100)";
-		ctx.fillRect (0, 0, map.width, map.height);
+		ctx.fillRect (0, 0, map.get_width(), map.get_height());
 		ctx.restore();
 	}
 
@@ -22,14 +22,14 @@ define(function(require, exports, module) {
 		ctx.rotate(state.theta);
 		ctx.fillStyle = "yellow";
 		ctx.beginPath();
-		ctx.arc(0, 0, player.radius, 0, Math.PI*2, true);
+		ctx.arc(0, 0, player.get_radius(), 0, Math.PI*2, true);
 		ctx.fill();
 
 		ctx.strokeStyle = "black";
 		ctx.lineWidth = 1.0/PIXELS_PER_TILE;
 		ctx.beginPath();
 		ctx.moveTo(0, 0);
-		ctx.lineTo(player.radius, 0);
+		ctx.lineTo(player.get_radius(), 0);
 		ctx.stroke();
 
 		ctx.restore();
@@ -58,14 +58,6 @@ define(function(require, exports, module) {
 			
 			this.render(ctx);
 			var self = this;
-			if(!this.replay.is_complete()) {
-				this.replay.update();
-			}
-			this.replay_update_interval = window.setInterval(function() {
-				if(!self.replay.is_complete()) {
-					self.replay.update();
-				}
-			}, 1000);
 		};
 		this.stop = function() {
 			console.log("Replay done");
@@ -111,24 +103,19 @@ define(function(require, exports, module) {
 			ctx.scale(PIXELS_PER_TILE, PIXELS_PER_TILE);
 			var map = this.replay.get_map();
 			draw_map(map, ctx);
-			for(var i = 0, len = snapshot.object_states.length; i<len; i++) {
-				var object_index = i;
-				if(snapshot.object_states[i] == null) continue;
-				var object = this.replay.get_object(object_index);
-
-				var object_state = snapshot.object_states[i];
-				if(object.type === "player") {
-					draw_player(object, object_state, ctx);
-				}
-				else if(object.type === "projectile") {
-					draw_projectile(object, object_state, ctx);
-				}
-			}
+			var self = this;
+			snapshot.players.forEach(function(player_state) {
+				var player = player_state.player;
+				draw_player(player, player_state, ctx);
+			});
+			snapshot.projectiles.forEach(function(projectile_state) {
+				var projectile = projectile_state.projectile;
+				draw_projectile(projectile, projectile_state, ctx);
+			});
 			ctx.restore();
 		};
 		this.destroy = function() {
 			this._destroy = true;
-			window.clearInterval(this.replay_update_interval);
 		};
 	}).call(ReplayRenderer.prototype);
 

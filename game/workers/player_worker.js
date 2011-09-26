@@ -11,8 +11,7 @@ if(is_node) {
 	var CONST = utils.CONST;
 }
 else {
-	importScripts('game/workers/actions.js');
-	importScripts('game/workers/util/worker_utils.js');
+	importScripts('actions.js', '../util/worker_utils.js');
 }
 
 var post = function() {
@@ -20,6 +19,17 @@ var post = function() {
 		return postMessage.apply(self, arguments);
 	} else {
 		return self.postMessage.apply(self, arguments);
+	}
+};
+
+var console = { 
+	log: function() {
+		var args = [];
+		for(var i = 0, len = arguments.length; i<len; i++) {
+			args.push(arguments[i]);
+		}
+		post({type: "console.log"
+				, args: args});
 	}
 };
 
@@ -271,15 +281,12 @@ self.onmessage = function(event) {
 	var type = data.type;
 
 	if(type === "initialize") {
-		code = data.code;
-		controller.number = data.number;
+		code = data.info.code;
+		controller.number = data.info.number;
 		controller.team_id = data.team_id;
-	} else if(type === "message") {
-		var message = data.message;
-		if(message.type === "game_start") {
-			game.start_time = message.start_time;
-			run();
-		}
+	} else if(type === "game_start") {
+		game.start_time = data.start_time;
+		run();
 	} else if(type === "event") {
 		game.on_event(data);
 	}

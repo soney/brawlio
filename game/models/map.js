@@ -13,5 +13,40 @@ define(function(require, exports, module) {
 		};
 	};
 
+	(function(my) {
+		var proto = my.prototype;
+
+		proto.get_width = function() { return this.attributes.width; };
+		proto.get_height = function() { return this.attributes.height; };
+
+		proto.check_bounds = function(old_pos, new_pos, player) {
+			var rv = {x: new_pos.x, y: new_pos.y, theta: new_pos.theta};
+			var radius = player.get_radius();
+			var map_width = this.get_width();
+			var map_height = this.get_height();
+
+			var min_x = rv.x - radius;
+			var max_x = rv.x + radius;
+			var min_y = rv.y - radius;
+			var max_y = rv.y + radius;
+
+			if(min_x < 0) {
+				rv.x = radius;
+			} else if(max_x > map_width) {
+				rv.x = map_width - radius;
+			}
+
+			if(min_y < 0) {
+				rv.y = radius;
+			} else if(max_y > map_height) {
+				rv.y = map_height - radius;
+			}
+			return rv;
+		};
+		proto.get_start_positions = function() {
+			return this.attributes.start_positions;
+		};
+	})(Map);
+
 	return Map;
 });

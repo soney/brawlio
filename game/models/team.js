@@ -1,17 +1,31 @@
-define(function(require, exports, module) {
-	var Constants = require("../constants");
-	var PlayerModel = require("./player");
-
+define(['../constants', './player'], function(Constants, Player) {
 	var Team = function(options) {
 		this.code = options.code;
-		this.player_models = new Array(Constants.TEAM_SIZE);
+		this.players = [];
 		for(var i = 0; i<Constants.TEAM_SIZE; i++) {
-			var player_model = new PlayerModel({
+			var player = new Player({
 				number: i+1
+				, team: this
+				, code: this.code
 			});
-			this.player_models[i] = player_model;
+
+			this.players.push(player);
 		}
 	};
+
+	(function(my) {
+		var proto = my.prototype;
+		proto.is_alive = function() {
+			var players = this.get_players();
+			for(var i = 0, len = players.length; i<len; i++) {
+				if(players[i].is_alive()) return true;
+			}
+			return false;
+		};
+		proto.is_dead = function() { return !this.is_alive(); };
+		proto.get_players = function() { return this.players; };
+		proto.num_players = function() { return this.get_players().length; };
+	})(Team);
 
 	return Team;
 });

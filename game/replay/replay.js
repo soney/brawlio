@@ -1,6 +1,5 @@
 define(function(require, exports, module) {
 	var Replay = function(options) {
-		this.update = options.update;
 		this.map = options.map;
 		this.last_snapshot_index =	null; 
 		this.snapshots = options.snapshots || [];
@@ -9,12 +8,8 @@ define(function(require, exports, module) {
 	};
 
 	(function() {
-		this.concat_chunk = function(replay_chunk) {
-			var objects = replay_chunk.objects
-				, snapshots = replay_chunk.snapshots;
-
-			this.objects = objects;
-			this.snapshots = this.snapshots.concat(snapshots);
+		this.concat_snapshot = function(snapshot) {
+			this.snapshots.push(snapshot);
 		};
 
 		this.get_snapshot = function(index) { return this.snapshots[index]; };
