@@ -45,7 +45,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				});
 				var replay = brawl.get_replay();
 				brawl.run(function(winner) {
-					if(winner === team.id) {
+					if(winner === 0) {
 						BrawlIO.claim_crown();
 					}
 				});

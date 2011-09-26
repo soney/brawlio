@@ -86,7 +86,9 @@ define(function(require, exports, module) {
 				};
 				this.claim_crown = function(callback) {
 					socket.emit('claim_crown', function() {
-						callback();
+						if(callback) {
+							callback();
+						}
 					});
 					$(".crown").show();
 				};

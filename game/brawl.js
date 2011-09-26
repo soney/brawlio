@@ -78,7 +78,6 @@ var Brawl = function(options) {
 	};
 
 	proto.run = function(callback) {
-		this.callback = callback;
 		var self = this;
 		this.game.on("update", function() {
 			var snapshot = self.game.get_snapshot();
@@ -87,6 +86,9 @@ var Brawl = function(options) {
 		this.game.on("end", function(event) {
 			var winner = event.winner;
 			self.terminate();
+			if(callback) {
+				callback(winner.get_id());
+			}
 		});
 		this.game.start();
 		var start_time = this.game.get_start_time();
