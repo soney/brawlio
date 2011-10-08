@@ -1,4 +1,5 @@
-*.sqp
+*.swp
 node_modules
 server/brawlio_db.sqlite3
 invited_emails.txt
+.DS_Store
