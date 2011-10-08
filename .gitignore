@@ -1,3 +1,4 @@
-*.sqp
+*.swp
 node_modules
 server/brawlio_db.sqlite3
+.DS_Store
