@@ -178,7 +178,7 @@ var BrawlIOServer = function(production) {
 
 	var relyingParty;
 
-	var _debug = false;
+	var _debug = true;
 	function render_home(req, res, next) {
 		var session = req.session;
 		if(_debug) {

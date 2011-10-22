@@ -215,7 +215,7 @@ var Brawl = function(options) {
 			}
 
 			if(action_type === Actions.move_type) {
-				var do_action = function() {
+				var do_action = function(round) {
 					var angle = 0;
 					if(action === Actions.move.forward) angle = 0;
 					else if(action === Actions.move.left) angle = Math.PI/2.0;
@@ -226,7 +226,7 @@ var Brawl = function(options) {
 					if(action === Actions.move.stop) speed = 0;
 
 					self.game.update();
-					player.set_velocity(speed, angle);
+					player.set_velocity(speed, angle, round);
 					callback({
 						type: "start"
 						, action: action
@@ -235,7 +235,7 @@ var Brawl = function(options) {
 					if(request_timing.stop_time_ms) {
 						var stop_action = function(round) {
 							self.game.update();
-							player.set_velocity(0, 0);
+							player.set_velocity(0, 0, round);
 							callback({
 								type: "stop"
 								, action: action

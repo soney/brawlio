@@ -11,6 +11,7 @@ html(lang="en")
       require(["vendor/jquery", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $(".content"));
+          $("a#king_challenge").click();
         });
       });
   body

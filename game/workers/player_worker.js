@@ -51,6 +51,7 @@ var get_time = function() {
 		} else {
 			action = Actions.move.forward;
 		}
+		user_options = user_options || {};
 
 		var options = {
 			delay: user_options.delay
@@ -129,6 +130,8 @@ var get_time = function() {
 		} else {
 			action = Actions.fire;
 		}
+
+		user_options = user_options || {};
 
 		var options = {
 			automatic: automatic

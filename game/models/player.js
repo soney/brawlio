@@ -48,6 +48,7 @@ define(['game/models/shapes/circle', 'game/models/moving_object', 'game/models/m
 		proto.set_attribute = function(attr_name, value) {this.attributes[attr_name] = value;};
 		proto.get_state = function(state_name) {return this.state[state_name]; };
 		proto.set_state = function(state_name, value) {this.state[state_name] = value;};
+		proto.get_max_movement_speed = function() {return this.get_attribute("max_movement_speed");};
 
 		proto.set_game = function(game) { this.game = game; };
 		proto.set_id = function(id) { this.options.id = id; };
@@ -130,9 +131,19 @@ define(['game/models/shapes/circle', 'game/models/moving_object', 'game/models/m
 			var state = new MovingObjectState({
 				start: {
 					x: position.x, y: position.y, theta: position.theta
-				}, translational_velocity: 0, rotational_velocity: 0
+				}, translational_speed: 0, translational_angle: 0, rotational_speed: 0
 			});
 			this.push_state(state, 0);
+		};
+
+		proto.set_velocity = function(speed, angle, round) {
+			var old_position = this.get_position(round);
+			var old_state = this.get_movement_state();
+			var state = new MovingObjectState({
+				start: old_position
+				, translational_speed: speed, translational_angle: angle, rotational_speed: old_state.rotational_speed
+			});
+			this.push_state(state, round);
 		};
 	})(Player);
 
