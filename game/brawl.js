@@ -1,4 +1,6 @@
 define(["game/models/game", "game/replay/replay"], function(Game, Replay) {
+var num_worker_speed_samples = 1;
+
 var Actions = {
 	move_type: 0
 	, move: {
@@ -93,6 +95,7 @@ var Brawl = function(options) {
 		this.game.start();
 		var start_time = this.game.get_start_time();
 		this.game.players.forEach(function(player) {
+			self.replay.add_player(player);
 			player.on("fire", function(event) {
 				self.on_player_fire(player, event);
 			});

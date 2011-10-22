@@ -88,6 +88,8 @@ var get_time = function() {
 			action = Actions.rotate.counter_clockwise;
 		}
 
+		user_options = user_options || {};
+
 		var options = {
 			delay: user_options.delay
 			, duration: user_options.duration

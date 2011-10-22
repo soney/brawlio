@@ -2,7 +2,6 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 	var Game = function(options) {
 		this.teams = options.teams;
 		this.map = options.map;
-		this.projectiles = [];
 
 		this.round_limit = options.round_limit;
 		this.running = false;
@@ -35,11 +34,9 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 					var player_start_position = team_start_positions[j];
 					player.set_game(this);
 					player.set_id(unique_object_id);
-					player._set_x(player_start_position.x);
-					player._set_y(player_start_position.y);
-					player._set_theta(player_start_position.theta);
 					this.initialize_player(player);
 					this.players.push(player);
+					player.set_starting_position(player_start_position);
 				}
 				unique_object_id++;
 			}
@@ -103,10 +100,10 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 
 		//Update functions
 		proto.update = function() {
-			this.do_update();
-			this.emit({
-				type: "update"
-			});
+			//this.do_update();
+			//this.emit({
+			//	type: "update"
+			//});
 		};
 		proto.do_update = function() {
 			if(!this.running) return false;

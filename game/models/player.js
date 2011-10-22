@@ -1,21 +1,23 @@
-define(['game/util/listenable'], function(make_listenable) {
-
+define(['game/models/shapes/circle', 'game/models/moving_object', 'game/models/moving_object_state', 'game/util/object_oriented', 'game/util/listenable'], function(Circle, MovingObject, MovingObjectState, oo_utils, make_listenable) {
 	var Player = function(options) {
+		var radius = 2; //Radius in tiles
 		if(options == null) {
 			options = {};
 		}
+
+		Player.superclass.call(this, {
+			shape: new Circle({radius: radius})
+			, start_state: undefined
+		});
 		this.attributes = {
-			radius: 2 //Radius in tiles
-			, max_movement_speed: 5.0 //Tiles per round
+			max_movement_speed: 5.0 //Tiles per round
 			, max_rotation_speed: 90*Math.PI/180.0 //Radians per round
 			, max_health: 10 //Maximum health
 			, max_firing_angle_offset: Math.PI/8.0 //Radians
 			, shots_per_round: 1.0 //Shots per round
 		};
 		this.state = {
-			position: {x: -1, y: -1, theta: 0}
-			, velocity: {speed: 0, angle: 0, theta: 0}
-			, health: this.get_max_health()
+			health: this.get_max_health()
 			, auto_fire: false
 			, next_fireable_round: 0
 			, last_update_round: 0
@@ -24,6 +26,7 @@ define(['game/util/listenable'], function(make_listenable) {
 		this.options = options;
 		make_listenable(this);
 	};
+	oo_utils.extend(Player, MovingObject);
 
 	(function(my) {
 		//Utilities
@@ -54,7 +57,6 @@ define(['game/util/listenable'], function(make_listenable) {
 		proto.get_number = function() { return this.options.number; };
 		proto.get_id = function() { return this.options.id; };
 
-
 		proto.serialize = function() {
 			return {
 				code: this.get_code()
@@ -63,7 +65,8 @@ define(['game/util/listenable'], function(make_listenable) {
 			};
 		};
 
-		proto.get_radius = function() { return this.get_attribute("radius"); };
+		proto.get_radius = function() { return this.shape.get_radius(); };
+		proto.get_max_rotation_speed = function() { return this.get_attribute("max_rotation_speed"); };
 
 		//Health-related
 		proto.get_max_health = function() { return this.get_attribute("max_health"); };
@@ -73,38 +76,6 @@ define(['game/util/listenable'], function(make_listenable) {
 		proto.remove_health = function(amount) {
 			this.set_state("health", this.get_health() - amount);
 			return this.is_alive();
-		};
-
-		//Movement-related
-		proto._set_x = function(x) { this.state.position.x = x; };
-		proto.get_x = function() { return this.state.position.x; };
-		proto._set_y = function(y) { this.state.position.y = y; };
-		proto.get_y = function() { return this.state.position.y; };
-		proto.get_velocity = function() {
-			var speed = this.state.velocity.speed;
-			var angle = this.state.velocity.angle + this.get_theta();
-
-			return {x: speed * Math.cos(angle), y: speed*Math.sin(angle)};
-		};
-		proto.set_velocity = function(speed, angle) {
-			this.state.velocity.speed = ceil(speed, this.get_max_movement_speed());
-			this.state.velocity.angle = angle;
-		};
-		proto.get_max_movement_speed = function() { return this.get_attribute("max_movement_speed"); };
-
-		//Rotation-related
-		proto._set_theta = function(theta) { this.state.position.theta = theta; };
-		proto.get_theta = function() { return this.state.position.theta; };
-		proto.get_max_rotation_speed = function() { return this.get_attribute("max_rotation_speed"); };
-		proto.get_rotation_speed = function() { return this.state.velocity.theta; };
-		proto.set_rotation_speed = function(speed) {
-			this.state.velocity.theta = ceil(speed, this.get_max_rotation_speed());
-		};
-
-		proto.get_position = function() {
-			return {x: this.get_x()
-					, y: this.get_y()
-					, theta: this.get_theta()};
 		};
 
 		//Firing-related
@@ -155,23 +126,13 @@ define(['game/util/listenable'], function(make_listenable) {
 			}, this.get_next_fireable_round());
 		};
 
-		//Update-related
-		proto.get_last_update_round = function() { return this.get_state("last_update_round"); };
-		proto.update_last_update_round = function() { this.set_state("last_update_round", this.get_round()); };
-		proto.get_updated_position = function() {
-			var delta_rounds = this.get_round() - this.get_last_update_round();
-			var velocity = this.get_velocity();
-
-			return {x: this.get_x() + velocity.x * delta_rounds
-					, y: this.get_y() + velocity.y * delta_rounds
-					, theta: this.get_theta() + this.get_rotation_speed() * delta_rounds };
-		};
-		proto.set_updated_position = function(position) {
-			this._set_x(position.x);
-			this._set_y(position.y);
-			this._set_theta(position.theta);
-
-			this.update_last_update_round();
+		proto.set_starting_position = function(position) {
+			var state = new MovingObjectState({
+				start: {
+					x: position.x, y: position.y, theta: position.theta
+				}, translational_velocity: 0, rotational_velocity: 0
+			});
+			this.push_state(state, 0);
 		};
 	})(Player);
 

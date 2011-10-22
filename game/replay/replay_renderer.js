@@ -77,28 +77,10 @@ define(function(require, exports, module) {
 		this.do_render = function(ctx) {
 			var time_diff = get_time() - this.start_time;
 			var round = time_diff/MS_PER_ROUND;
-
-			for(var i = this.snapshot_index, len = this.replay.num_snapshots(); i<len; i++) {
-				var snapshot = this.replay.get_snapshot(i);
-				if(snapshot == null) continue;
-
-				if(snapshot.round > round) {
-					this.snapshot_index = i-1;
-					if(this.snapshot_index < 0) this.snapshot_index = 0;
-					break;
-				}
-				else if(i >= len-1) {
-					this.snapshot_index = len-1;
-					break;
-				}
-			}
-			this.render_snapshot(this.snapshot_index, ctx);
+			var snapshot = this.replay.get_snapshot_at(round);
+			this.render_snapshot(snapshot, ctx);
 		};
-		this.render_snapshot = function(snapshot_index, ctx) {
-			var snapshot = this.replay.get_snapshot(snapshot_index);
-			if(snapshot == null) return;
-			var round = snapshot.round;
-
+		this.render_snapshot = function(snapshot, ctx) {
 			ctx.save();
 			ctx.scale(PIXELS_PER_TILE, PIXELS_PER_TILE);
 			var map = this.replay.get_map();
