@@ -49,11 +49,10 @@ define(['game/models/moving_object_state'], function(MovingObjectState) {
 				end_time_offset: undefined
 			};
 			this.memorized_movement_states.push(memorized_state);
-			console.log(this.memorized_movement_states);
 		};
 
 		proto.get_movement_state = function() {
-			return this.memorized_movement_states[this.memorized_movement_states.length-1];
+			return this.memorized_movement_states[this.memorized_movement_states.length-1].state;
 		};
 
 		proto.get_shape = function() {

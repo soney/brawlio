@@ -15,6 +15,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				$("a.save").click();
 				self.test();
 			});
+			self.test();
 		}
 
 		, destroy: function() {
@@ -35,7 +36,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				});
 
 				var other_team = new Team({
-					code: king_code 
+					code: ""//king_code 
 				});
 
 				var brawl = new Brawl({

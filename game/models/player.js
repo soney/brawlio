@@ -1,4 +1,4 @@
-define(['game/models/shapes/circle', 'game/models/moving_object', 'game/models/moving_object_state', 'game/util/object_oriented', 'game/util/listenable'], function(Circle, MovingObject, MovingObjectState, oo_utils, make_listenable) {
+define(['game/geometry/shapes/circle', 'game/models/moving_object', 'game/models/moving_object_state', 'game/util/object_oriented', 'game/util/listenable'], function(Circle, MovingObject, MovingObjectState, oo_utils, make_listenable) {
 	var Player = function(options) {
 		var radius = 2; //Radius in tiles
 		if(options == null) {
@@ -131,7 +131,7 @@ define(['game/models/shapes/circle', 'game/models/moving_object', 'game/models/m
 			var state = new MovingObjectState({
 				start: {
 					x: position.x, y: position.y, theta: position.theta
-				}, translational_speed: 0, translational_angle: 0, rotational_speed: 0
+				}, translational_speed: 0, translational_angle: 0, rotation_speed: 0
 			});
 			this.push_state(state, 0);
 		};
@@ -141,7 +141,16 @@ define(['game/models/shapes/circle', 'game/models/moving_object', 'game/models/m
 			var old_state = this.get_movement_state();
 			var state = new MovingObjectState({
 				start: old_position
-				, translational_speed: speed, translational_angle: angle, rotational_speed: old_state.rotational_speed
+				, translational_speed: speed, translational_angle: angle, rotation_speed: old_state.rotation_speed
+			});
+			this.push_state(state, round);
+		};
+		proto.set_rotation_speed = function(speed, round) {
+			var old_position = this.get_position(round);
+			var old_state = this.get_movement_state();
+			var state = new MovingObjectState({
+				start: old_position
+				, translational_speed: old_state.translational_speed, translational_angle: old_state.translational_angle, rotation_speed: speed 
 			});
 			this.push_state(state, round);
 		};

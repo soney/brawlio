@@ -106,9 +106,6 @@ var Brawl = function(options) {
 				, start_time: start_time
 			});
 		});
-		this.game_update_interval = window.setInterval(function() {
-			self.game.update();
-		}, this.ms_per_round / this.updates_per_round);
 	};
 	proto.terminate = function() {
 		window.clearInterval(this.game_update_interval);
@@ -116,6 +113,10 @@ var Brawl = function(options) {
 	};
 	proto.get_replay = function() {
 		return this.replay;
+	};
+
+	proto.on_moving_object_state_change = function() {
+		this.game.on_moving_object_state_change();
 	};
 
 	proto.compute_request_timing = function(request) {
@@ -218,15 +219,15 @@ var Brawl = function(options) {
 				var do_action = function(round) {
 					var angle = 0;
 					if(action === Actions.move.forward) angle = 0;
-					else if(action === Actions.move.left) angle = Math.PI/2.0;
-					else if(action === Actions.move.right) angle = -1 * Math.PI/2.0;
+					else if(action === Actions.move.left) angle = -1 * Math.PI/2.0;
+					else if(action === Actions.move.right) angle = Math.PI/2.0;
 					else if(action === Actions.move.backward) angle = Math.PI;
 
 					var speed = options.speed || player.get_max_movement_speed();
 					if(action === Actions.move.stop) speed = 0;
 
-					self.game.update();
 					player.set_velocity(speed, angle, round);
+					self.on_moving_object_state_change();
 					callback({
 						type: "start"
 						, action: action
@@ -234,8 +235,8 @@ var Brawl = function(options) {
 
 					if(request_timing.stop_time_ms) {
 						var stop_action = function(round) {
-							self.game.update();
 							player.set_velocity(0, 0, round);
+							self.on_moving_object_state_change();
 							callback({
 								type: "stop"
 								, action: action
@@ -246,13 +247,13 @@ var Brawl = function(options) {
 				};
 				this.do_at_time(do_action, request_timing.start_time_ms);
 			} else if(action_type === Actions.rotate_type) {
-				var do_action = function() {
+				var do_action = function(round) {
 					var speed = options.speed || player.get_max_rotation_speed();
 					if(action === Actions.rotate.stop) speed = 0;
 					else if(action === Actions.rotate.counter_clockwise) speed *= -1;
 
-					self.game.update();
-					player.set_rotation_speed(speed);
+					player.set_rotation_speed(speed, round);
+					self.on_moving_object_state_change();
 					callback({
 						type: "start"
 						, action: action
@@ -260,8 +261,8 @@ var Brawl = function(options) {
 
 					if(request_timing.stop_time_ms) {
 						var stop_action = function(round) {
-							self.game.update();
-							player.set_rotation_speed(0);
+							player.set_rotation_speed(0, round);
+							self.on_moving_object_state_change();
 							callback({
 								type: "stop"
 								, action: action

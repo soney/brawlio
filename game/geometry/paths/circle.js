@@ -1,4 +1,4 @@
-define(['game/models/paths/path'], function(Path) {
+define(['game/geometry/paths/path'], function(Path) {
 	var Circle = function(options) {
 		this.cx = options.center_x;
 		this.cy = options.center_y;

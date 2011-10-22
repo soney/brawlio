@@ -1,0 +1,12 @@
+define([], function() {
+	var Shape = function(options) {
+		this.name = "none";
+	};
+	(function(my) {
+		var proto = my.prototype;
+		proto.get_name = function() {
+			return this.name;
+		};
+	})(Shape);
+	return Shape;
+});

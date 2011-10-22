@@ -1,7 +1,7 @@
 define(function(require, exports, module) {
 	var PIXELS_PER_TILE = 8;
 
-	var FPS = 5;
+	var FPS = 30;
 	var MS_PER_ROUND = 1000;
 
 	var get_time = function() {

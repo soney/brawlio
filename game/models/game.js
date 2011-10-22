@@ -61,7 +61,6 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 		proto.start = function() {
 			this.start_time = get_time();
 			this.running = true;
-			this.update();
 			this.emit({
 				type: "start"
 			});
@@ -96,132 +95,6 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 		proto.add_projectile = function(projectile) {
 			this.projectiles.push(projectile);
 		};
-
-
-		//Update functions
-		proto.update = function() {
-			//this.do_update();
-			//this.emit({
-			//	type: "update"
-			//});
-		};
-		proto.do_update = function() {
-			if(!this.running) return false;
-
-			var round = this.get_round();
-			if(this.round_limit > 0 && round >= this.round_limit) {
-				this.end(null);
-				return false;
-			} else if(this.teams[0].is_dead()) {
-				this.end(this.teams[1]);
-				return false;
-			} else if(this.teams[1].is_dead()) {
-				this.end(this.teams[0]);
-				return false;
-			}
-
-			var self = this;
-			this.get_living_players().forEach(function(player) {
-				self.update_player(player);
-			});
-			this.get_projectiles().forEach(function(projectile) {
-				self.update_projectile(projectile);
-			});
-			for(var i = 0, len = this.projectiles.length; i<len; i++) {
-				var projectile = this.projectiles[i];
-				if(projectile == null) continue;
-				this.update_projectile(projectile);
-			}
-			return true;
-		};
-		proto.update_player = function(player) {
-			var old_pos = player.get_position();
-			var new_pos = this.check_player_collisions(this.map.check_bounds(old_pos, player.get_updated_position(), player));
-			player.set_updated_position(new_pos);
-		};
-
-		proto.update_projectile = function(projectile) {
-			var old_pos = projectile.get_position();
-			var new_pos = projectile.get_updated_position();
-			var projectile_left_map = this.map.projectile_left(projectile, old_pos, new_pos);
-			var projectile_hit_player = false;
-
-			if(!projectile_left_map) {
-				var player = this.projectile_hit_player(projectile, old_pos, new_pos);
-				if(player !== false) {
-					player.remove_health(1);
-					projectile_hit_player = true;
-				}
-			}
-			if(projectile_left_map || projectile_hit_player) {
-				for(var i = 0, len = this.projectiles.length; i<len; i++) {
-					if(this.projectiles[i]===projectile) {
-						this.projectiles.splice(i, 1);
-						return;
-					}
-				}
-			} else {
-				projectile.set_position(new_pos);
-			}
-		};
-		proto.check_player_collisions = function(new_pos) {
-			return new_pos;
-		};
-
-		proto.get_snapshot = function() {
-			var players = this.get_players().map(function(player) {
-				var position = player.get_position();
-				return {
-					x: position.x
-					, y: position.y
-					, theta: position.theta
-					, player: player
-					, number: player.get_number()
-					, team_id: player.get_team().id
-				};
-			});
-			var projectiles = this.projectiles.map(function(projectile) {
-				var position = projectile.get_position();
-				return {
-					x: position.x
-					, y: position.y
-					, projectile: projectile
-				};
-			});
-
-			var data = {
-				round: this.get_round()
-				, players: players
-				, projectiles: projectiles
-				, map: {
-					width: this.map.attributes.width
-					, height: this.map.attributes.height
-				}
-			};
-			return data;
-		};
-		proto.projectile_hit_player = function(projectile, old_pos, new_pos) {
-			var source = projectile.get_source();
-			var delta_x = new_pos.x - old_pos.x;
-			var delta_y = new_pos.y - old_pos.y;
-			var m = delta_y/delta_x;
-			var b = new_pos.y - m*new_pos.x;
-
-			var denom = Math.sqrt(m*m+1);
-			var projectile_radius = projectile.get_radius();
-			var living_players = this.get_living_players();
-			for(var i = 0, len = living_players.length; i<len; i++) {
-				var player = living_players[i];
-				if(player === source) continue;
-				var distance = distanceFromLineSegment({x: player.get_x(), y: player.get_y()}, old_pos, new_pos);
-				var closest_distance = distance.segment;
-				if(closest_distance < player.get_radius() + projectile_radius) {
-					return player;
-				}
-			}
-
-			return false;
-		};
 		proto.on_round = function(callback, round) {
 			var round_diff = round - this.get_round();
 			if(round_diff <= 0) {
@@ -231,7 +104,20 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 				window.setTimeout(callback, time_ms);
 			}
 		};
+
 		
+		proto.on_moving_object_state_change = function() {
+			var next_collision = this.get_next_player_map_collision();
+		};
+
+		proto.get_next_player_map_collision = function() {
+			var players = this.get_living_players();
+			var map = this.get_map();
+
+			players.forEach(function(player) {
+				var next_collision = map.get_next_collision(player);
+			});
+		};
 	})(Game);
 
 	return Game;
