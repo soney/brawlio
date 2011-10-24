@@ -22,9 +22,27 @@ define(['game/models/obstacles/obstacle', 'game/geometry/paths/line', 'game/util
 		}else if(close_to(rotation_speed, 0)) {
 			var moving_object_line = LinePath.fromPointAndAngle(x0, y0, theta0);
 			var line_segment_line = LinePath.fromPoints(line_segment.start, line_segment.end);
+			var radius = moving_circle.radius;
 
-			console.log("linear movement");
-			console.log(line_segment, moving_object_line, line_segment_line);
+			var intersection_points = moving_object_line.intersects_with(line_segment_line, radius);
+			if(intersection_points === true) { //It's already intersecting
+				return 0;
+			} else if(intersection_points === false) { //It will never intersect
+				return false;
+			} else { //It will intersect at some time..
+				if(!_.isArray(intersection_points)) {
+					intersection_points = [intersection_points];
+				}
+				var moving_object_state = moving_circle.state;
+				var intersection_times = intersection_points.map(function(intersection_point) {
+					var delta_t = moving_object_state.delta_t_until_at(intersection_point.x, intersection_point.y);
+					return delta_t;
+				}).filter(function(delta_t) {
+					return delta_t >= 0;
+				});
+				if(intersection_times.length === 0) {return false;}
+				return Math.min.apply(Math, intersection_times);
+			}
 		} else {
 			console.log("non-linear movement");
 		}
@@ -54,9 +72,32 @@ define(['game/models/obstacles/obstacle', 'game/geometry/paths/line', 'game/util
 					state: moving_object_state
 					, radius: radius
 				};
-				line_segments.forEach(function(line_segment) {
+				var intersections = line_segments.map(function(line_segment) {
 					var time = line_segment_hits_moving_circle(line_segment, moving_circle);
+					if(time === false) {
+						return false;
+					} else if(time === true) {
+						return {
+							time: 0
+							, line_segment: line_segment
+						};
+					} else {
+						return {
+							time: time
+							, line_segment: line_segment
+						};
+					}
+				}).filter(function(intersection) {
+					return intersection !== false;
 				});
+				var next_intersection = false;
+				intersections.forEach(function(intersection) {
+					if(next_intersection === false || next_intersection.time > intersection.time) {
+						next_intersection = intersection;
+					}
+				});
+				if(next_intersection === false) { return false; }
+				else { return next_intersection.time; }
 			}
 			return false;
 		};

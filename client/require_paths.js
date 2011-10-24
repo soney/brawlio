@@ -11,6 +11,7 @@
 		paths: {
 			"client": client_path
 			, "vendor/handlebars": vendor_path + "/handlebars"
+			, "vendor/underscore": vendor_path + "/underscore"
 			, "vendor/jquery": vendor_path + "/jquery-1.6.2.min"
 			, "vendor/jquery-ui": vendor_path + "/jquery-ui-1.8.14.custom/js/jquery-ui-1.8.14.custom.min"
 			, "vendor/socket.io": "/socket.io/socket.io"

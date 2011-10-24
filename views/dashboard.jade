@@ -8,7 +8,7 @@ html(lang="en")
     script(src="vendor/require.js")
     script(src="client/require_paths.js")
     script
-      require(["vendor/jquery", "client/brawlio"], function() {
+      require(["vendor/jquery", "vendor/underscore", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $(".content"));
           $("a#king_challenge").click();

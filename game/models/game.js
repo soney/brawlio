@@ -114,9 +114,15 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 			var players = this.get_living_players();
 			var map = this.get_map();
 
-			players.forEach(function(player) {
+			var collision_times = players.map(function(player) {
 				var next_collision = map.get_next_collision(player);
+				return next_collision;
+			}).filter(function(collision) {
+				return collision !== false;
 			});
+			if(collision_times.length === 0) {return false;}
+			var next_collision = Math.min.apply(Math, collision_times);
+			return next_collision;
 		};
 	})(Game);
 

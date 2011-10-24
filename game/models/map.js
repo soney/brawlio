@@ -29,15 +29,21 @@ define(['game/models/obstacles/map_boundary_obstacle'], function(MapBoundaryObst
 		};
 		proto.get_next_collision = function(moving_object) {
 			var collision_times = this.obstacles.map(function(obstacle) {
-				return obstacle.will_touch(moving_object);
+				var touch_time = obstacle.will_touch(moving_object);
+				if(touch_time === false) { return false; }
+				else { return {obstacle: obstacle, time: touch_time}; }
 			}).filter(function(collision_time) {
 				return collision_time !== false;
 			});
 
-			if(collision_times.length === 0) {
-				return false;
-			} else {
-			}
+			var next_obstacle_collision = false;
+			collision_times.forEach(function(collision) {
+				if(next_obstacle_collision === false || collision.time < next_obstacle_collision.time) {
+					next_obstacle_collision = collision;
+				}
+			});
+			if(next_obstacle_collision === false) { return false; }
+			else { return next_obstacle_collision.time; }
 		};
 	})(Map);
 

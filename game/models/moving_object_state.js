@@ -46,6 +46,32 @@ define([], function() {
 				return rv;
 			}
 		};
+		proto.delta_t_until_x_is = function(x,from_t) {
+			if(close_to(this.translational_speed, 0)) {
+				if(close_to(this.start.x, x)) {
+					return from_t;
+				}
+			} else if(close_to(this.rotation_speed, 0)) {
+				if(close_to(Math.abs(this.start.theta), Math.PI/2)) {
+					if(close_to(this.start.x, x)) {
+						return from_t;
+					} else {
+						return false;
+					}
+				} else {
+					return (x - this.start.x)/(this.translational_speed * Math.cos(this.translational_angle));
+				}
+			}
+			return false;
+		};
+		proto.delta_t_until_y_is = function(y,from_t) {
+		};
+		proto.delta_t_until_at = function(x,y,from_t) {
+			if(from_t === undefined) {
+				from_t = 0;
+			}
+			return this.delta_t_until_x_is(x, from_t);
+		};
 	})(MovingObjectState);
 
 
