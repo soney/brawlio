@@ -93,7 +93,6 @@ var Brawl = function(options) {
 			}
 		});
 		this.game.start();
-		var start_time = this.game.get_start_time();
 		this.game.players.forEach(function(player) {
 			self.replay.add_player(player);
 			player.on("fire", function(event) {
@@ -103,7 +102,6 @@ var Brawl = function(options) {
 		this.player_workers.forEach(function(player_worker) {
 			player_worker.postMessage({
 				type: "game_start"
-				, start_time: start_time
 			});
 		});
 	};
@@ -116,7 +114,7 @@ var Brawl = function(options) {
 	};
 
 	proto.on_moving_object_state_change = function() {
-		this.game.on_moving_object_state_change();
+		this.game.update();
 	};
 
 	proto.compute_request_timing = function(request) {
