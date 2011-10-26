@@ -9,8 +9,8 @@ define(['game/geometry/paths/path'], function(Path) {
 		my.fromPointAndAngle = function(x0, y0, theta) {
 			return new Line({
 				a: Math.sin(theta)
-				, b: Math.cos(theta)
-				, c: -y0*Math.cos(theta) - x0*Math.sin(theta)
+				, b: -Math.cos(theta)
+				, c: y0*Math.cos(theta) - x0*Math.sin(theta)
 			});
 		};
 		my.fromPoints = function(p0, p1) {

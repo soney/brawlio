@@ -125,6 +125,7 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 			}
 
 			set_round_to = set_round_to || 0;
+
 			this.update_constraining_obstacles(set_round_to);
 			this.update_state_variables(set_round_to); // set this.next_collision_time
 			if(this.next_update_time !== false) {

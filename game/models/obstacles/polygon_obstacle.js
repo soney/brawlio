@@ -27,6 +27,7 @@ define(['game/geometry/paths/movement_path', 'game/models/obstacles/obstacle', '
 		if(close_to(translational_speed, 0)) {
 			return false;
 		} else if(close_to(rotation_speed, 0)) {
+			//debugger;
 			var moving_object_line = LinePath.fromPointAndAngle(x0, y0, theta0 + translational_angle);
 			var line_segment_line = LinePath.fromPoints(line_segment.start, line_segment.end);
 			var radius = moving_circle.radius;
