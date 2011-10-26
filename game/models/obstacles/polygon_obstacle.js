@@ -76,11 +76,11 @@ define(['game/geometry/paths/movement_path', 'game/models/obstacles/obstacle', '
 			var normal = Math.cos(delta_theta);
 
 			var new_translational_speed = translational_speed * Math.cos(delta_theta);
-			var new_translational_angle = line_segment_theta;
+			var new_translational_angle = line_segment_theta - theta0;
 
 			var new_path = create_movement_path({
 				x0: position.x, y0: position.y, theta0: position.theta
-				, translational_speed: new_translational_speed, angle: new_translational_angle
+				, translational_speed: new_translational_speed, translational_angle: new_translational_angle
 			}, path);
 			return {path: new_path, constrained_until: undefined};
 		} else {
@@ -181,6 +181,7 @@ define(['game/geometry/paths/movement_path', 'game/models/obstacles/obstacle', '
 						}
 					}
 				});
+				//debugger;
 				return {path: new_path, constrained_until: constrained_until};
 			}
 			return {path: create_movement_path({}, path), constrained_until: undefined};

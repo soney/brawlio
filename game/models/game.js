@@ -138,6 +138,7 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 					self.update(desired_round);
 				}, delay);
 			}
+			//if(set_round_to > 1) debugger;
 		};
 
 		

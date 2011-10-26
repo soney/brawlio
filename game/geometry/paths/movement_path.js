@@ -11,6 +11,7 @@ define([], function() {
 		this.translational_speed = options.translational_speed;
 		this.translational_angle = options.translational_angle;
 		this.rotation_speed = options.rotation_speed;
+		this.movement_angle = options.movement_angle;
 	};
 
 	(function(my) {
@@ -20,19 +21,18 @@ define([], function() {
 				return {
 					x: this.start.x
 					, y: this.start.y
-					, theta: this.start.theta + this.rotation_speed * delta_t
+					, theta: this.get_theta(delta_t)
 				};
 			} else if(close_to(this.rotation_speed, 0)) {
-				var movement_theta= this.start.theta + this.translational_angle;
+				var movement_theta = this.get_movement_theta(delta_t);
 				return {
 					x: this.start.x + this.translational_speed * delta_t * Math.cos(movement_theta)
 					, y: this.start.y + this.translational_speed * delta_t * Math.sin(movement_theta)
-					, theta: this.start.theta
+					, theta: this.get_theta(delta_t)
 				};
 			} else {
 				var r = this.translational_speed / (1.0*this.rotation_speed);
 				var movement_theta = this.start.theta + this.translational_angle;
-
 				var center_x = this.start.x + r*Math.sin(-movement_theta);
 				var center_y = this.start.y + r*Math.cos(-movement_theta);
 				var delta_theta = this.rotation_speed * delta_t;
@@ -41,10 +41,16 @@ define([], function() {
 				return {
 					x: center_x + r*Math.cos(new_movement_theta-Math.PI/2)
 					, y: center_y + r*Math.sin(new_movement_theta-Math.PI/2)
-					, theta: this.start.theta + delta_theta
+					, theta: this.get_theta(delta_t)
 				};
 				return rv;
 			}
+		};
+		proto.get_theta = function(delta_t) {
+			return this.start.theta + this.rotation_speed * delta_t;
+		};
+		proto.get_movement_theta = function(delta_t) {
+			return this.movement_angle === undefined ? this.get_theta(delta_t) + this.translational_angle : this.movement_angle;
 		};
 		proto.delta_t_until_x_is = function(x,from_t) {
 			if(close_to(this.translational_speed, 0)) {
