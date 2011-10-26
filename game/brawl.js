@@ -37,7 +37,6 @@ var Actions = {
 var PLAYER_WORKER_PATH = "game/workers/player_worker.js";
 
 var Brawl = function(options) {
-	this.updates_per_round = 5.0;
 	this.ms_per_round = 1000.0;
 	this.game = new Game($.extend({
 		ms_per_round: this.ms_per_round
@@ -113,61 +112,6 @@ var Brawl = function(options) {
 		return this.replay;
 	};
 
-	proto.on_moving_object_state_change = function() {
-		this.game.update();
-	};
-
-	proto.compute_request_timing = function(request) {
-		var request_time = request.time;
-		var options = request.options;
-
-		var delay_rounds = 0;
-		if(options.delay != null) {
-			delay_rounds = options.delay;
-		}
-
-		if(isNaN(delay_rounds)) {
-			delay_rounds = 0;
-		} else {
-			delay_rounds = Math.max(0, delay_rounds);
-		}
-		var delay_ms = delay_rounds * this.ms_per_round;
-
-		var desired_start_time_ms = request_time + delay_ms;
-
-		var rv = {
-			start_time_ms: desired_start_time_ms
-			, stop_time_ms: undefined
-		};
-
-		if(options.duration) {
-			var duration = options.duration;
-			if(!isNaN(duration)) {
-				duration = Math.max(0, duration);
-				var duration_ms = duration * this.ms_per_round;
-				var desired_stop_time_ms = desired_start_time_ms + duration_ms;
-
-				rv.stop_time_ms = desired_stop_time_ms;
-			}
-		}
-		return rv;
-	};
-	var at_time = function(callback, time) {
-		var curr_time = get_time();
-		var time_diff = time - curr_time;
-		if(time_diff > 0) {
-			setTimeout(callback, time_diff);
-		} else {
-			callback();
-		}
-	};
-
-	proto.do_at_time = function(callback, time) {
-		var at_round = this.game.get_round(time);
-		at_time(function() {
-			callback(at_round);
-		}, time);
-	};
 	proto.on_player_fire = function(player, event) {
 		var callback = this._fire_callback;
 		if(callback) {
@@ -187,6 +131,7 @@ var Brawl = function(options) {
 	proto.on_player_message = function(player, event) {
 		var data = event.data;
 		var type = data.type;
+		var game = this.game;
 		if(type === "console.log") {
 			console.log.apply(console, data.args);
 		}
@@ -195,9 +140,7 @@ var Brawl = function(options) {
 			var request = data;
 			var action = request.action;
 			var action_type = Actions.get_type(action);
-			var options = request.options;
-
-			var request_timing = this.compute_request_timing(request);
+			var options = request.options || {};
 
 			var callback = function() {};
 
@@ -214,6 +157,7 @@ var Brawl = function(options) {
 			}
 
 			if(action_type === Actions.move_type) {
+				var delay = options.delay || 0;
 				var do_action = function(round) {
 					var angle = 0;
 					if(action === Actions.move.forward) angle = 0;
@@ -225,52 +169,49 @@ var Brawl = function(options) {
 					if(action === Actions.move.stop) speed = 0;
 
 					player.set_velocity(speed, angle, round);
-					self.on_moving_object_state_change();
 					callback({
 						type: "start"
 						, action: action
 					});
 
-					if(request_timing.stop_time_ms) {
+					if(options.duration!==undefined) {
 						var stop_action = function(round) {
 							player.set_velocity(0, 0, round);
-							self.on_moving_object_state_change();
 							callback({
 								type: "stop"
 								, action: action
 							});
 						};
-						self.do_at_time(stop_action, request_timing.stop_time_ms);
+						game.on_round(stop_action, request.round+delay+options.duration);
 					}
 				};
-				this.do_at_time(do_action, request_timing.start_time_ms);
+				game.on_round(do_action, request.round+delay);
 			} else if(action_type === Actions.rotate_type) {
+				var delay = options.delay || 0;
 				var do_action = function(round) {
 					var speed = options.speed || player.get_max_rotation_speed();
 					if(action === Actions.rotate.stop) speed = 0;
 					else if(action === Actions.rotate.counter_clockwise) speed *= -1;
 
 					player.set_rotation_speed(speed, round);
-					self.on_moving_object_state_change();
 					callback({
 						type: "start"
 						, action: action
 					});
 
-					if(request_timing.stop_time_ms) {
+					if(options.duration !== undefined) {
 						var stop_action = function(round) {
 							player.set_rotation_speed(0, round);
-							self.on_moving_object_state_change();
 							callback({
 								type: "stop"
 								, action: action
 							});
 						};
-						self.do_at_time(stop_action, request_timing.stop_time_ms);
+						game.on_round(stop_action, request.round+delay+options.duration);
 					}
 				};
-				this.do_at_time(do_action, request_timing.start_time_ms);
-			} else if(action_type === Actions.instantaneous_type) {
+				game.on_round(do_action, request.round+delay);
+			} /*else if(action_type === Actions.instantaneous_type) {
 				if(action === Actions.fire) {
 					var do_fire = function() {
 						player.set_auto_fire(options.automatic);
@@ -298,6 +239,7 @@ var Brawl = function(options) {
 					});
 				}
 			}
+			/**/
 		}
 	};
 })(Brawl);

@@ -9,6 +9,7 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 		make_listenable(this);
 		this.state_start_time = undefined;
 		this.state_start_round = undefined;
+		this.next_collision_timeout = undefined;
 		this.state_starts = [];
 		this.initialize();
 	};
@@ -108,37 +109,58 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 		proto.on_round = function(callback, round) {
 			var round_diff = round - this.get_round();
 			if(round_diff <= 0) {
-				callback();
+				callback(round);
 			} else {
 				var time_ms = round_diff / this.rounds_per_ms;
-				window.setTimeout(callback, time_ms);
+				window.setTimeout(function() {
+					callback(round);
+				} , time_ms);
 			}
 		};
 
 		proto.update = function(set_round_to) {
-			this.update_state_variables(set_round_to); // set this.next_collision_time
-			if(this.next_collision_time !== false) {
-				var current_round = this.state_start_round;
-				var delay = this.next_collision_time/this.rounds_per_ms;
+			if(this.next_collision_timeout !== undefined) {
+				window.clearTimeout(this.next_collision_timeout);
+				this.next_collision_timeout = undefined;
+			}
 
-				var desired_round = current_round + this.next_collision_time;
+			set_round_to = set_round_to || 0;
+			this.update_constraining_obstacles(set_round_to);
+			this.update_state_variables(set_round_to); // set this.next_collision_time
+			if(this.next_update_time !== false) {
+				var current_round = this.state_start_round;
+				var delay = this.next_update_time/this.rounds_per_ms;
+
+				var desired_round = current_round + this.next_update_time;
 				var self = this;
 				this.next_collision_timeout = window.setTimeout(function() {
 					self.update(desired_round);
 				}, delay);
 			}
 		};
+
 		
 		proto.update_state_variables = function(desired_round) {
-			this.next_collision_time = this.get_next_player_map_collision();
+			var next_collision_time = this.get_next_player_map_collision();
 			if(this.state_start_time === undefined || this.state_start_round === undefined) {
 				this.state_start_time = get_time();
-				this.state_start_round = desired_round || 0;
+				this.state_start_round = desired_round;
 			} else {
 				this.state_start_time = get_time();
-				this.state_start_round = desired_round || this.get_round(this.state_start_time);
+				this.state_start_round = desired_round;
 			}
 			this.state_starts.push({time: this.state_start_time, round: this.state_start_round});
+
+			this.next_update_time = next_collision_time;
+		};
+
+		proto.update_constraining_obstacles = function(round) {
+			var players = this.get_living_players();
+			var map = this.get_map();
+			players.forEach(function(player) {
+				var touching_obstacles = map.get_constraining_obstacles(player, round);
+				player.set_touching_obstacles(touching_obstacles, round);
+			});
 		};
 
 		proto.get_next_player_map_collision = function() {

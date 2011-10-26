@@ -7,8 +7,8 @@ define(['game/models/obstacles/map_boundary_obstacle'], function(MapBoundaryObst
 			width: 50 //Width in tiles
 			, height: 50 //Height in tiles
 			, start_positions: [
-				[{x: 10, y: 10, theta: 0}]
-				, [{x: 40, y: 40, theta: 0}]
+				[{x: 40, y: 10, theta: 0}]
+				, [{x: 10, y: 40, theta: 0}]
 			]
 		};
 		this.obstacles = [
@@ -44,6 +44,14 @@ define(['game/models/obstacles/map_boundary_obstacle'], function(MapBoundaryObst
 			});
 			if(next_obstacle_collision === false) { return false; }
 			else { return next_obstacle_collision.time; }
+		};
+		proto.get_constraining_obstacles = function(moving_object, round) {
+			var touching_obstacles = this.obstacles.map(function(obstacle) {
+				return {obstacle: obstacle, signature: obstacle.touching(moving_object, round)};
+			}).filter(function(touch_info) {
+				return touch_info.signature !== 0;
+			});;
+			return touching_obstacles;
 		};
 	})(Map);
 

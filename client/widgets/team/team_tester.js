@@ -15,7 +15,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 				$("a.save").click();
 				self.test();
 			});
-			self.test();
+//			self.test();
 		}
 
 		, destroy: function() {

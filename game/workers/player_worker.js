@@ -76,7 +76,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 	controller.turn = function(direction, user_options) {
@@ -114,7 +114,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 	controller.fire = function(param, user_options) {
@@ -154,7 +154,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 	controller.sense = function(callback) {
@@ -182,7 +182,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 
@@ -265,6 +265,10 @@ var get_time = function() {
 		var event_listener = event_listeners.get(data.event_id);
 		event_listener(data.event);
 	};
+	game.get_round = function(time) {
+		time = time || get_time();
+		return (time - this.start_time) * CONST.ROUNDS_PER_MS;
+	};
 })(game);
 
 var code;
@@ -278,7 +282,7 @@ self.onmessage = function(event) {
 		controller.number = data.info.number;
 		controller.team_id = data.info.team_id;
 	} else if(type === "game_start") {
-		game.start_time = data.start_time;
+		game.start_time = get_time();
 		run();
 	} else if(type === "callback") {
 		game.on_event(data);

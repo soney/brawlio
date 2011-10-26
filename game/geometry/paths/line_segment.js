@@ -52,8 +52,8 @@ define(['game/geometry/paths/path'], function(Path) {
 					, y: intersection_y
 				};
 			} else {
-				var my_theta = this.get_theta();
-				var other_theta = other.get_theta();
+				var my_theta = this.b === 0 ? (this.a > 0 ? Math.PI/2 : -Math.PI/2) : Math.atan(-this.a/this.b);
+				var other_theta = other.b === 0 ? (other.a > 0 ? Math.PI/2 : -Math.PI/2) : Math.atan(-other.a/other.b);
 				var delta_denom = Math.sin(my_theta)*Math.cos(other_theta) - Math.sin(other_theta)*Math.cos(my_theta);
 				var delta_x = my_radius*Math.cos(my_theta)/delta_denom;
 				var delta_y = my_radius*Math.sin(my_theta)/delta_denom;
@@ -67,10 +67,7 @@ define(['game/geometry/paths/path'], function(Path) {
 			}
 		};
 		proto.distance_to = function(point) {
-			return Math.abs(this.a*point.x + this.b*point.y + this.c) / Math.sqrt(Math.pow(this.a, 2)+Math.pow(this.b, 2));
-		};
-		proto.get_theta = function(vector) {
-			return this.b === 0 ? (this.a > 0 ? Math.PI/2 : -Math.PI/2) : Math.atan(-this.a/this.b);
+			
 		};
 	})(Line);
 
