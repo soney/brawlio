@@ -1,5 +1,13 @@
-define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils'], function(make_listenable, Projectile, distanceFromLineSegment) {
+define(function(require) {
+	var make_listenable = require('game/util/listenable');
+	var create_projectile = require('game/models/projectile');
+
 	var Game = function(options) {
+		this.teams = options.team;
+		this.map = options.map;
+		this.round_limit = options.round_limit;
+	/*
+		console.log(options);
 		this.teams = options.teams;
 		this.map = options.map;
 
@@ -12,7 +20,9 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 		this.next_collision_timeout = undefined;
 		this.state_starts = [];
 		this.initialize();
+		*/
 	};
+/*
 
 	(function(my) {
 		var unique_object_id = 0;
@@ -182,4 +192,8 @@ define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils
 	})(Game);
 
 	return Game;
+	*/
+	return function(options) {
+		return new Game(options);
+	};
 });

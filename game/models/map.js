@@ -1,4 +1,6 @@
-define(['game/models/obstacles/map_boundary_obstacle'], function(MapBoundaryObstacle) {
+define(function(require) {
+	var MapBoundaryObstacle = require('game/models/obstacles/map_boundary_obstacle');
+
 	var Map = function(options) {
 		if(options == null) {
 			options = {};
@@ -7,8 +9,8 @@ define(['game/models/obstacles/map_boundary_obstacle'], function(MapBoundaryObst
 			width: 50 //Width in tiles
 			, height: 50 //Height in tiles
 			, start_positions: [
-				[{x: 40, y: 10, theta: 0}]
-				, [{x: 10, y: 40, theta: 0}]
+				[{x: 47, y: 10, theta: 0}]
+				, [{x: 5, y: 40, theta: 0}]
 			]
 		};
 		this.obstacles = [
@@ -55,5 +57,7 @@ define(['game/models/obstacles/map_boundary_obstacle'], function(MapBoundaryObst
 		};
 	})(Map);
 
-	return Map;
+	return function(options) {
+		return new Map(options);
+	};
 });

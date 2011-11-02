@@ -1,18 +1,5 @@
-var controller = {}
-	, game = {};
-
+importScripts("../vendor/require.js");
 var is_node = typeof importScripts === "undefined";
-if(is_node) {
-	var actions = require(__dirname+'/actions');
-	var Actions = actions.Actions;
-
-	var utils = require(__dirname+'/util/worker_utils');
-	var Hash = utils.Hash;
-	var CONST = utils.CONST;
-}
-else {
-	importScripts('actions.js', '../util/worker_utils.js');
-}
 
 var post = function() {
 	if(is_node) {
@@ -32,6 +19,26 @@ var console = {
 				, args: args});
 	}
 };
+var controller = {}
+	, game = {}
+	, GameConstants
+	, Actions;
+
+require(["constants"], function(constants) {
+	GameConstants = constants.game_constants;
+	Actions = constants.actions;
+});
+
+var is_node = typeof importScripts === "undefined";
+
+var post = function() {
+	if(is_node) {
+		return postMessage.apply(self, arguments);
+	} else {
+		return self.postMessage.apply(self, arguments);
+	}
+};
+
 
 var get_time = function() {
 	return new Date().getTime();
@@ -225,11 +232,11 @@ var get_time = function() {
 		};
 	})();
 
-	var event_listeners = new Hash();
+	var event_listeners = [];
 
 	var addCallback = function(options, listener) {
 		var id = get_id();
-		event_listeners.set(id, listener);
+		event_listeners[id] = listener;
 		return id;
 	};
 
@@ -238,7 +245,7 @@ var get_time = function() {
 	};
 
 	game.onRound = function(listener, round) {
-		var run_time = game.start_time + round/CONST.ROUNDS_PER_MS;
+		var run_time = game.start_time + round*GameConstants.SIM_MS_PER_ROUND;
 		var time_diff = run_time - get_time();
 		if(time_diff <= 0) {
 			listener();
@@ -248,26 +255,26 @@ var get_time = function() {
 	};
 
 	game.setInterval = function(callback, rounds) {
-		return setInterval(callback, rounds / CONST.ROUNDS_PER_MS);
+		return setInterval(callback, rounds * GameConstants.SIM_MS_PER_ROUND);
 	};
 	game.clearInterval = function(id) {
 		return clearInterval(id);
 	};
 
 	game.setTimeout = function(callback, rounds) {
-		return setTimeout(callback, rounds / CONST.ROUNDS_PER_MS);
+		return setTimeout(callback, rounds * GameConstants.SIM_MS_PER_ROUND);
 	};
 	game.clearTimeout = function(id) {
 		return clearTimeout(id);
 	};
 
 	game.on_event = function(data) {
-		var event_listener = event_listeners.get(data.event_id);
+		var event_listener = event_listeners[data.event_id];
 		event_listener(data.event);
 	};
 	game.get_round = function(time) {
 		time = time || get_time();
-		return (time - this.start_time) * CONST.ROUNDS_PER_MS;
+		return (time - this.start_time) * GameConstants.SIM_MS_PER_ROUND;
 	};
 })(game);
 

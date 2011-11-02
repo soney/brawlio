@@ -1,40 +1,28 @@
-define(["game/models/game", "game/replay/replay"], function(Game, Replay) {
-var num_worker_speed_samples = 1;
+define(function(require) {
+require("vendor/underscore");
+var constants = require("game/constants")
+	, create_game = require("game/models/game")
+	, create_map = require("game/models/map")
+	, create_team = require("game/models/team")
+	, Replay = require("game/replay/replay")
+	, Actions = constants.Actions
+	, GameConstants = constants.GameConstants
+	, PLAYER_WORKER_PATH = "game/player_worker.js";
 
-var Actions = {
-	move_type: 0
-	, move: {
-		stop: 00
-		, forward: 01
-		, backward: 02
-		, left: 03
-		, right: 04
-	}
+var Brawl = function(options) {
+	var map = create_map(options.map);
+	var teams = _.map(options.teams, function(team_options) {
+		return create_team(team_options);
+	});
 
-	, rotate_type: 1
-	, rotate: {
-		stop: 10
-		, clockwise: 11
-		, counter_clockwise: 12
-	}
-
-	, instantaneous_type: 2
-	, fire: 20
-	, stop_firing: 21
-	, sense: 22
-
-	, get_type: function(action) {
-		if(action >= 00 && action <= 09) {
-			return Actions.move_type;
-		} else if(action >= 10 && action <= 19) {
-			return Actions.rotate_type;
-		} else if(action >= 20 && action <= 29) {
-			return Actions.instantaneous_type;
-		}
-	}
+	this.game = create_game({
+		map: map
+		, teams: teams
+		, round_limit: options.round_limit
+	});
 };
 
-var PLAYER_WORKER_PATH = "game/workers/player_worker.js";
+/*
 
 var Brawl = function(options) {
 	this.ms_per_round = 1000.0;
@@ -239,9 +227,11 @@ var Brawl = function(options) {
 					});
 				}
 			}
-			/**/
 		}
 	};
 })(Brawl);
-return Brawl;
+			/**/
+return function(options) {
+	return new Brawl(options);
+};
 });

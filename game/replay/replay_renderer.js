@@ -1,4 +1,4 @@
-define(function(require, exports, module) {
+define(function() {
 	var PIXELS_PER_TILE = 8;
 
 	var FPS = 30;

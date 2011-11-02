@@ -1,4 +1,4 @@
-define(function(require, exports, module) {
+define(function() {
 	var util = {
 		extend: function (subclass, superclass) {
 			var Dummy = function(){};

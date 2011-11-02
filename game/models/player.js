@@ -1,9 +1,7 @@
 define(['game/geometry/shapes/circle', 'game/models/moving_object', 'game/models/moving_object_state', 'game/util/object_oriented', 'game/util/listenable'], function(Circle, MovingObject, create_movement_state, oo_utils, make_listenable) {
 	var Player = function(options) {
 		var radius = 2; //Radius in tiles
-		if(options == null) {
-			options = {};
-		}
+		this.code = options.code;
 
 		Player.superclass.call(this, {
 			shape: new Circle({radius: radius})
@@ -232,5 +230,5 @@ define(['game/geometry/shapes/circle', 'game/models/moving_object', 'game/models
 	};
 
 
-	return Player;
+	return function(options) { return new Player(options); };
 });

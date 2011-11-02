@@ -1,4 +1,8 @@
-define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "vendor/jquery-ui"], function(Brawl, Map, Team) {
+define(function(require) {
+	require("vendor/jquery");
+	require("vendor/jquery-ui");
+	var create_brawl = require("game/brawl");
+
 	var TeamTester = {
 		options: {
 			team_id: null
@@ -30,20 +34,27 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 
 
 			BrawlIO.get_king_code(function(king_code) {
-				var map = new Map();
-				var my_team = new Team({
-					code: team.code
+				var brawl = create_brawl({
+					teams: [ {
+							name: "Me"
+							, players: [{
+								code: team.code
+							}]
+						} , {
+							name: "Opponent"
+							, players: [{
+								code: ""
+							}]
+						}
+					]
+					, map: {
+						width: 50
+						, height: 50
+					}
+					, round_limit: 20
 				});
 
-				var other_team = new Team({
-					code: ""//king_code 
-				});
-
-				var brawl = new Brawl({
-					teams: [my_team, other_team]
-					, map: map
-					, round_limit: 40
-				});
+/*
 				var replay = brawl.get_replay();
 				brawl.run(function(winner) {
 					if(winner === 0) {
@@ -51,6 +62,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "vendor/jquery", "v
 					}
 				});
 				self.show_replay(replay);
+				*/
 			});
 		}
 

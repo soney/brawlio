@@ -1,17 +1,12 @@
-define(['../constants', './player'], function(Constants, Player) {
-	var Team = function(options) {
-		this.code = options.code;
-		this.players = [];
-		for(var i = 0; i<Constants.TEAM_SIZE; i++) {
-			var player = new Player({
-				number: i+1
-				, team: this
-				, code: this.code
-			});
+define(function(require) {
+	require("vendor/underscore");
+	var create_player = require('game/models/player');
 
-			this.players.push(player);
-		}
-		this.id = options.id;
+	var Team = function(options) {
+		this.name = options.name;
+		this.players = _.map(options.players, function(player_options) {
+			return create_player(player_options);
+		});
 	};
 
 	(function(my) {
@@ -30,5 +25,7 @@ define(['../constants', './player'], function(Constants, Player) {
 		proto.set_id = function(id) { this.id = id; };
 	})(Team);
 
-	return Team;
+	return function(options) {
+		return new Team(options);
+	};
 });
