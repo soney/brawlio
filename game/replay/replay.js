@@ -33,6 +33,7 @@ define(['game/models/player'], function(Player) {
 					if(object instanceof Player) {
 						var player = object;
 						var position = player.get_position(round);
+
 						var info = $.extend({}, position, {
 							player: player
 							, number: player.get_number()

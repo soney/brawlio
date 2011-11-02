@@ -53,11 +53,19 @@ define(function(require, exports, module) {
 	};
 	(function() {
 		this.play = function(ctx) {
+			var self = this;
+			window.setTimeout(function() {
+				self.start_time = get_time();
+				self.snapshot_index = 0;
+				
+				self.render(ctx);
+			}, 1000);
+			/*
 			this.start_time = get_time();
 			this.snapshot_index = 0;
 			
 			this.render(ctx);
-			var self = this;
+			*/
 		};
 		this.stop = function() {
 			console.log("Replay done");
@@ -68,7 +76,7 @@ define(function(require, exports, module) {
 				this.stop();
 				return;
 			}
-			if(this._destroy === true) return;
+			if(this._destroy === true) { return; }
 			var self = this;
 			window.setTimeout(function() {
 				self.render(ctx);
