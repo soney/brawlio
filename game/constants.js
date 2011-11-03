@@ -27,6 +27,12 @@ define(function(require, exports, module) {
 		, fire: 20
 		, stop_firing: 21
 		, sense: 22
+
+		, get_type: function(action) {
+			if(action<10) { return Actions.move_type; }
+			else if(action<20) { return Actions.rotate_type; }
+			else if(action<30) { return Actions.instantaneous_type; }
+		}
 	};
 
 	exports.game_constants = GameConstants;

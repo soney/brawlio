@@ -17,6 +17,9 @@ define(function(require) {
 			var self = this;
 			$("a#king_challenge").bind("click.show_dummy_replay", function() {
 				$("a.save").click();
+				if(self.current_brawl!==undefined) {
+					self.current_brawl.terminate();
+				}
 				self.test();
 			});
 //			self.test();
@@ -53,6 +56,12 @@ define(function(require) {
 					}
 					, round_limit: 20
 				});
+				brawl.run(function(winner) {
+					if(winner === 0) {
+						//BrawlIO.claim_crown();
+					}
+				});
+				self.current_brawl = brawl;
 
 /*
 				var replay = brawl.get_replay();

@@ -1,13 +1,13 @@
 define(['game/models/player'], function(Player) {
 	var Replay = function(options) {
-		this.map = options.map;
+		this.game = options.game;
 		this.complete = options.complete || false;
 		this.objects = [];
 		this.events = [];
 	};
 
 	(function() {
-		this.get_map = function() { return this.map; };
+		this.get_map = function() { return this.game.get_map(); };
 		this.add_moving_object = function(object, appears_at, disappears_at) {
 			var meta_obj = {
 				object: object,

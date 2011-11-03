@@ -313,3 +313,4 @@ var run = function() {
 		eval(code);
 	}).call();
 };
+post("ready");

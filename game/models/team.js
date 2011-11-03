@@ -4,8 +4,9 @@ define(function(require) {
 
 	var Team = function(options) {
 		this.name = options.name;
-		this.players = _.map(options.players, function(player_options) {
-			return create_player(player_options);
+		this.id = options.id;
+		this.players = _.map(options.players, function(player_options, index) {
+			return create_player(_.extend({number: index}, player_options));
 		});
 	};
 
