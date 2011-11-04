@@ -1,9 +1,9 @@
-define(['game/models/player'], function(Player) {
+define(function(require) {
+	var Player = require("game/models/player");
+
 	var Replay = function(options) {
 		this.game = options.game;
 		this.complete = options.complete || false;
-		this.objects = [];
-		this.events = [];
 	};
 
 	(function() {
@@ -21,40 +21,26 @@ define(['game/models/player'], function(Player) {
 		};
 		this.is_complete = function() {return this.complete;};
 		this.get_snapshot_at = function(round) {
-			var players = [];
-			for(var i = 0, len = this.objects.length; i<len; i++) {
-				var meta_object = this.objects[i];
-				var appears_at = meta_object.appears_at
-					, disappears_at = meta_object.disappears_at
-					, object = meta_object.object;
-
-				if((appears_at === undefined || round >= appears_at) &&
-					(disappears_at === undefined || round < disappears_at)) {
-					if(object instanceof Player) {
-						var player = object;
-						var position = player.get_position(round);
-
-						var info = $.extend({}, position, {
-							player: player
-							, number: player.get_number()
-							, team_id: player.get_team().id
-						});
-						players.push(info);
-					}
-				}
-			}
+			var game = this.game;
+			var players = game.get_players().map(function(player) {
+				return _.extend({
+					player: player
+					, number: player.get_number()
+				}, game.get_player_position_on_round(player, round));
+			});
+			var map = this.get_map();
 
 			return {
 				round: round
 				, players: players
 				, projectiles: []
 				, map: {
-					width: this.map.attributes.width
-					, height: this.map.attributes.height
+					width: map.get_width()
+					, height: map.get_height()
 				}
 			};
 		};
 	}).call(Replay.prototype);
 
-	return Replay;
+	return function(options){return new Replay(options);};
 });

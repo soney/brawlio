@@ -63,7 +63,6 @@ define(function(require) {
 				});
 				self.current_brawl = brawl;
 
-/*
 				var replay = brawl.get_replay();
 				brawl.run(function(winner) {
 					if(winner === 0) {
@@ -71,7 +70,6 @@ define(function(require) {
 					}
 				});
 				self.show_replay(replay);
-				*/
 			});
 		}
 

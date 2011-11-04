@@ -1,4 +1,4 @@
-define(['game/geometry/paths/movement_path', 'game/models/obstacles/obstacle', 'game/geometry/paths/line', 'game/util/object_oriented'], function(create_movement_path, StaticObstacle, LinePath, oo_utils) {
+define(['game/models/obstacles/obstacle', 'game/geometry/paths/line', 'game/util/object_oriented'], function(StaticObstacle, LinePath, oo_utils) {
 	var close_to = function(a, b) {
 		return Math.abs(a-b) < 0.00001;
 	};

@@ -1,56 +1,71 @@
-define(['game/geometry/paths/movement_path'], function(create_movement_path) {
-	var close_to = function(a, b) {
+define(function(require) {
+	require("vendor/underscore");
+	var create_path = require("game/geometry/movement_paths/movement_path");
+	var close_to = function(a,b) {
 		return Math.abs(a-b) < 0.00001;
 	};
 	var MovingObjectState = function(options) {
-		this.path = options.path;
-		this.specified_path = options.specified_path;
-		this.valid_from = options.valid_from;
-		this.valid_to = undefined;
+		this.moving_object = options.moving_object;
+		this.x0 = options.x0;
+		this.y0 = options.y0;
+		this.theta0 = options.theta0;
+		this.rotational_velocity = options.rotational_velocity;
+		this.translational_velocity = options.translational_velocity;
+		this.game = options.game;
+
+		this.specified_path = this.get_specified_path();
+		this.path = this.game.restrict_path(this.moving_object, this.specified_path);
 	};
 
 	(function(my) {
 		var proto = my.prototype;
-		proto.get_position = function(delta_t) {
-			return this.path.get_position(delta_t);
+		proto.get_moving_object = function() { return this.moving_object; };
+		proto.get_position_after = function(rounds) {
+			var path = this.get_path();
+			var position = path.get_position(rounds);
+			return {
+				x: position.x
+				, y: position.y
+				, theta: this.theta0 + rounds * this.get_rotational_velocity()
+			};
 		};
-		proto.delta_t_until_at = function(x,y,from_t) {
-			return this.path.delta_t_until_at(x,y,from_t);
+		proto.get_x0 = function() { return this.x0; };
+		proto.get_y0 = function() { return this.y0; };
+		proto.get_theta0 = function() { return this.theta0; };
+		proto.get_rotational_velocity = function() { return this.rotational_velocity; };
+		proto.get_translational_speed = function() { return this.translational_velocity.speed; };
+		proto.get_translational_angle = function() { return this.translational_velocity.angle; };
+		proto.get_specified_path = function() {
+			var translational_speed = this.get_translational_speed();
+			var rotational_velocity = this.get_rotational_velocity();
+			if(close_to(translational_speed, 0)) {
+				return create_path("stationary", {
+					x0: this.get_x0()
+					, y0: this.get_y0()
+				});
+			} else if(close_to(rotational_velocity, 0)) {
+				var movement_angle = this.get_theta0() + this.get_translational_angle();
+				return create_path("constant_velocity_line", {
+					x0: this.get_x0()
+					, y0: this.get_y0()
+					, speed: this.get_translational_speed()
+					, angle: movement_angle
+				});
+			} else {
+				var movement_angle = this.get_theta0() + this.get_translational_angle();
+				return create_path("constant_velocity_circle", {
+					x0: this.get_x0()
+					, y0: this.get_y0()
+					, angle: movement_angle
+					, speed: this.get_translational_speed()
+					, rotational_speed: this.get_rotational_velocity()
+				});
+			}
 		};
-		proto.set_valid_to = function(to) {
-			this.valid_to = to;
-		};
-		proto.valid_at = function(time) {
-			return time >= this.valid_from && (this.valid_to === undefined ||
-												time < this.valid_to);
-		};
-		proto.get_valid_from = function() {
-			return this.valid_from;
+		proto.get_path = function() {
+			return this.path;
 		};
 	})(MovingObjectState);
 
-	var create_movement_state = function(options, based_on) {
-		based_on = based_on || {};
-
-		var round = options.round || 0;
-		var moving_object = options.moving_object;
-		var touching = options.touching;
-
-		var specified_path = create_movement_path(options, based_on.specified_path);
-		var path = create_movement_path(options, based_on.specified_path);
-		touching.forEach(function(touch_info) {
-			var obstacle = touch_info.obstacle;
-			path_info = obstacle.constrain_path(path, moving_object, round);
-			path = path_info.path;
-		});
-
-		var state = new MovingObjectState({
-			specified_path: specified_path
-			, path: path
-			, valid_from: round
-		});
-		return state;
-	};
-
-	return create_movement_state;
+	return function(options) { return new MovingObjectState(options); };
 });

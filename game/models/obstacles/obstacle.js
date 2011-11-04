@@ -1,4 +1,4 @@
-define(['game/geometry/paths/movement_path'], function(create_movement_path) {
+define(function(require) {
 	var StaticObstacle = function(options) {
 		this.inverted = options.inverted;
 	};
@@ -14,7 +14,7 @@ define(['game/geometry/paths/movement_path'], function(create_movement_path) {
 			return false;
 		};
 		proto.constrain_path = function(path, moving_object, round) {
-			return {path: create_movement_path({}, path), constrained_until: undefined};
+			return {path: path, constrained_until: undefined};
 		};
 	})(StaticObstacle);
 

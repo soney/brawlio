@@ -274,7 +274,7 @@ var get_time = function() {
 	};
 	game.get_round = function(time) {
 		time = time || get_time();
-		return (time - this.start_time) * GameConstants.SIM_MS_PER_ROUND;
+		return (time - this.start_time) / GameConstants.SIM_MS_PER_ROUND;
 	};
 })(game);
 
