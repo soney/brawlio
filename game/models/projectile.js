@@ -5,7 +5,7 @@ define(function(require) {
 
 	var Projectile = function(options) {
 		var radius = options.radius; //Radius in tiles
-		Player.superclass.call(this, {
+		Projectile.superclass.call(this, {
 			shape: new Circle({radius: radius})
 		});
 	};

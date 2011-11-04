@@ -6,7 +6,6 @@ var constants = require("game/constants")
 	, create_projectile = require("game/models/projectile")
 	, create_moving_object_state = require("game/models/moving_object_state");
 var make_listenable = require('game/util/listenable');
-var create_projectile = require('game/models/projectile');
 
 var get_time = function() {
 	return (new Date()).getTime();
@@ -106,6 +105,9 @@ var Game = function(options) {
 							.flatten()
 							.value();
 	};
+	proto.get_projectiles = function() {
+		return this.projectiles;
+	};
 	proto.get_living_players = function() {
 		return _.filter(this.get_players(), function(player) {
 			return player.is_alive();
@@ -123,6 +125,7 @@ var Game = function(options) {
 		var projectile = create_projectile({
 			radius: projectile_radius
 		});
+		this.projectiles.push(projectile);
 		this.update_state(round, "Fire");
 	};
 	proto.start = function() {

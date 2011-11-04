@@ -3,6 +3,9 @@ define(function(require) {
 	var make_listenable = require("game/util/listenable");
 	var MovingObject = function(options) {
 		this.shape = options.shape;
+		this.x0 = options.x0;
+		this.y0 = options.y0;
+		this.theta0 = options.theta0;
 		this.state = {
 			translational_velocity: {speed: 0, angle: 0}
 			, rotational_velocity: 0
