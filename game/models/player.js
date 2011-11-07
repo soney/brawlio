@@ -9,6 +9,7 @@ define(function(require) {
 
 		Player.superclass.call(this, {
 			shape: new Circle({radius: radius})
+			, type: "player"
 		});
 		this.attributes = {
 			max_movement_speed: 5.0 //Tiles per round

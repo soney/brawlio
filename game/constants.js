@@ -4,6 +4,7 @@ define(function(require, exports, module) {
 		, PIXEL_TILE_RATIO: 5
 		, SIM_MS_PER_ROUND: 1000
 		, REPLAY_MS_PER_ROUND: 1000
+		, PROJECTILE_SPEED: 20 
 	};
 
 	var Actions = {

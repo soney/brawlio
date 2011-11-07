@@ -13,6 +13,7 @@ define(function(require) {
 			, rotational_velocity: rotational_velocity
 		};
 		make_listenable(this);
+		this.type = options.type;
 	};
 
 	(function(my) {
@@ -31,6 +32,9 @@ define(function(require) {
 		};
 		proto.get_state = function() {
 			return _.clone(this.state);
+		};
+		proto.is = function(type) {
+			return this.type === type;
 		};
 	})(MovingObject);
 

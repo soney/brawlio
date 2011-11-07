@@ -45,6 +45,17 @@ var proto = my.prototype;
 		var round_delta = round - this.start_round;
 		return moving_object_state.get_position_after(round_delta);
 	};
+	proto.get_moving_object_states = function(round) {
+		var round_diff = round - this.start_round;
+		return _.map(this.moving_object_states, function(moving_object_state) {
+			return {
+				position: moving_object_state.get_position_after(round_diff)
+				, moving_object: moving_object_state.get_moving_object()
+			};
+			return moving_object_state.get_position_after(round_diff);
+		});
+		return this.moving_object_states;
+	};
 })(GameState);
 
 var RoundListener = function(options) {
@@ -114,12 +125,12 @@ var Game = function(options) {
 		});
 	};
 	proto.on_player_fire = function(player, round) {
-		var position = this.get_player_position_on_round(player, round);
+		var position = this.get_moving_object_position_on_round(player, round);
 		var player_radius = player.get_radius();
 		var projectile_radius = 1;
 		var radius = player_radius + projectile_radius;
-		var dx = radius + Math.cos(position.theta);
-		var dy = radius + Math.sin(position.theta);
+		var dx = radius * Math.cos(position.theta);
+		var dy = radius * Math.sin(position.theta);
 		var projectile_x = position.x + dx;
 		var projectile_y = position.y + dy;
 		var projectile = create_projectile({
@@ -127,6 +138,8 @@ var Game = function(options) {
 			, x0: projectile_x
 			, y0: projectile_y
 			, theta0: position.theta
+			, translational_velocity: {speed: GameConstants.PROJECTILE_SPEED}
+			, fired_by: player
 		});
 		this.projectiles.push(projectile);
 		this.update_state(round, "Fire");
@@ -215,7 +228,6 @@ var Game = function(options) {
 		var new_state = new GameState(options);
 		this.states.push(new_state);
 		this.update_round_listeners();
-		console.log(new_state);
 	};
 	proto.peek_state = function() {
 		return _.last(this.states);
@@ -224,7 +236,7 @@ var Game = function(options) {
 	proto.update_state = function(round, trigger, more_info) {
 		//set_round_to = set_round_to || 0;
 		//var next_event_rounds = this.rounds_until_next_event();
-		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.get_moving_object_states(round)});
+		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
 	};
 	proto.rounds_until_next_event = function() {
 		return this.rounds_until_next_player_map_collision();
@@ -256,16 +268,23 @@ var Game = function(options) {
 		}
 		return undefined;
 	};
-	proto.get_player_position_on_round = proto.get_moving_object_position_on_round = function(moving_object, round) {
+	proto.get_moving_object_position_on_round = function(moving_object, round) {
 		var relevant_state = this.get_relevant_state(round);
 		if(relevant_state === undefined) {
 			return undefined;
 		}
 		return relevant_state.get_moving_object_position_on_round(moving_object, round);
 	};
-	proto.get_existing_objects = function(round) {
-	};
+
 	proto.get_moving_object_states = function(round) {
+		var relevant_state = this.get_relevant_state(round);
+		if(relevant_state === undefined) {
+			return undefined;
+		}
+		return relevant_state.get_moving_object_states(round);
+	};
+
+	proto.create_moving_object_states = function(round) {
 		var self = this;
 		var start_positions;
 		if(round === 0) {
@@ -289,7 +308,7 @@ var Game = function(options) {
 		});
 		var projectile_states = _.map(this.get_projectiles(), function(projectile, index) {
 			if(!projectile.initialized) {
-				projectile.initialzed = true;
+				projectile.initialized = true;
 
 				return create_moving_object_state(_.extend({
 					moving_object: projectile
@@ -300,11 +319,11 @@ var Game = function(options) {
 				}, projectile.get_state()));
 			} else {
 				var start_position = self.get_moving_object_position_on_round(projectile, round);
-
 				return create_moving_object_state(_.extend({
 					moving_object: projectile
 					, x0: start_position.x
 					, y0: start_position.y
+					, theta0: start_position.theta
 					, game: self
 				}, projectile.get_state()));
 			}

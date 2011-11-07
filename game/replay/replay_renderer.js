@@ -18,8 +18,8 @@ define(function() {
 	function draw_player(player, state, ctx) {
 		ctx.save();
 
-		ctx.translate(state.x, state.y);
-		ctx.rotate(state.theta);
+		ctx.translate(state.position.x, state.position.y);
+		ctx.rotate(state.position.theta);
 		ctx.fillStyle = "yellow";
 		ctx.beginPath();
 		ctx.arc(0, 0, player.get_radius(), 0, Math.PI*2, true);
@@ -38,7 +38,7 @@ define(function() {
 	function draw_projectile(projectile, state, ctx) {
 		ctx.save();
 
-		ctx.translate(state.x, state.y);
+		ctx.translate(state.position.x, state.position.y);
 		ctx.fillStyle = "red";
 		ctx.beginPath();
 		ctx.arc(0, 0, projectile.get_radius(), 0, Math.PI*2, true);
@@ -94,6 +94,15 @@ define(function() {
 			var map = this.replay.get_map();
 			draw_map(map, ctx);
 			var self = this;
+			_.forEach(snapshot.moving_object_states, function(moving_object_state) {
+				var moving_object = moving_object_state.moving_object;
+				if(moving_object.is("player")) {
+					draw_player(moving_object, moving_object_state, ctx);
+				} else if(moving_object.is("projectile")) {
+					draw_projectile(moving_object, moving_object_state, ctx);
+				}
+			});
+			/*
 			snapshot.players.forEach(function(player_state) {
 				var player = player_state.player;
 				draw_player(player, player_state, ctx);
@@ -102,6 +111,7 @@ define(function() {
 				var projectile = projectile_state.projectile;
 				draw_projectile(projectile, projectile_state, ctx);
 			});
+			*/
 			ctx.restore();
 		};
 		this.destroy = function() {

@@ -22,18 +22,13 @@ define(function(require) {
 		this.is_complete = function() {return this.complete;};
 		this.get_snapshot_at = function(round) {
 			var game = this.game;
-			var players = game.get_players().map(function(player) {
-				return _.extend({
-					player: player
-					, number: player.get_number()
-				}, game.get_player_position_on_round(player, round));
-			});
+			var moving_object_states = game.get_moving_object_states(round);
 			var map = this.get_map();
+
 
 			return {
 				round: round
-				, players: players
-				, projectiles: []
+				, moving_object_states: moving_object_states
 				, map: {
 					width: map.get_width()
 					, height: map.get_height()
