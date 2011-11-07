@@ -83,7 +83,7 @@ var Game = function(options) {
 	this.round_listeners = [];
 	this.replay = create_replay({ game: this });
 	this.initialize();
-	this.projectiles = [];
+	this.active_projectiles = [];
 };
 (function(my) {
 	var proto = my.prototype;
@@ -116,13 +116,16 @@ var Game = function(options) {
 							.flatten()
 							.value();
 	};
-	proto.get_projectiles = function() {
-		return this.projectiles;
-	};
 	proto.get_living_players = function() {
 		return _.filter(this.get_players(), function(player) {
 			return player.is_alive();
 		});
+	};
+	proto.get_active_projectiles = function() {
+		return this.active_projectiles;
+	};
+	proto.get_active_moving_objects = function() {
+		return this.get_living_players().concat(this.get_active_projectiles());
 	};
 	proto.on_player_fire = function(player, round) {
 		var position = this.get_moving_object_position_on_round(player, round);
@@ -141,7 +144,7 @@ var Game = function(options) {
 			, translational_velocity: {speed: GameConstants.PROJECTILE_SPEED}
 			, fired_by: player
 		});
-		this.projectiles.push(projectile);
+		this.active_projectiles.push(projectile);
 		this.update_state(round, "Fire");
 	};
 	proto.start = function() {
@@ -234,20 +237,27 @@ var Game = function(options) {
 	};
 
 	proto.update_state = function(round, trigger, more_info) {
-		//set_round_to = set_round_to || 0;
-		//var next_event_rounds = this.rounds_until_next_event();
+		var next_event_rounds = this.rounds_until_next_event();
 		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
 	};
 	proto.rounds_until_next_event = function() {
-		return this.rounds_until_next_player_map_collision();
+		var map_collision_time = this.rounds_until_next_map_collision();
+		var moving_object_collision_time = this.rounds_until_next_moving_object_collision();
+		if(map_collision_time === false) {
+			return moving_object_collision_time;
+		} else if(moving_object_collision_time === false) {
+			return map_collision_time;
+		} else {
+			return Math.min(map_collision_time, moving_object_collision_time);
+		}
 	};
 
-	proto.rounds_until_next_player_map_collision = function() {
-		var players = this.get_living_players();
+	proto.rounds_until_next_map_collision = function() {
+		var moving_objects = this.get_active_moving_objects();
 		var map = this.get_map();
 
-		var collision_times = players.map(function(player) {
-			var next_collision = map.get_next_collision(player);
+		var collision_times = moving_objects.map(function(moving_object) {
+			var next_collision = map.get_next_collision(moving_object);
 			return next_collision;
 		}).filter(function(collision) {
 			return collision !== false;
@@ -256,6 +266,28 @@ var Game = function(options) {
 		var next_collision = Math.min.apply(Math, collision_times);
 		return next_collision;
 	};
+	proto.rounds_until_next_moving_object_collision = function() {
+		var moving_objects = this.get_active_moving_objects();
+		var i,j, len = moving_objects.length;
+		var collision_times = [];
+
+		for(i = 0; i<len-1; i++) {
+			var mo_i = moving_objects[i];
+			for(j = i+1; j<len; j++) {
+				var mo_j = moving_objects[j];
+				
+				var collision_time = mo_i.get_next_collision(mo_j);
+				if(collision_time !== false) {
+					collision_times.push(collision_time);
+				}
+			}
+		}
+
+		if(collision_times.length === 0) {return false;}
+		var next_collision = Math.min.apply(Math, collision_times);
+		return next_collision;
+	};
+
 	proto.get_replay = function() {
 		return this.replay;
 	};
@@ -306,7 +338,7 @@ var Game = function(options) {
 				, game: self
 			}, player.get_state()));
 		});
-		var projectile_states = _.map(this.get_projectiles(), function(projectile, index) {
+		var projectile_states = _.map(this.get_active_projectiles(), function(projectile, index) {
 			if(!projectile.initialized) {
 				projectile.initialized = true;
 

@@ -30,6 +30,8 @@ define(function(require) {
 			return this.attributes.start_positions;
 		};
 		proto.get_next_collision = function(moving_object) {
+			return false;
+
 			var collision_times = this.obstacles.map(function(obstacle) {
 				var touch_time = obstacle.will_touch(moving_object);
 				if(touch_time === false) { return false; }
