@@ -6,9 +6,11 @@ define(function(require) {
 		this.x0 = options.x0;
 		this.y0 = options.y0;
 		this.theta0 = options.theta0;
+		var translational_velocity = _.extend({speed: 0, angle: 0}, options.translational_velocity);
+		var rotational_velocity = options.rotational_velocity || 0;
 		this.state = {
-			translational_velocity: {speed: 0, angle: 0}
-			, rotational_velocity: 0
+			translational_velocity: translational_velocity
+			, rotational_velocity: rotational_velocity
 		};
 		make_listenable(this);
 	};

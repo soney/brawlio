@@ -124,6 +124,9 @@ var Game = function(options) {
 		var projectile_y = position.y + dy;
 		var projectile = create_projectile({
 			radius: projectile_radius
+			, x0: projectile_x
+			, y0: projectile_y
+			, theta0: position.theta
 		});
 		this.projectiles.push(projectile);
 		this.update_state(round, "Fire");
@@ -260,6 +263,8 @@ var Game = function(options) {
 		}
 		return relevant_state.get_moving_object_position_on_round(moving_object, round);
 	};
+	proto.get_existing_objects = function(round) {
+	};
 	proto.get_moving_object_states = function(round) {
 		var self = this;
 		var start_positions;
@@ -282,7 +287,29 @@ var Game = function(options) {
 				, game: self
 			}, player.get_state()));
 		});
-		var projectile_states = [];
+		var projectile_states = _.map(this.get_projectiles(), function(projectile, index) {
+			if(!projectile.initialized) {
+				projectile.initialzed = true;
+
+				return create_moving_object_state(_.extend({
+					moving_object: projectile
+					, x0: projectile.x0
+					, y0: projectile.y0
+					, theta0: projectile.theta0
+					, game: self
+				}, projectile.get_state()));
+			} else {
+				var start_position = self.get_moving_object_position_on_round(projectile, round);
+
+				return create_moving_object_state(_.extend({
+					moving_object: projectile
+					, x0: start_position.x
+					, y0: start_position.y
+					, game: self
+				}, projectile.get_state()));
+			}
+		});
+
 		return player_states.concat(projectile_states);
 	};
 	proto.restrict_path = function(moving_object, path) {

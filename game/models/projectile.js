@@ -5,9 +5,11 @@ define(function(require) {
 
 	var Projectile = function(options) {
 		var radius = options.radius; //Radius in tiles
-		Projectile.superclass.call(this, {
+		Projectile.superclass.call(this, _.extend({
 			shape: new Circle({radius: radius})
-		});
+			, translational_velocity: {speed: 0}
+		}, options));
+		this.initialized = false;
 	};
 	oo_utils.extend(Projectile, MovingObject);
 
