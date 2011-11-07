@@ -303,13 +303,19 @@ var Game = function(options) {
 	proto.rounds_until_next_map_event = function() {
 		var moving_objects = this.get_active_moving_objects();
 		var map = this.get_map();
+		var game_state = this.peek_state();
 
-		var event_times = moving_objects.map(function(moving_object) {
-			var next_event = map.get_next_event(moving_object);
-			return next_event;
-		}).filter(function(map_event) {
-			return map_event !== false;
-		});
+		var self = this;
+		var event_times = _(moving_objects)	.chain()
+											.map(function(moving_object) {
+												var moving_object_state = game_state.get_state_for_moving_object(moving_object);
+												var next_event = map.get_next_event(moving_object, moving_object_state);
+												return next_event;
+											})
+											.filter(function(map_event) {
+												return map_event !== false;
+											})
+											.value();
 		if(event_times.length === 0) {return false;}
 		var next_event_time = Math.min.apply(Math, event_times);
 		return next_event_time;

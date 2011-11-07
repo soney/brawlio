@@ -7,6 +7,9 @@ define([], function() {
 		proto.get_name = function() {
 			return this.name;
 		};
+		proto.is = function(name) {
+			return this.name === name;
+		};
 	})(Shape);
 	return Shape;
 });

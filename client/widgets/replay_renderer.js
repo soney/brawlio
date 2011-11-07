@@ -62,12 +62,6 @@ define(function(require) {
 				
 				self.render(ctx);
 			}, 0);
-			/*
-			this.start_time = get_time();
-			this.snapshot_index = 0;
-			
-			this.render(ctx);
-			*/
 		};
 		this.stop = function() {
 			console.log("Replay done");

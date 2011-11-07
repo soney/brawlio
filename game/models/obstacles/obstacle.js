@@ -7,7 +7,7 @@ define(function(require) {
 		var proto = my.prototype;
 		//If will not touch, return false
 		//Otherwise, return the delta t until it will touch
-		proto.will_touch = function(moving_object) {
+		proto.next_touch_event = function(moving_object, moving_object_state) {
 			return false;
 		};
 		proto.touching = function(moving_object_state, round) {

@@ -22,7 +22,7 @@ define(function(require) {
 				}
 				self.test();
 			});
-//			self.test();
+			self.test();
 		}
 
 		, destroy: function() {

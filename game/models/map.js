@@ -30,7 +30,15 @@ define(function(require) {
 		proto.get_start_positions = function() {
 			return this.attributes.start_positions;
 		};
-		proto.get_next_event = function(moving_object) {
+		proto.get_next_event = function(moving_object, moving_object_state) {
+			var event_times = this.obstacles.map(function(obstacle) {
+				var touch_time = obstacle.next_touch_event(moving_object, moving_object_state);
+				if(touch_time === false) { return false; }
+				else { return {obstacle: obstacle, time: touch_time}; }
+			}).filter(function(collision_time) {
+				return collision_time !== false;
+			});
+			
 		/*
 			var event_times = this.obstacles.map(function(obstacle) {
 				var touch_time = obstacle.will_touch(moving_object);
