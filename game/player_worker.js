@@ -289,7 +289,7 @@ self.onmessage = function(event) {
 		controller.number = data.info.number;
 		controller.team_id = data.info.team_id;
 	} else if(type === "game_start") {
-		game.start_time = get_time();
+		game.start_time = data.start_time;//get_time();
 		run();
 	} else if(type === "callback") {
 		game.on_event(data);

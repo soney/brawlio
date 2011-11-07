@@ -54,7 +54,7 @@ define(function(require) {
 						width: 50
 						, height: 50
 					}
-					, round_limit: 20
+					//, round_limit: 20
 				});
 				brawl.run(function(winner) {
 					if(winner === 0) {

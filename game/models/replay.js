@@ -1,12 +1,15 @@
 define(function(require) {
+	require("vendor/underscore");
 	var Replay = function(options) {
 		this.game = options.game;
 		this.complete = options.complete || false;
+		this.game_events = [];
 	};
 
-	(function() {
-		this.get_map = function() { return this.game.get_map(); };
-		this.add_moving_object = function(object, appears_at, disappears_at) {
+	(function(my) {
+		var proto = my.prototype;
+		proto.get_map = function() { return this.game.get_map(); };
+		proto.add_moving_object = function(object, appears_at, disappears_at) {
 			var meta_obj = {
 				object: object,
 				appears_at: appears_at,
@@ -14,8 +17,8 @@ define(function(require) {
 			};
 			this.objects.push(meta_obj);
 		};
-		this.is_complete = function() {return this.complete;};
-		this.get_snapshot_at = function(round) {
+		proto.is_complete = function() {return this.complete;};
+		proto.get_snapshot_at = function(round) {
 			var game = this.game;
 			var moving_object_states = game.get_moving_object_states(round);
 			var map = this.get_map();
@@ -28,7 +31,19 @@ define(function(require) {
 				}
 			};
 		};
-	}).call(Replay.prototype);
+		proto.get_game_events = function() {
+			return this.game_events;
+		};
+		proto.get_game_events.between = function(from_round, to_round) {
+			return _.filter(this.get_game_events(), function(game_event) {
+				var round = game_event.get_round();
+				return round >= from_round && round < to_round;
+			});
+		};
+		proto.push_game_event = function(game_event) {
+			this.game_events.push(game_event);
+		};
+	}(Replay));
 
 	return function(options){return new Replay(options);};
 });

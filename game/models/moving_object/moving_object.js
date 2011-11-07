@@ -39,6 +39,12 @@ define(function(require) {
 		proto.get_next_event = function(with_moving_object) {
 			return false;
 		};
+		proto.restrict_path = function(moving_object, path) {
+			return path;
+		};
+		proto.is_touching = function(moving_object) {
+			return false;
+		};
 	})(MovingObject);
 
 	return MovingObject;

@@ -114,10 +114,10 @@ var Brawl = function(options) {
 									, action: action
 								});
 							};
-							game.round_timeout(stop_action, request.round+delay+options.duration);
+							game.on_round(stop_action, request.round+delay+options.duration, "Stop moving");
 						}
 					};
-					game.round_timeout(do_action, request.round+delay);
+					game.on_round(do_action, request.round+delay, "Move");
 				} else if(action_type === Actions.rotate_type) {
 					var delay = options.delay || 0;
 					var do_action = function(round) {
@@ -139,22 +139,22 @@ var Brawl = function(options) {
 									, action: action
 								});
 							};
-							game.round_timeout(stop_action, request.round+delay+options.duration);
+							game.on_round(stop_action, request.round+delay+options.duration, "Stop rotating");
 						}
 					};
-					game.round_timeout(do_action, request.round+delay);
+					game.on_round(do_action, request.round+delay, "Rotate");
 				} else if(action_type === Actions.instantaneous_type) {
 					if(action === Actions.fire) {
 						var do_fire = function() {
 							player.set_auto_fire(options.automatic);
 							player.fire();
 						};
-						game.round_timeout(do_fire, request.round);
+						game.on_round(do_fire, request.round, "Fire");
 					} else if(action === Actions.stop_firing) {
 						var do_stop_firing = function() {
 							player.set_auto_fire(false);
 						};
-						game.round_timeout(do_stop_firing, request.round);
+						game.on_round(do_stop_firing, request.round, "Stop firing");
 					} else if(action === Actions.sense) {
 						var snapshot_data = game.get_snapshot();
 						snapshot_data.projectiles.forEach(function(projectile) {
@@ -188,8 +188,9 @@ var Brawl = function(options) {
 	proto.do_run = function() {
 		var self = this;
 		this.game.on("start", function() {
+			var start_time = (new Date()).getTime();
 			_.forEach(self.player_workers, function(worker) {
-				self.post(worker, {type: "game_start"});
+				self.post(worker, {type: "game_start", start_time: start_time});
 			});
 		});
 		this.game.on("end", function(winner) {

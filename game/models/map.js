@@ -1,4 +1,5 @@
 define(function(require) {
+	require("vendor/underscore");
 	var MapBoundaryObstacle = require('game/models/obstacles/map_boundary_obstacle');
 
 	var Map = function(options) {
@@ -30,15 +31,18 @@ define(function(require) {
 			return this.attributes.start_positions;
 		};
 		proto.get_next_event = function(moving_object) {
-			return false;
-
-			var collision_times = this.obstacles.map(function(obstacle) {
+		/*
+			var event_times = this.obstacles.map(function(obstacle) {
 				var touch_time = obstacle.will_touch(moving_object);
 				if(touch_time === false) { return false; }
 				else { return {obstacle: obstacle, time: touch_time}; }
 			}).filter(function(collision_time) {
 				return collision_time !== false;
 			});
+			*/
+			return false;
+			/*
+
 
 			var next_obstacle_collision = false;
 			collision_times.forEach(function(collision) {
@@ -48,6 +52,13 @@ define(function(require) {
 			});
 			if(next_obstacle_collision === false) { return false; }
 			else { return next_obstacle_collision.time; }
+			*/
+		};
+		proto.restrict_path = function(moving_object, path) {
+			return path;
+		};
+		proto.is_touching = function(moving_object) {
+			return false;
 		};
 		proto.get_constraining_obstacles = function(moving_object, round) {
 			var touching_obstacles = this.obstacles.map(function(obstacle) {

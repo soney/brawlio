@@ -14,12 +14,16 @@ define(function(require) {
 	var PlayerFired = function(options) {
 		PlayerFired.superclass.call(this, options);
 		this.player = options.player;
+		this.projectile = options.projectile;
 	};
 	oo_utils.extend(PlayerFired, GameEvent);
 	(function(my) {
 		var proto = my.prototype;
 		proto.get_player = function() {
 			return this.player;
+		};
+		proto.get_projectile = function() {
+			return this.projectile;
 		};
 	})(PlayerFired);
 	//========================================

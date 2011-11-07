@@ -1,8 +1,10 @@
 define(function(require) {
+	require("vendor/underscore");
+	var constants = require("game/constants")
+		, GameConstants = constants.game_constants;
 	var PIXELS_PER_TILE = 8;
 
 	var FPS = 30;
-	var MS_PER_ROUND = 1000;
 
 	var get_time = function() {
 		return (new Date()).getTime();
@@ -59,7 +61,7 @@ define(function(require) {
 				self.snapshot_index = 0;
 				
 				self.render(ctx);
-			}, 1000);
+			}, 0);
 			/*
 			this.start_time = get_time();
 			this.snapshot_index = 0;
@@ -84,7 +86,7 @@ define(function(require) {
 		};
 		this.do_render = function(ctx) {
 			var time_diff = get_time() - this.start_time;
-			var round = time_diff/MS_PER_ROUND;
+			var round = time_diff/GameConstants.REPLAY_MS_PER_ROUND;
 			var snapshot = this.replay.get_snapshot_at(round);
 			this.render_snapshot(snapshot, ctx);
 		};
