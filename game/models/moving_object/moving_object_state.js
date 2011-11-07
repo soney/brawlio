@@ -67,5 +67,5 @@ define(function(require) {
 		};
 	})(MovingObjectState);
 
-	return function(options) { return new MovingObjectState(options); };
+	return MovingObjectState;
 });

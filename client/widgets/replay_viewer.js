@@ -1,4 +1,4 @@
-define(["game/replay/replay_renderer", "vendor/jquery", "vendor/jquery-ui"], function(ReplayRenderer) {
+define(["client/widgets/replay_renderer", "vendor/jquery", "vendor/jquery-ui"], function(ReplayRenderer) {
 	var ReplayViewer = {
 		options: {
 			replay: undefined

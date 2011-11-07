@@ -36,7 +36,7 @@ define(function(require) {
 		proto.is = function(type) {
 			return this.type === type;
 		};
-		proto.get_next_collision = function(with_moving_object) {
+		proto.get_next_event = function(with_moving_object) {
 			return false;
 		};
 	})(MovingObject);

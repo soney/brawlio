@@ -1,6 +1,4 @@
 define(function(require) {
-	var Player = require("game/models/player");
-
 	var Replay = function(options) {
 		this.game = options.game;
 		this.complete = options.complete || false;
@@ -16,16 +14,11 @@ define(function(require) {
 			};
 			this.objects.push(meta_obj);
 		};
-		this.add_player = function(player) {
-			this.add_moving_object(player, 0, undefined);
-		};
 		this.is_complete = function() {return this.complete;};
 		this.get_snapshot_at = function(round) {
 			var game = this.game;
 			var moving_object_states = game.get_moving_object_states(round);
 			var map = this.get_map();
-
-
 			return {
 				round: round
 				, moving_object_states: moving_object_states

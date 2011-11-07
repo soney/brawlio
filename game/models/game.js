@@ -2,9 +2,11 @@ define(function(require) {
 require("vendor/underscore");
 var constants = require("game/constants")
 	, GameConstants = constants.game_constants
-	, create_replay = require("game/replay/replay")
-	, create_projectile = require("game/models/projectile")
-	, create_moving_object_state = require("game/models/moving_object_state");
+	, create_replay = require("game/models/replay")
+	, create_projectile = require("game/models/projectile/projectile")
+	, create_player_state = require("game/models/player/player_state")
+	, create_projectile_state = require("game/models/projectile/projectile_state")
+	, create_game_event = require("game/game_events/game_event_factory");
 var make_listenable = require('game/util/listenable');
 
 var get_time = function() {
@@ -221,9 +223,6 @@ var Game = function(options) {
 	};
 	proto.push_state = function(options) {
 		var round = options.round;
-		if(round<1 && round>0) {
-		//	debugger;
-		}
 		var last_state = this.peek_state();
 		if(last_state !== undefined) {
 			last_state.set_end_round(round);
@@ -241,51 +240,51 @@ var Game = function(options) {
 		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
 	};
 	proto.rounds_until_next_event = function() {
-		var map_collision_time = this.rounds_until_next_map_collision();
-		var moving_object_collision_time = this.rounds_until_next_moving_object_collision();
-		if(map_collision_time === false) {
-			return moving_object_collision_time;
-		} else if(moving_object_collision_time === false) {
-			return map_collision_time;
+		var map_event_time = this.rounds_until_next_map_event();
+		var moving_object_event_time = this.rounds_until_next_moving_object_event();
+		if(map_event_time === false) {
+			return moving_object_event_time;
+		} else if(moving_object_event_time === false) {
+			return map_event_time;
 		} else {
-			return Math.min(map_collision_time, moving_object_collision_time);
+			return Math.min(map_event_time, moving_object_event_time);
 		}
 	};
 
-	proto.rounds_until_next_map_collision = function() {
+	proto.rounds_until_next_map_event = function() {
 		var moving_objects = this.get_active_moving_objects();
 		var map = this.get_map();
 
-		var collision_times = moving_objects.map(function(moving_object) {
-			var next_collision = map.get_next_collision(moving_object);
-			return next_collision;
-		}).filter(function(collision) {
-			return collision !== false;
+		var event_times = moving_objects.map(function(moving_object) {
+			var next_event = map.get_next_event(moving_object);
+			return next_event;
+		}).filter(function(map_event) {
+			return map_event !== false;
 		});
-		if(collision_times.length === 0) {return false;}
-		var next_collision = Math.min.apply(Math, collision_times);
-		return next_collision;
+		if(event_times.length === 0) {return false;}
+		var next_event_time = Math.min.apply(Math, event_times);
+		return next_event_time;
 	};
-	proto.rounds_until_next_moving_object_collision = function() {
+	proto.rounds_until_next_moving_object_event = function() {
 		var moving_objects = this.get_active_moving_objects();
 		var i,j, len = moving_objects.length;
-		var collision_times = [];
+		var event_times = [];
 
 		for(i = 0; i<len-1; i++) {
 			var mo_i = moving_objects[i];
 			for(j = i+1; j<len; j++) {
 				var mo_j = moving_objects[j];
 				
-				var collision_time = mo_i.get_next_collision(mo_j);
-				if(collision_time !== false) {
-					collision_times.push(collision_time);
+				var event_time = mo_i.get_next_event(mo_j);
+				if(event_time !== false) {
+					event_times.push(event_time);
 				}
 			}
 		}
 
-		if(collision_times.length === 0) {return false;}
-		var next_collision = Math.min.apply(Math, collision_times);
-		return next_collision;
+		if(event_times.length === 0) {return false;}
+		var next_event_time = Math.min.apply(Math, event_times);
+		return next_event_time;
 	};
 
 	proto.get_replay = function() {
@@ -330,11 +329,12 @@ var Game = function(options) {
 
 		var player_states = _.map(this.get_players(), function(player, index) {
 			var start_position = start_positions[index];
-			return create_moving_object_state(_.extend({
+			return create_player_state(_.extend({
 				moving_object: player
 				, x0: start_position.x
 				, y0: start_position.y
 				, theta0: start_position.theta
+				, health: player.get_health()
 				, game: self
 			}, player.get_state()));
 		});
@@ -342,7 +342,7 @@ var Game = function(options) {
 			if(!projectile.initialized) {
 				projectile.initialized = true;
 
-				return create_moving_object_state(_.extend({
+				return create_projectile_state(_.extend({
 					moving_object: projectile
 					, x0: projectile.x0
 					, y0: projectile.y0
@@ -351,7 +351,7 @@ var Game = function(options) {
 				}, projectile.get_state()));
 			} else {
 				var start_position = self.get_moving_object_position_on_round(projectile, round);
-				return create_moving_object_state(_.extend({
+				return create_projectile_state(_.extend({
 					moving_object: projectile
 					, x0: start_position.x
 					, y0: start_position.y

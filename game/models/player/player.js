@@ -1,6 +1,6 @@
 define(function(require) {
 	var Circle = require("game/geometry/shapes/circle");
-	var MovingObject = require("game/models/moving_object");
+	var MovingObject = require("game/models/moving_object/moving_object");
 	var oo_utils = require("game/util/object_oriented");
 
 	var Player = function(options) {

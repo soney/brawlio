@@ -1,6 +1,6 @@
 define(function(require) {
 	require("vendor/underscore");
-	var create_player = require('game/models/player');
+	var create_player = require('game/models/player/player');
 
 	var Team = function(options) {
 		this.name = options.name;

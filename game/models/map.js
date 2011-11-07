@@ -29,7 +29,7 @@ define(function(require) {
 		proto.get_start_positions = function() {
 			return this.attributes.start_positions;
 		};
-		proto.get_next_collision = function(moving_object) {
+		proto.get_next_event = function(moving_object) {
 			return false;
 
 			var collision_times = this.obstacles.map(function(obstacle) {
