@@ -267,13 +267,14 @@ var Game = function(options) {
 	};
 
 	proto.update_state = function(round, trigger, more_info) {
+		console.log(trigger, round);
 		this.clear_interesting_round_timeout();
 		this.handle_projectile_collisions(round);
 		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
 		var rounds_until_next_event = this.rounds_until_next_event(round);
 		if(rounds_until_next_event !== false) {
 			var next_event_round = round + rounds_until_next_event;
-			this.set_update_timeout(next_event_round);
+			this.set_interesting_round_timeout(next_event_round);
 		}
 	};
 	proto.set_interesting_round_timeout = function(round) {

@@ -1,4 +1,7 @@
-define(['game/geometry/shapes/shape', 'game/util/object_oriented'], function(Shape, oo_utils) {
+define(function(require) {
+	var Shape = require("game/geometry/shapes/shape");
+	var oo_utils = require("game/util/object_oriented");
+
 	var CircleShape = function(options) {
 		CircleShape.superclass.call(this, options);
 		this.radius = options.radius;
@@ -11,7 +14,9 @@ define(['game/geometry/shapes/shape', 'game/util/object_oriented'], function(Sha
 		proto.get_radius = function() {
 			return this.radius;
 		};
-	})(CircleShape);
+	}(CircleShape));
 
-	return CircleShape;
+	return function(options) {
+		return new CircleShape(options);
+	};
 });

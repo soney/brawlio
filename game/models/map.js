@@ -31,49 +31,45 @@ define(function(require) {
 			return this.attributes.start_positions;
 		};
 		proto.get_next_event = function(moving_object, moving_object_state) {
-			var event_times = this.obstacles.map(function(obstacle) {
-				var touch_time = obstacle.next_touch_event(moving_object, moving_object_state);
-				if(touch_time === false) { return false; }
-				else { return {obstacle: obstacle, time: touch_time}; }
-			}).filter(function(collision_time) {
-				return collision_time !== false;
-			});
-			
-		/*
-			var event_times = this.obstacles.map(function(obstacle) {
-				var touch_time = obstacle.will_touch(moving_object);
-				if(touch_time === false) { return false; }
-				else { return {obstacle: obstacle, time: touch_time}; }
-			}).filter(function(collision_time) {
-				return collision_time !== false;
-			});
-			*/
-			return false;
-			/*
+			var touch_events = _(this.obstacles).chain()
+												.map(function(obstacle) {
+													var touch_time = obstacle.next_touch_event(moving_object, moving_object_state);
+													if(touch_time === false) { return false; }
+													else { return {obstacle: obstacle, time: touch_time}; }
+												})
+												.filter(function(touch_event) {
+													return touch_event !== false;
+												})
+												.value();
 
-
-			var next_obstacle_collision = false;
-			collision_times.forEach(function(collision) {
-				if(next_obstacle_collision === false || collision.time < next_obstacle_collision.time) {
-					next_obstacle_collision = collision;
+			var next_touch_event = false;
+			touch_events.forEach(function(touch_event) {
+				if(next_touch_event === false || touch_event.time < next_touch_event.time) {
+					next_touch_event = touch_event;
 				}
 			});
-			if(next_obstacle_collision === false) { return false; }
-			else { return next_obstacle_collision.time; }
-			*/
+			if(next_touch_event === false) { return false; }
+			else { return next_touch_event.time; }
 		};
 		proto.restrict_path = function(moving_object, path) {
-			return path;
+			var restricted_path = path;
+			var touching_obstacles = _(this.obstacles)	.forEach(function(obstacle) {
+															restricted_path = obstacle.restrict_path(moving_object, restricted_path);
+														});
+			return restricted_path;
 		};
-		proto.is_touching = function(moving_object) {
+		proto.is_touching = function(moving_object, path) {
 			return false;
 		};
 		proto.get_constraining_obstacles = function(moving_object, round) {
-			var touching_obstacles = this.obstacles.map(function(obstacle) {
-				return {obstacle: obstacle, signature: obstacle.touching(moving_object, round)};
-			}).filter(function(touch_info) {
-				return touch_info.signature !== 0;
-			});;
+			var touching_obstacles = _(this.obstacles)	.chain()
+														.map(function(obstacle) {
+															return {obstacle: obstacle, signature: obstacle.touching(moving_object, round)};
+														})
+														.filter(function(touch_info) {
+															return touch_info.signature !== 0;
+														})
+														.value();
 			return touching_obstacles;
 		};
 	})(Map);

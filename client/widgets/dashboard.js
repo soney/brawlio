@@ -1,4 +1,6 @@
-define(["vendor/jquery", "vendor/jquery-ui"], function() {
+define(function(require) {
+	require("vendor/jquery");
+	require("vendor/jquery-ui");
 	require(["client/widgets/team/team_editor"]);
 	require(["client/widgets/team/team_tester"]);
 

@@ -1,4 +1,8 @@
-define(["client/widgets/replay_renderer", "vendor/jquery", "vendor/jquery-ui"], function(ReplayRenderer) {
+define(function(require) {
+	require("vendor/jquery");
+	require("vendor/jquery-ui");
+	var ReplayRenderer = require("client/widgets/replay_renderer");
+
 	var ReplayViewer = {
 		options: {
 			replay: undefined

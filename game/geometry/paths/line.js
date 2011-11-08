@@ -1,9 +1,19 @@
-define(['game/geometry/paths/path'], function(Path) {
+define(function(require) {
+	require("vendor/underscore");
+	var Path = require("game/geometry/paths/path");
+	var oo_utils = require("game/util/object_oriented");
+
+	var close_to = function(a, b) {
+		return Math.abs(a-b) < 0.00001;
+	};
+
 	var Line = function(options) {
+		Line.superclass.call(this, _.extend({type: "line"}, options));
 		this.a = options.a;
 		this.b = options.b;
 		this.c = options.c;
 	};
+	oo_utils.extend(Line, Path);
 
 	(function(my) {
 		my.fromPointAndAngle = function(x0, y0, theta) {
@@ -22,18 +32,32 @@ define(['game/geometry/paths/path'], function(Path) {
 		};
 
 		var proto = my.prototype;
+		var get_line = function(obj) {
+			//This function returns the line of a line segment and ray
+			if(obj.is("line")) {
+				return obj;
+			} else if(obj.is("line_segment")) {
+				return obj.get_line();
+			} else if(obj.is("ray")) {
+				return obj.get_line();
+			}
+		};
 		proto.intersects_with = function(other, my_radius) {
+			//TODO: Correct for corner cases in line segments with radiuses
+			var my_line = get_line(this);
+			var other_line = get_line(other);
+
 			var xi, yi;
-			var denom = this.a*other.b - this.b * other.a;
+			var denom = my_line.a*other_line.b - my_line.b * other_line.a;
 			if(denom === 0) {
 				if(my_radius === undefined) {
-					if(this.a===other.a && this.b===other.b && this.c===other.c) {
+					if(my_line.a===other_line.a && my_line.b===other_line.b && my_line.c===other_line.c) {
 						return true;
 					} else {
 						return false;
 					}
 				} else {
-					var distance = Math.abs(this.c - other.c);
+					var distance = Math.abs(my_line.c - other_line.c);
 					if(distance < my_radius) {
 						return true;
 					} else {
@@ -41,16 +65,21 @@ define(['game/geometry/paths/path'], function(Path) {
 					}
 				}
 			} else {
-				xi_numer = (this.b*other.c - other.b*this.c);
-				yi_numer = (other.a*this.c - this.a*other.c);
+				xi_numer = (my_line.b*other_line.c - other_line.b*my_line.c);
+				yi_numer = (other_line.a*my_line.c - my_line.a*other_line.c);
 			}
 			var intersection_x = xi_numer/denom;
 			var intersection_y = yi_numer/denom;
+
+
+			if(!this.includes_point(intersection_x, intersection_y) || !other.includes_point(intersection_x, intersection_y)) {
+				return false;
+			}
 			if(my_radius === undefined) {
-				return {
+				return [{
 					x: intersection_x
 					, y: intersection_y
-				};
+				}];
 			} else {
 				var my_theta = this.get_theta();
 				var other_theta = other.get_theta();
@@ -69,8 +98,11 @@ define(['game/geometry/paths/path'], function(Path) {
 		proto.distance_to = function(point) {
 			return Math.abs(this.a*point.x + this.b*point.y + this.c) / Math.sqrt(Math.pow(this.a, 2)+Math.pow(this.b, 2));
 		};
-		proto.get_theta = function(vector) {
+		proto.get_theta = function() {
 			return this.b === 0 ? (this.a > 0 ? Math.PI/2 : -Math.PI/2) : Math.atan(-this.a/this.b);
+		};
+		proto.includes_point = function(x,y) {
+			return close_to(this.a * x + this.b * y + this.c, 0);
 		};
 	})(Line);
 

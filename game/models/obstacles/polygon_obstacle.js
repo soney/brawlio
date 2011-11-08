@@ -1,7 +1,9 @@
 define(function(require) {
 	require("vendor/underscore");
 	var StaticObstacle = require("game/models/obstacles/obstacle");
+	var shape_factory = require("game/geometry/shapes/shape_factory");
 	var path_utils = require("game/geometry/movement_paths/path_utils");
+	var create_movement_path = require("game/geometry/movement_paths/movement_path");
 	var oo_utils = require("game/util/object_oriented");
 
 	var close_to = function(a, b) {
@@ -9,22 +11,15 @@ define(function(require) {
 	};
 
 	var PolygonObstacle = function(options) {
-		PolygonObstacle.superclass.call(this, options);
-		this.path = options.path;
+		var shape = shape_factory("polygon", {points: options.points});
+		PolygonObstacle.superclass.call(this, {shape: shape});
 	};
 	oo_utils.extend(PolygonObstacle, StaticObstacle);
 
 	(function(my) {
 		var proto = my.prototype;
-
 		proto.get_line_segments = function() {
-			var path = this.path;
-			var rv = path.map(function(start_point, index) {
-				var end_point_index = (index+1) % path.length;
-				var end_point = path[end_point_index];
-				return { start: start_point , end: end_point };
-			});
-			return rv;
+			return this.shape.get_line_segments();
 		};
 
 		proto.next_touch_event = function(moving_object, moving_object_state) {
@@ -67,6 +62,17 @@ define(function(require) {
 			else { return next_intersection.time; }
 		};
 
+		proto.restrict_path = function(moving_object, path) {
+			var shape = moving_object.get_shape();
+			if(!shape.is("circle")) {
+				console.error("Only circles are supported!");
+			}
+			if(path.is("stationary")) {
+				return path;
+			} else if(path.is("constant_velocity_line")) {
+			}
+			return path;
+		};
 	})(PolygonObstacle);
 
 	return PolygonObstacle;

@@ -1,4 +1,4 @@
-define([], function() {
+define(function(require) {
 	var Shape = function(options) {
 		this.name = "none";
 	};

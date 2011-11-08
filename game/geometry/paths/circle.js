@@ -1,9 +1,13 @@
-define(['game/geometry/paths/path'], function(Path) {
+define(function(require) {
+	var Path = require("game/geometry/paths/path");
+	var oo_utils = require("game/util/object_oriented");
 	var Circle = function(options) {
+		Circle.superclass.call(this, _.extend({type: "Circle"}, options));
 		this.cx = options.center_x;
 		this.cy = options.center_y;
 		this.r = options.radius;
 	};
+	oo_utils.extend(Circle, Path);
 
 	(function(my) {
 		my.fromPointAngleAndVelocity = function(x0, y0, theta0, v_translational, v_theta ) {

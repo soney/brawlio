@@ -1,78 +1,43 @@
-define(['game/geometry/paths/path'], function(Path) {
-	var Line = function(options) {
-		this.a = options.a;
-		this.b = options.b;
-		this.c = options.c;
+define(function(require) {
+	var Path = require("game/geometry/paths/path");
+	var Line = require("game/geometry/paths/line");
+	var oo_utils = require("game/util/object_oriented");
+
+	var between = function(x, start, end) {
+		return (x >= start && x<=end) || (x >= end && x<=start);
 	};
 
-	(function(my) {
-		my.fromPointAndAngle = function(x0, y0, theta) {
-			return new Line({
-				a: Math.sin(theta)
-				, b: -Math.cos(theta)
-				, c: y0*Math.cos(theta) - x0*Math.sin(theta)
-			});
-		};
-		my.fromPoints = function(p0, p1) {
-			return new Line({
-				a: p0.y - p1.y
-				, b: p1.x - p0.x
-				, c: p0.x*p1.y - p1.x*p0.y
-			});
-		};
+	var LineSegment = function(options) {
+		LineSegment.superclass.call(this, _.extend({type: "line_segment"}, options));
+		this.p0 = options.p0;
+		this.p1 = options.p1;
+		this.along_line = Line.fromPoints(this.p0, this.p1);
+	};
+	oo_utils.extend(LineSegment, Path);
 
+
+	(function(my) {
+		my.fromPoints = function(p0, p1) {
+			return new LineSegment({p0: p0, p1: p1});
+		};
 		var proto = my.prototype;
 		proto.intersects_with = function(other, my_radius) {
-			var xi, yi;
-			var denom = this.a*other.b - this.b * other.a;
-			if(denom === 0) {
-				if(my_radius === undefined) {
-					if(this.a===other.a && this.b===other.b && this.c===other.c) {
-						return true;
-					} else {
-						return false;
-					}
-				} else {
-					var distance = Math.abs(this.c - other.c);
-					if(distance < my_radius) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			} else {
-				xi_numer = (this.b*other.c - other.b*this.c);
-				yi_numer = (other.a*this.c - this.a*other.c);
+			return Line.prototype.intersects_with.apply(this, arguments);
+		};
+		proto.get_theta = function() {
+			return this.along_line.get_theta();
+		};
+		proto.get_line = function() {
+			return this.along_line;
+		};
+		proto.includes_point = function(x,y) {
+			var line = this.get_line();
+			if(!line.includes_point(x,y)) {
+				return false;
 			}
-			var intersection_x = xi_numer/denom;
-			var intersection_y = yi_numer/denom;
-			if(my_radius === undefined) {
-				return {
-					x: intersection_x
-					, y: intersection_y
-				};
-			} else {
-				var my_theta = this.get_theta();
-				var other_theta = other.get_theta();
-				var delta_denom = Math.sin(my_theta)*Math.cos(other_theta) - Math.sin(other_theta)*Math.cos(my_theta);
-				var delta_x = my_radius*Math.cos(my_theta)/delta_denom;
-				var delta_y = my_radius*Math.sin(my_theta)/delta_denom;
-				return [{
-						x: intersection_x - delta_x
-						, y: intersection_y - delta_y
-					}, {
-						x: intersection_x + delta_x
-						, y: intersection_y + delta_y
-					}];
-			}
+			return between(x, this.p0.x, this.p1.x) && between(y, this.p0.y, this.p1.y);
 		};
-		proto.distance_to = function(point) {
-			return Math.abs(this.a*point.x + this.b*point.y + this.c) / Math.sqrt(Math.pow(this.a, 2)+Math.pow(this.b, 2));
-		};
-		proto.get_theta = function(vector) {
-			return this.b === 0 ? (this.a > 0 ? Math.PI/2 : -Math.PI/2) : Math.atan(-this.a/this.b);
-		};
-	})(LineSegment);
+	}(LineSegment));
 
 	return LineSegment;
 });

@@ -1,5 +1,6 @@
 define(function(require) {
 	var StaticObstacle = function(options) {
+		this.shape = options.shape;
 		this.inverted = options.inverted;
 	};
 
@@ -13,8 +14,8 @@ define(function(require) {
 		proto.touching = function(moving_object_state, round) {
 			return false;
 		};
-		proto.constrain_path = function(path, moving_object, round) {
-			return {path: path, constrained_until: undefined};
+		proto.restrict_path = function(moving_object, path) {
+			return path;
 		};
 	})(StaticObstacle);
 

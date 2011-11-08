@@ -4,7 +4,7 @@ define(['game/models/obstacles/polygon_obstacle', 'game/util/object_oriented'], 
 		var height = options.height || 50;
 
 		MapBoundaryObstacle.superclass.call(this, {
-			path: [
+			points: [
 				{x: 0, y: 0}
 				, {x: width, y: 0}
 				, {x: width, y: height}

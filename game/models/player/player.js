@@ -1,5 +1,5 @@
 define(function(require) {
-	var Circle = require("game/geometry/shapes/circle");
+	var shape_factory = require("game/geometry/shapes/shape_factory");
 	var MovingObject = require("game/models/moving_object/moving_object");
 	var oo_utils = require("game/util/object_oriented");
 
@@ -8,7 +8,7 @@ define(function(require) {
 		this.code = options.code;
 
 		Player.superclass.call(this, {
-			shape: new Circle({radius: radius})
+			shape: shape_factory("circle", {radius: radius})
 			, type: "player"
 		});
 		this.attributes = {
