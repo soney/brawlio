@@ -67,9 +67,11 @@ define(function(require) {
 			if(!shape.is("circle")) {
 				console.error("Only circles are supported!");
 			}
+
 			if(path.is("stationary")) {
 				return path;
 			} else if(path.is("constant_velocity_line")) {
+				console.log(path);
 			}
 			return path;
 		};
