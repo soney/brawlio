@@ -6,6 +6,24 @@ define(function(require) {
 	var close_to = function(a,b) {
 		return Math.abs(a-b) < 0.0001;
 	};
+	var make_angle_over = function(angle1, angle2) {
+		while(angle1 > angle2) {
+			angle1 -= 2*Math.PI;
+		}
+		while(angle1 < angle2) {
+			angle1 += 2*Math.PI;
+		}
+		return angle1;
+	};
+	var make_angle_under = function(angle1, angle2) {
+		while(angle1 < angle2) {
+			angle1 += 2*Math.PI;
+		}
+		while(angle1 > angle2) {
+			angle1 -= 2*Math.PI;
+		}
+		return angle1;
+	};
 
 	var MovementPath = function(options) {
 		this.x0 = options.x0;
@@ -148,19 +166,9 @@ define(function(require) {
 			var end_angle = Math.atan2(dy_end, dx_end);
 
 			if(this.clockwise) {
-				while(end_angle > this.angle) {
-					end_angle -= 2*Math.PI;
-				}
-				while(end_angle <= this.angle) {
-					end_angle += 2*Math.PI;
-				}
+				end_angle = make_angle_over(end_angle, this.angle);
 			} else {
-				while(end_angle < this.angle) {
-					end_angle += 2*Math.PI;
-				}
-				while(end_angle >= this.angle) {
-					end_angle -= 2*Math.PI;
-				}
+				end_angle = make_angle_under(end_angle, this.angle);
 			}
 
 			var angle_diff = end_angle - this.angle;
@@ -185,20 +193,23 @@ define(function(require) {
 		this.rotational_speed = options.rotational_speed;
 		this.speed = options.speed;
 		this.initial_theta = options.initial_theta;
+		this.initial_circle_theta = options.initial_circle_theta
 		this.init();
 	};
 	oo_utils.extend(SinusoidalVelocityLine, MovementPath);
 	(function(my) {
 		var proto = my.prototype;
 		proto.init = function() {
+			this.clockwise = this.rotational_speed > 0;
 			this.cos_movement_angle = Math.cos(this.movement_angle);
 			this.sin_movement_angle = Math.sin(this.movement_angle);
+
 			this.initial_distance = (this.speed / this.rotational_speed)*Math.sin(this.initial_theta);
 		};
 		proto.get_position = function(rounds) {
 			var theta = this.initial_theta + rounds * this.rotational_speed;
-			var velocity = this.speed * Math.cos(theta);
-			var distance = (this.speed / this.rotational_speed)*Math.cos(theta);
+			var distance = (this.speed / this.rotational_speed)*Math.sin(theta) - this.initial_distance;
+
 			var dx = distance * this.cos_movement_angle;
 			var dy = distance * this.sin_movement_angle;
 			return {
@@ -206,7 +217,105 @@ define(function(require) {
 				, y: this.y0 + dy
 			};
 		};
+		proto.get_line_segment_range = function() {
+			//Far minimum distance
+			var min_dist = - (this.speed / this.rotational_speed) - this.initial_distance;
+			var max_dist = (this.speed / this.rotational_speed) - this.initial_distance;
+
+			var min_dx = min_dist * this.cos_movement_angle;
+			var min_dy = min_dist * this.sin_movement_angle;
+
+			var max_dx = max_dist * this.cos_movement_angle;
+			var max_dy = max_dist * this.sin_movement_angle;
+
+			var p0 = {
+				x: this.x0 + min_dx
+				, y: this.y0 + min_dy
+			};
+			var p1 = {
+				x: this.x0 + max_dx
+				, y: this.y0 + max_dy
+			};
+			return path_factory("line_segment_from_points", p0, p1);
+		};
+
+		proto.delta_t_until_x_is = function(x) {
+			if(close_to(x, this.x0)) {
+				return 0;
+			}
+			var dx = x - this.x0;
+			var distance = dx / this.cos_movement_angle;
+			var sin_theta = (distance + this.initial_distance)*(this.rotational_speed / this.speed);
+			var theta = Math.asin(sin_theta);
+			if(this.clockwise) {
+				theta = make_angle_over(theta, this.initial_theta);
+			} else {
+				theta = make_angle_under(theta, this.initial_theta);
+			}
+			var rounds = (theta - this.initial_theta)/this.rotational_speed;
+			return rounds;
+		};
+		proto.delta_t_until_y_is = function(y) {
+			if(close_to(y, this.y0)) {
+				return 0;
+			}
+			var dy = y - this.y0;
+			var distance = dy / this.sin_movement_angle;
+			var sin_theta = (distance + this.initial_distance)*(this.rotational_speed / this.speed);
+			var theta = Math.asin(sin_theta);
+			if(this.clockwise) {
+				theta = make_angle_over(theta, this.initial_theta);
+			} else {
+				theta = make_angle_under(theta, this.initial_theta);
+			}
+			var rounds = (theta - this.initial_theta)/this.rotational_speed;
+			return rounds;
+		};
+		proto.delta_t_until_at = function(x,y) {
+			var x_delta_t = this.delta_t_until_x_is(x);
+			if(x_delta_t === false) { return false; }
+			var y_delta_t = this.delta_t_until_y_is(y);
+			if(y_delta_t === false) { return false; }
+			var rv = Math.max(x_delta_t, y_delta_t);
+			if(rv <= 0) {
+				return false;
+			}
+			return rv;
+		};
+		proto.get_movement_angle = function() {
+			return this.movement_angle;
+		};
+		proto.get_rotational_speed = function() {
+			return this.rotational_speed;
+		};
 	})(SinusoidalVelocityLine);
+	//========================================
+	var RotatingStationary = function(options) {
+		RotatingStationary.superclass.call(this, options);
+		this.type = "rotating_stationary";
+		this.theta0 = options.theta0;
+		this.rotational_speed = options.rotational_speed;
+		this.clockwise = this.rotational_speed > 0;
+	};
+	oo_utils.extend(RotatingStationary, MovementPath);
+	(function(my) {
+		var proto = my.prototype;
+		proto.get_position = function(rounds) {
+			return {
+				x: this.x0
+				, y: this.y0
+			};
+		};
+		proto.delta_t_until_theta_is = function(theta) {
+			if(this.clockwise) {
+				theta = make_angle_over(this.theta0);
+			} else {
+				theta = make_angle_under(this.theta0);
+			}
+			var delta_theta = theta - this.theta0;
+			return delta_theta / this.rotational_speed;
+		};
+	})(RotatingStationary);
 
 	return function(type, options) {
 		if(type === "stationary") {
@@ -217,6 +326,8 @@ define(function(require) {
 			return new ConstantVelocityCircle(options);
 		} else if(type === "sinusoidal_velocity_line") {
 			return new SinusoidalVelocityLine(options);
+		} else if(type === "rotating_stationary") {
+			return new RotatingStationary(options);
 		}
 	};
 });

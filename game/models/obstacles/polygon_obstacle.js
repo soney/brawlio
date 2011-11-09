@@ -35,7 +35,7 @@ define(function(require) {
 			var intersections = _.map(line_segments,
 										function(line_segment) {
 											var normal = my_polygon.get_normal(line_segment);
-											var time = path_utils.line_segment_hits_moving_circle(line_segment, normal, path, shape.get_radius());
+											var time = path_utils.next_event_with_line_segment_and_moving_circle(line_segment, normal, path, shape.get_radius());
 											if(time === false) {
 												return false;
 											} else if(time === true) {
