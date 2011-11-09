@@ -1,6 +1,7 @@
 define(function(require) {
 	require("vendor/underscore");
 	var Path = require("game/geometry/paths/path");
+	var Vector = require("game/geometry/paths/vector");
 	var oo_utils = require("game/util/object_oriented");
 
 	var close_to = function(a, b) {
@@ -103,6 +104,20 @@ define(function(require) {
 		};
 		proto.includes_point = function(x,y) {
 			return close_to(this.a * x + this.b * y + this.c, 0);
+		};
+		proto.get_normals = function() {
+			var theta = this.get_theta();
+			var theta_1 = theta + Math.PI/2;
+			var theta_2 = theta - Math.PI/2;
+
+			return [
+				Vector.fromMagnitudeAndTheta(1, theta_1)
+				, Vector.fromMagnitudeAndTheta(1, theta_2)
+			];
+		};
+		proto.shift_by = function(x,y) {
+			var new_c = this.c + this.a * x + this.b * y;
+			return new Line({a: this.a, b: this.b, c: new_c});
 		};
 	})(Line);
 

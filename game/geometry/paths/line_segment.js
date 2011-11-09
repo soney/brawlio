@@ -4,7 +4,8 @@ define(function(require) {
 	var oo_utils = require("game/util/object_oriented");
 
 	var between = function(x, start, end) {
-		return (x >= start && x<=end) || (x >= end && x<=start);
+		var et = 0.000001; //error tolerance
+		return (x >= start-et && x<=end+et) || (x >= end-et && x<=start+et);
 	};
 
 	var LineSegment = function(options) {
@@ -36,6 +37,16 @@ define(function(require) {
 				return false;
 			}
 			return between(x, this.p0.x, this.p1.x) && between(y, this.p0.y, this.p1.y);
+		};
+		proto.distance_to = function(point) {
+			var line = this.get_line();
+			return line.distance_to(point);
+		};
+		proto.get_center_point = function() {
+			return {
+				x: (this.p0.x + this.p1.x)/2
+				, y: (this.p0.y + this.p1.y)/2
+			};
 		};
 	}(LineSegment));
 

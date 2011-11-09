@@ -11,7 +11,7 @@ define(function(require) {
 	};
 
 	var PolygonObstacle = function(options) {
-		var shape = shape_factory("polygon", {points: options.points});
+		var shape = shape_factory("polygon", {points: options.points, inverted: options.inverted});
 		PolygonObstacle.superclass.call(this, {shape: shape});
 	};
 	oo_utils.extend(PolygonObstacle, StaticObstacle);
@@ -68,12 +68,14 @@ define(function(require) {
 				console.error("Only circles are supported!");
 			}
 
-			if(path.is("stationary")) {
-				return path;
-			} else if(path.is("constant_velocity_line")) {
-				console.log(path);
-			}
-			return path;
+			var restricted_path = path;
+			var line_segments = this.get_line_segments();
+			var my_polygon = this.get_shape();
+			_.forEach(line_segments, function(line_segment) {
+				var normal = my_polygon.get_normal(line_segment);
+				restricted_path = path_utils.restrict_path(line_segment, restricted_path, shape.get_radius(), normal);
+			});
+			return restricted_path;
 		};
 	})(PolygonObstacle);
 

@@ -61,6 +61,9 @@ define(function(require) {
 		proto.get_ray = function() {
 			return path_factory("ray_from_point_and_angle", this.x0, this.y0, this.angle);
 		};
+		proto.get_vector = function() {
+			return path_factory("vector_from_magnitude_and_angle", this.speed, this.angle);
+		};
 		proto.delta_t_until_x_is = function(x) {
 			var vx = this.speed * Math.cos(this.angle);
 			if(close_to(vx, 0)) {
@@ -124,6 +127,9 @@ define(function(require) {
 				x: this.center_x + this.r*Math.cos(new_movement_theta-Math.PI/2)
 				, y: this.center_y + this.r*Math.sin(new_movement_theta-Math.PI/2)
 			};
+		};
+		proto.get_circle = function() {
+			return path_factory("circle_from_center_and_radius", this.center_x, this.center_y, this.r);
 		};
 	})(ConstantVelocityCircle);
 	//========================================

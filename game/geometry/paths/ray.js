@@ -20,6 +20,10 @@ define(function(require) {
 		my.fromPointAndAngle = function(x, y, theta) {
 			return new Ray({p0: {x: x, y: y}, theta: theta});
 		};
+		my.fromPointAndVector = function(x,y,vector) {
+			var theta = vector.get_theta();
+			return new Ray({p0: {x: x, y: y}, theta: theta});
+		};
 		var proto = my.prototype;
 		proto.intersects_with = function(other, my_radius) {
 			return Line.prototype.intersects_with.apply(this, arguments);
@@ -48,6 +52,10 @@ define(function(require) {
 			var right_y_direction = y_direction * pt_y_direction >= 0; //If they are both positive or both negative
 
 			return right_x_direction && right_y_direction;
+		};
+		proto.distance_to = function(point) {
+			var line = this.get_line();
+			return line.distance_to(point);
 		};
 	}(Ray));
 

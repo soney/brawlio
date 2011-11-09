@@ -10,7 +10,7 @@ define(function(require) {
 			width: 50 //Width in tiles
 			, height: 50 //Height in tiles
 			, start_positions: [
-				[{x: 47, y: 10, theta: 0}]
+				[{x: 45, y: 10, theta: 0}]
 				, [{x: 5, y: 40, theta: 0}]
 			]
 		};

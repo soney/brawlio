@@ -1,7 +1,6 @@
 define(function(require) {
 	var StaticObstacle = function(options) {
 		this.shape = options.shape;
-		this.inverted = options.inverted;
 	};
 
 	(function(my) {
@@ -16,6 +15,9 @@ define(function(require) {
 		};
 		proto.restrict_path = function(moving_object, path) {
 			return path;
+		};
+		proto.get_shape = function() {
+			return this.shape;
 		};
 	})(StaticObstacle);
 

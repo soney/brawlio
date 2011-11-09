@@ -5,6 +5,8 @@ define(function(require) {
 	var CircleShape = function(options) {
 		CircleShape.superclass.call(this, options);
 		this.radius = options.radius;
+		this.cx = options.x;
+		this.cy = options.y;
 		this.name="circle";
 	};
 	oo_utils.extend(CircleShape, Shape);
