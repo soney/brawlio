@@ -48,6 +48,20 @@ define(function(require) {
 				, y: (this.p0.y + this.p1.y)/2
 			};
 		};
+		proto.shift_by = function(x,y) {
+			var new_p0 = {
+				x: this.p0.x + x
+				, y: this.p0.y + y
+			};
+			var new_p1 = {
+				x: this.p1.x + x
+				, y: this.p1.y + y
+			};
+			return my.fromPoints(new_p0, new_p1);
+		};
+		proto.shift_by_vector = function(vector) {
+			return this.shift_by(vector.get_x(), vector.get_y());
+		};
 	}(LineSegment));
 
 	return LineSegment;

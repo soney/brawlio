@@ -100,7 +100,7 @@ define(function(require) {
 			return Math.abs(this.a*point.x + this.b*point.y + this.c) / Math.sqrt(Math.pow(this.a, 2)+Math.pow(this.b, 2));
 		};
 		proto.get_theta = function() {
-			return this.b === 0 ? (this.a > 0 ? Math.PI/2 : -Math.PI/2) : Math.atan(-this.a/this.b);
+			return this.b === 0 ? (this.a > 0 ? Math.PI/2 : -Math.PI/2) : Math.atan2(-this.a, this.b);
 		};
 		proto.includes_point = function(x,y) {
 			return close_to(this.a * x + this.b * y + this.c, 0);

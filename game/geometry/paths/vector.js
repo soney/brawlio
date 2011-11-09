@@ -36,13 +36,7 @@ define(function(require) {
 			return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
 		};
 		proto.get_theta = function() {
-			if(close_to(this.x, 0)) {
-				return this.y > 0 ? Math.PI/2 : -Math.PI/2;
-			} else if(close_to(this.y, 0)) {
-				return this.x > 0 ? 0 : Math.PI;
-			} else {
-				return Math.atan(this.y/this.x);
-			}
+			return Math.atan2(this.y, this.x);
 		};
 		proto.add = function(other_vector) {
 			return my.fromComponents(this.x + other_vector.x, this.y + other_vector.y);

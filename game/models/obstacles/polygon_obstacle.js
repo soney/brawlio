@@ -31,9 +31,11 @@ define(function(require) {
 
 			var line_segments = this.get_line_segments();
 			var path = moving_object_state.get_path();
+			var my_polygon = this.get_shape();
 			var intersections = _.map(line_segments,
 										function(line_segment) {
-											var time = path_utils.line_segment_hits_moving_circle(line_segment, path, shape.get_radius());
+											var normal = my_polygon.get_normal(line_segment);
+											var time = path_utils.line_segment_hits_moving_circle(line_segment, normal, path, shape.get_radius());
 											if(time === false) {
 												return false;
 											} else if(time === true) {
@@ -73,7 +75,7 @@ define(function(require) {
 			var my_polygon = this.get_shape();
 			_.forEach(line_segments, function(line_segment) {
 				var normal = my_polygon.get_normal(line_segment);
-				restricted_path = path_utils.restrict_path(line_segment, restricted_path, shape.get_radius(), normal);
+				restricted_path = path_utils.restrict_path(line_segment, normal, restricted_path, shape.get_radius());
 			});
 			return restricted_path;
 		};

@@ -105,7 +105,7 @@ define(function(require) {
 	//========================================
 	var ConstantVelocityCircle = function(options) {
 		ConstantVelocityCircle.superclass.call(this, options);
-		this.angle = options.angle;
+		this.movement_angle = options.movement_angle;
 		this.speed = options.speed;
 		this.rotational_speed = options.rotational_speed;
 		this.init();
@@ -115,24 +115,98 @@ define(function(require) {
 	(function(my) {
 		var proto = my.prototype;
 		proto.init = function() {
-			this.r = this.speed / (1.0*this.rotational_speed);
-			this.center_x = this.x0 + this.r*Math.sin(-this.angle);
-			this.center_y = this.y0 + this.r*Math.cos(-this.angle);
+			this.clockwise = this.rotational_speed > 0;
+			this.r = this.speed / this.rotational_speed;
+			this.center_x = this.x0 + this.r*Math.sin(-this.movement_angle);
+			this.center_y = this.y0 + this.r*Math.cos(-this.movement_angle);
+			this.r = Math.abs(this.r);
+			if(this.clockwise) {
+				this.angle = this.movement_angle - Math.PI/2;
+			} else {
+				this.angle = this.movement_angle + Math.PI/2;
+			}
+		};
+		proto.get_rotational_speed = function() {
+			return this.rotational_speed;
+		};
+		proto.get_translational_speed = function() {
+			return this.speed;
 		};
 		proto.get_position = function(rounds) {
 			var delta_theta = this.rotational_speed * rounds;
-			var new_movement_theta = this.angle + delta_theta;
+			var new_angle = this.angle + delta_theta;
 
-			return {
-				x: this.center_x + this.r*Math.cos(new_movement_theta-Math.PI/2)
-				, y: this.center_y + this.r*Math.sin(new_movement_theta-Math.PI/2)
+			var rv = {
+				x: this.center_x + this.r*Math.cos(new_angle)
+				, y: this.center_y + this.r*Math.sin(new_angle)
 			};
+			return rv;
+		};
+		proto.delta_t_until_at = function(x,y) {
+			var dx_end = x - this.center_x;
+			var dy_end = y - this.center_y;
+			var end_angle = Math.atan2(dy_end, dx_end);
+
+			if(this.clockwise) {
+				while(end_angle > this.angle) {
+					end_angle -= 2*Math.PI;
+				}
+				while(end_angle <= this.angle) {
+					end_angle += 2*Math.PI;
+				}
+			} else {
+				while(end_angle < this.angle) {
+					end_angle += 2*Math.PI;
+				}
+				while(end_angle >= this.angle) {
+					end_angle -= 2*Math.PI;
+				}
+			}
+
+			var angle_diff = end_angle - this.angle;
+			var rounds_taken = angle_diff / this.rotational_speed;
+			return rounds_taken;
 		};
 		proto.get_circle = function() {
 			return path_factory("circle_from_center_and_radius", this.center_x, this.center_y, this.r);
 		};
+		proto.get_vector = function(round) {
+			var angle = this.movement_angle + round * this.rotational_speed;
+			return path_factory("vector_from_magnitude_and_angle", this.speed, angle);
+		};
 	})(ConstantVelocityCircle);
 	//========================================
+	var SinusoidalVelocityLine = function(options) {
+		SinusoidalVelocityLine.superclass.call(this, options);
+		this.type = "sinusoidal_velocity_line";
+		this.x0 = options.x0;
+		this.y0 = options.y0;
+		this.movement_angle = options.movement_angle;
+		this.rotational_speed = options.rotational_speed;
+		this.speed = options.speed;
+		this.initial_theta = options.initial_theta;
+		this.init();
+	};
+	oo_utils.extend(SinusoidalVelocityLine, MovementPath);
+	(function(my) {
+		var proto = my.prototype;
+		proto.init = function() {
+			this.cos_movement_angle = Math.cos(this.movement_angle);
+			this.sin_movement_angle = Math.sin(this.movement_angle);
+			this.initial_distance = (this.speed / this.rotational_speed)*Math.sin(this.initial_theta);
+		};
+		proto.get_position = function(rounds) {
+			var theta = this.initial_theta + rounds * this.rotational_speed;
+			var velocity = this.speed * Math.cos(theta);
+			var distance = (this.speed / this.rotational_speed)*Math.cos(theta);
+			var dx = distance * this.cos_movement_angle;
+			var dy = distance * this.sin_movement_angle;
+			return {
+				x: this.x0 + dx
+				, y: this.y0 + dy
+			};
+		};
+	})(SinusoidalVelocityLine);
 
 	return function(type, options) {
 		if(type === "stationary") {
@@ -141,6 +215,8 @@ define(function(require) {
 			return new ConstantVelocityLine(options);
 		} else if(type === "constant_velocity_circle") {
 			return new ConstantVelocityCircle(options);
+		} else if(type === "sinusoidal_velocity_line") {
+			return new SinusoidalVelocityLine(options);
 		}
 	};
 });

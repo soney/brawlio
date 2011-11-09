@@ -56,7 +56,7 @@ define(function(require) {
 				return create_path("constant_velocity_circle", {
 					x0: this.get_x0()
 					, y0: this.get_y0()
-					, angle: movement_angle
+					, movement_angle: movement_angle
 					, speed: this.get_translational_speed()
 					, rotational_speed: this.get_rotational_velocity()
 				});
