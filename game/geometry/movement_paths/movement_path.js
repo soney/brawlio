@@ -28,6 +28,7 @@ define(function(require) {
 	var MovementPath = function(options) {
 		this.x0 = options.x0;
 		this.y0 = options.y0;
+		this.debug_info = options.debug_info;
 		this.name = "generic_movement_path";
 	};
 	(function(my) {
@@ -308,9 +309,9 @@ define(function(require) {
 		};
 		proto.delta_t_until_theta_is = function(theta) {
 			if(this.clockwise) {
-				theta = make_angle_over(this.theta0);
+				theta = make_angle_over(theta, this.theta0);
 			} else {
-				theta = make_angle_under(this.theta0);
+				theta = make_angle_under(theta, this.theta0);
 			}
 			var delta_theta = theta - this.theta0;
 			return delta_theta / this.rotational_speed;

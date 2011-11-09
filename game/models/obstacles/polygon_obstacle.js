@@ -32,36 +32,35 @@ define(function(require) {
 			var line_segments = this.get_line_segments();
 			var path = moving_object_state.get_path();
 			var my_polygon = this.get_shape();
-			var intersections = _.map(line_segments,
+			var touch_events = _.map(line_segments,
 										function(line_segment) {
 											var normal = my_polygon.get_normal(line_segment);
-											var time = path_utils.next_event_with_line_segment_and_moving_circle(line_segment, normal, path, shape.get_radius());
-											if(time === false) {
+											var event_info = path_utils.next_event_with_line_segment_and_moving_circle(line_segment, normal, path, shape.get_radius());
+
+											if(event_info === false) {
 												return false;
-											} else if(time === true) {
-												return {
-													time: 0
-													, line_segment: line_segment
-												};
+											} else if(event_info === true) {
+												return _.extend(event_info, {
+													line_segment: line_segment
+												});
 											} else {
-												return {
-													time: time
-													, line_segment: line_segment
-												};
+												return _.extend(event_info, {
+													line_segment: line_segment
+												});
 											}
 										})
 									.filter(function(intersection) {
 										return intersection !== false;
 									});
 
-			var next_intersection = false;
-			intersections.forEach(function(intersection) {
-				if(next_intersection === false || next_intersection.time > intersection.time) {
-					next_intersection = intersection;
+			var next_touch_event = false;
+			touch_events.forEach(function(touch_event) {
+				if(next_touch_event === false || touch_event.time < next_touch_event.time) {
+					next_touch_event = touch_event;
 				}
 			});
-			if(next_intersection === false) { return false; }
-			else { return next_intersection.time; }
+			if(next_touch_event === false) { return false; }
+			else { return next_touch_event; }
 		};
 
 		proto.restrict_path = function(moving_object, path) {

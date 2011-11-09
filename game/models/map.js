@@ -33,12 +33,12 @@ define(function(require) {
 		proto.get_next_event = function(moving_object, moving_object_state) {
 			var touch_events = _(this.obstacles).chain()
 												.map(function(obstacle) {
-													var touch_time = obstacle.next_touch_event(moving_object, moving_object_state);
-													if(touch_time === false) { return false; }
-													else { return {obstacle: obstacle, time: touch_time}; }
+													var touch_info = obstacle.next_touch_event(moving_object, moving_object_state);
+													if(touch_info === false) { return false; }
+													else { return _.extend({obstacle: obstacle}, touch_info); }
 												})
-												.filter(function(touch_event) {
-													return touch_event !== false;
+												.filter(function(touch_info) {
+													return touch_info !== false;
 												})
 												.value();
 
@@ -49,7 +49,7 @@ define(function(require) {
 				}
 			});
 			if(next_touch_event === false) { return false; }
-			else { return next_touch_event.time; }
+			else { return next_touch_event; }
 		};
 		proto.restrict_path = function(moving_object, path) {
 			var restricted_path = path;

@@ -267,20 +267,20 @@ var Game = function(options) {
 	};
 
 	proto.update_state = function(round, trigger, more_info) {
-		console.log(trigger, round);
+		console.log("------", round, trigger, "------");
 		this.clear_interesting_round_timeout();
 		this.handle_projectile_collisions(round);
 		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
-		var rounds_until_next_event = this.rounds_until_next_event(round);
-		if(rounds_until_next_event !== false) {
-			var next_event_round = round + rounds_until_next_event;
-			this.set_interesting_round_timeout(next_event_round);
+		var next_event = this.get_next_touch_event();
+		if(next_event !== false) {
+			var next_event_round = round + next_event.time;
+			this.set_interesting_round_timeout(next_event_round, next_event);
 		}
 	};
-	proto.set_interesting_round_timeout = function(round) {
+	proto.set_interesting_round_timeout = function(round, event) {
 		var self = this;
 		this.special_timeouts.next_interesting_round = this.on_round(function() {
-			self.update_state(round, "Interesting Round");
+			self.update_state(round, "Interesting Round ("+event.event_type+")");
 		}, round, "Update timer");
 	};
 	proto.clear_interesting_round_timeout = function() {
@@ -289,58 +289,72 @@ var Game = function(options) {
 			this.special_timeouts.next_interesting_round = undefined;
 		}
 	};
-	proto.rounds_until_next_event = function(from_round) {
-		var map_event_time = this.rounds_until_next_map_event();
-		var moving_object_event_time = this.rounds_until_next_moving_object_event();
-		if(map_event_time === false) {
-			return moving_object_event_time;
-		} else if(moving_object_event_time === false) {
-			return map_event_time;
+	proto.get_next_touch_event = function() {
+		var map_event = this.get_next_map_event();
+		var moving_object_event= this.get_next_moving_object_event();
+		if(map_event === false) {
+			return moving_object_event;
+		} else if(moving_object_event=== false) {
+			return map_event;
 		} else {
-			return Math.min(map_event_time, moving_object_event_time);
+			if(map_event.time < moving_object_event.time) {
+				return map_event;
+			} else {
+				return moving_object_event;
+			}
 		}
 	};
 
-	proto.rounds_until_next_map_event = function() {
+	proto.get_next_map_event = function() {
 		var moving_objects = this.get_active_moving_objects();
 		var map = this.get_map();
 		var game_state = this.peek_state();
 
 		var self = this;
-		var event_times = _(moving_objects)	.chain()
-											.map(function(moving_object) {
-												var moving_object_state = game_state.get_state_for_moving_object(moving_object);
-												var next_event = map.get_next_event(moving_object, moving_object_state);
-												return next_event;
-											})
-											.filter(function(map_event) {
-												return map_event !== false;
-											})
-											.value();
-		if(event_times.length === 0) {return false;}
-		var next_event_time = Math.min.apply(Math, event_times);
-		return next_event_time;
+		var touch_events = _(moving_objects)	.chain()
+												.map(function(moving_object) {
+													var moving_object_state = game_state.get_state_for_moving_object(moving_object);
+													var next_event = map.get_next_event(moving_object, moving_object_state);
+													return next_event;
+												})
+												.filter(function(map_event) {
+													return map_event !== false;
+												})
+												.value();
+		var next_touch_event = false;
+		touch_events.forEach(function(touch_event) {
+			if(next_touch_event === false || touch_event.time < next_touch_event.time) {
+				next_touch_event = touch_event;
+			}
+		});
+		if(next_touch_event === false) { return false; }
+		else { return next_touch_event; }
 	};
-	proto.rounds_until_next_moving_object_event = function() {
+	proto.get_next_moving_object_event = function() {
 		var moving_objects = this.get_active_moving_objects();
 		var i,j, len = moving_objects.length;
-		var event_times = [];
+		var events = [];
 
 		for(i = 0; i<len-1; i++) {
 			var mo_i = moving_objects[i];
 			for(j = i+1; j<len; j++) {
 				var mo_j = moving_objects[j];
 				
-				var event_time = mo_i.get_next_event(mo_j);
-				if(event_time !== false) {
-					event_times.push(event_time);
+				var event = mo_i.get_next_event(mo_j);
+				if(event !== false) {
+					events.push(event);
 				}
 			}
 		}
 
-		if(event_times.length === 0) {return false;}
-		var next_event_time = Math.min.apply(Math, event_times);
-		return next_event_time;
+		var next_event = false;
+		events.forEach(function(event) {
+			if(next_event === false || event.time < next_event.time) {
+				next_event = event;
+			}
+		});
+		if(next_event === false) { return false; }
+		else { return next_event; }
 	};
 
 	proto.get_replay = function() {

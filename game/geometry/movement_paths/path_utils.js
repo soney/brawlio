@@ -39,7 +39,7 @@ define(function(require) {
 			var intersection_points = moving_object_ray.intersects_with(line_segment, circle_radius);
 
 			if(intersection_points === true) { //It's already intersecting
-				return 0;
+				return {time: 0, event_type: "A"};
 			} else if(intersection_points === false) { //It will never intersect
 				return false;
 			} else { //It will intersect at some time..
@@ -49,12 +49,12 @@ define(function(require) {
 																	return delta_t;
 																})
 																.filter(function(delta_t) {
-																	return delta_t !== false && delta_t >= 0;
+																	return delta_t !== false && delta_t > 0;
 																})
 																.value();
 
 				if(intersection_times.length === 0) {return false;}
-				return Math.min.apply(Math, intersection_times);
+				return {time: Math.min.apply(Math, intersection_times), event_type: "B"};
 			}
 		} else if(circle_path.is("constant_velocity_circle")) {
 			var circle = circle_path.get_circle();
@@ -71,12 +71,12 @@ define(function(require) {
 																return delta_t;
 															})
 															.filter(function(delta_t) {
-																return delta_t !== false && delta_t >= 0;
+																return delta_t !== false && delta_t > 0;
 															})
 															.value();
 
 			if(intersection_times.length === 0) {return false;}
-			return Math.min.apply(Math, intersection_times);
+			return {time: Math.min.apply(Math, intersection_times), event_type: "C"};
 		} else if(circle_path.is("sinusoidal_velocity_line")) {
 			var circle_start = circle_path.get_position(0);
 			if(line_is_touching(line_segment, circle_start, circle_radius)) {
@@ -90,7 +90,8 @@ define(function(require) {
 				}
 				var delta_angle = wait_until_angle - circle_path.initial_circle_theta;
 				var delta_t = delta_angle / circle_path.rotational_speed;
-				return delta_t;
+				if(delta_t <= error_tolerance ) { return false; }
+				return {time: delta_t, event_type: "D"};
 			} else {
 				var moving_circle_movement_range = circle_path.get_line_segment_range();
 				var proper_magnitude_vector = line_segment_normal.normalize(circle_radius);
@@ -106,12 +107,12 @@ define(function(require) {
 																		return delta_t;
 																	})
 																	.filter(function(delta_t) {
-																		return delta_t !== false && delta_t >= 0;
+																		return delta_t !== false && delta_t > 0;
 																	})
 																	.value();
 
 					if(intersection_times.length === 0) {return false;}
-					return Math.min.apply(Math, intersection_times);
+					return {time: Math.min.apply(Math, intersection_times), event_type: "E"};
 				}
 			}
 		} else if(circle_path.is("rotating_stationary")) {
@@ -120,13 +121,8 @@ define(function(require) {
 				var clockwise = circle_path.clockwise;
 				var line_segment_normal_angle = line_segment_normal.get_theta();
 				var wait_until_angle = line_segment_normal_angle + (clockwise ? -Math.PI/2 : Math.PI/2);
-				if(clockwise) {
-					wait_until_angle = make_angle_over(wait_until_angle, circle_path.initial_circle_theta);
-				} else {
-					wait_until_angle = make_angle_under(wait_until_angle, circle_path.initial_circle_theta);
-				}
 				var delta_t = circle_path.delta_t_until_theta_is(wait_until_angle);
-				return delta_t;
+				return {time: delta_t, event_type: "F"};
 			}
 		}
 		return false;
@@ -152,6 +148,7 @@ define(function(require) {
 					return create_movement_path("stationary", {
 						x0: circle_start.x
 						, y0: circle_start.y
+						, debug_info: {name: "Stationary after hit line", wall: line_segment}
 					});
 				} else {
 					return create_movement_path("constant_velocity_line", {
@@ -159,13 +156,13 @@ define(function(require) {
 						, y0: circle_start.y
 						, angle: new_movement_vector.get_theta()
 						, speed: new_movement_vector.get_magnitude()
+						, debug_info: {name: "Line after hit line", wall: line_segment}
 					});
 				}
 			} else if(circle_path.is("constant_velocity_circle")) {
 				var circle_path_vector = circle_path.get_vector(0);
 				var circle_theta = circle_path_vector.get_theta();
 				var normal_theta = line_segment_normal.get_theta();
-				console.log(circle_theta, normal_theta);
 
 				if(angle_diff(normal_theta, circle_theta) <= Math.PI/2 + error_tolerance) { //the circle isn't tring to travel along me
 					return circle_path;
@@ -188,6 +185,7 @@ define(function(require) {
 						, initial_theta: initial_theta
 						, initial_circle_theta: circle_theta
 						, speed: speed
+						, debug_info: {name: "Sinusoidal velocity line after circle hit wall", wall: line_segment}
 					});
 				}
 			} else if(circle_path.is("sinusoidal_velocity_line")) {
@@ -200,12 +198,17 @@ define(function(require) {
 
 				var new_movement_angle = new_movement_vector.get_theta();
 
-				if(close_to(new_movement_vector.get_magnitude(), 0)) {
+				if(angle_diff(normal_theta, circle_path.initial_circle_theta) <= Math.PI/2 + error_tolerance) { //the circle isn't tring to travel along me
+					return circle_path;
+				}
+
+				if(close_to(new_movement_vector.get_magnitude(), 0) || true ) { //TODO FIX
 					return create_movement_path("rotating_stationary", {
 						x0: circle_start.x
 						, y0: circle_start.y
 						, theta0: circle_path.initial_circle_theta
 						, rotational_speed: circle_path.get_rotational_speed()
+						, debug_info: {name: "rotating stationary after sinusoidal circle hit wall", wall: line_segment}
 					});
 				} else {
 					return create_movement_path("sinusoidal_velocity_line", {
@@ -216,6 +219,7 @@ define(function(require) {
 						, initial_theta: circle_path.initial_theta
 						, initial_circle_theta: circle_path_theta
 						, speed: new_movement_vector.get_magnitude()
+						, debug_info: {name: "sinusoidal after sinusoidal hit", wall: line_segment}
 					});
 				}
 			}
