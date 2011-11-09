@@ -18,6 +18,15 @@ define(function(require) {
 	(function(my) {
 		var proto = my.prototype;
 		proto.get_radius = function() { return this.shape.get_radius(); };
+		proto.can_collide_with = function(moving_object) {
+			if(moving_object.is("player")) {
+				return moving_object.can_collide_with(this);
+			}
+			return true;
+		};
+		proto.get_fired_by = function() {
+			return this.fired_by;
+		};
 	})(Projectile);
 
 	return function(options) { return new Projectile(options); };

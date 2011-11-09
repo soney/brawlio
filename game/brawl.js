@@ -6,6 +6,9 @@ var constants = require("game/constants")
 	, create_team = require("game/models/team")
 	, Actions = constants.actions
 	, GameConstants = constants.game_constants;
+var get_time = function() {
+	return (new Date()).getTime();
+};
 
 var Brawl = function(options) {
 	var map = create_map(options.map);
@@ -22,6 +25,7 @@ var Brawl = function(options) {
 	this.asked_to_run = false;
 	this.workers_ready = false;
 	this.game_callback = undefined;
+	this.worker_sync_interval = undefined;
 };
 
 (function(my) {
@@ -42,11 +46,19 @@ var Brawl = function(options) {
 			};
 			return player_worker;
 		});
+		/*
+		this.worker_sync_interval = window.setInterval(function() {
+			_.forEach(self.player_workers, function(worker) {
+				self.sync_worker(worker);
+			});
+		}, 5000);
+		/**/
 	};
 	proto.terminate_player_workers = function() {
 		_.forEach(this.player_workers, function(player_worker) {
 			player_worker.terminate();
 		});
+		window.clearInterval(this.worker_sync_interval);
 	};
 	proto.post = function(worker, message) {
 		return worker.postMessage(message);
@@ -188,7 +200,7 @@ var Brawl = function(options) {
 	proto.do_run = function() {
 		var self = this;
 		this.game.on("start", function() {
-			var start_time = (new Date()).getTime();
+			var start_time = get_time();
 			_.forEach(self.player_workers, function(worker) {
 				self.post(worker, {type: "game_start", start_time: start_time});
 			});
@@ -207,6 +219,11 @@ var Brawl = function(options) {
 	};
 	proto.get_replay = function() {
 		return this.game.get_replay();
+	};
+	proto.sync_worker = function(player_worker) {
+		var game_round = this.game.get_round();
+		var time = get_time();
+		this.post(player_worker, {type: "sync_time", time: time, round: game_round});
 	};
 })(Brawl);
 

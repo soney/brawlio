@@ -10,7 +10,7 @@ define(function(require) {
 			width: 50 //Width in tiles
 			, height: 50 //Height in tiles
 			, start_positions: [
-				[{x: 48, y: 20, theta: 0}]
+				[{x: 45, y: 10, theta: 0}]
 				, [{x: 5, y: 40, theta: 0}]
 			]
 		};
@@ -58,7 +58,13 @@ define(function(require) {
 														});
 			return restricted_path;
 		};
-		proto.is_touching = function(moving_object, path) {
+		proto.is_touching = function(moving_object, position) {
+			for(var i = 0, len = this.obstacles.length; i<len; i++) {
+				var obstacle = this.obstacles[i];
+				if(obstacle.is_touching(moving_object, position)) {
+					return true;
+				}
+			}
 			return false;
 		};
 		proto.get_constraining_obstacles = function(moving_object, round) {

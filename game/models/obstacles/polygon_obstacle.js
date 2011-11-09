@@ -6,8 +6,10 @@ define(function(require) {
 	var create_movement_path = require("game/geometry/movement_paths/movement_path");
 	var oo_utils = require("game/util/object_oriented");
 
+	var error_tolerance = 0.00001;
+
 	var close_to = function(a, b) {
-		return Math.abs(a-b) < 0.00001;
+		return Math.abs(a-b) < error_tolerance;
 	};
 
 	var PolygonObstacle = function(options) {
@@ -78,7 +80,24 @@ define(function(require) {
 			});
 			return restricted_path;
 		};
-	})(PolygonObstacle);
+
+		proto.is_touching = function(moving_object, position) {
+			var shape = moving_object.get_shape();
+			if(!shape.is("circle")) {
+				console.error("Only circles are supported!");
+			}
+
+			var line_segments = this.get_line_segments();
+			var radius = shape.get_radius();
+			for(var i = 0, len = line_segments.length; i<len; i++) {
+				var line_segment = line_segments[i];
+				if(line_segment.distance_to(position) <= radius + error_tolerance) { 
+					return true;
+				}
+			}
+			return false;
+		};
+	}(PolygonObstacle));
 
 	return PolygonObstacle;
 });

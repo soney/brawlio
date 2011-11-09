@@ -14,7 +14,6 @@ define(function(require) {
 		this.game = options.game;
 
 		this.specified_path = this.get_specified_path();
-		this.path = this.game.restrict_path(this.moving_object, this.specified_path);
 	};
 
 	(function(my) {

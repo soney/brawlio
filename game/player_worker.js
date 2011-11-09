@@ -245,7 +245,8 @@ var get_time = function() {
 	};
 
 	game.onRound = function(listener, round) {
-		var run_time = game.start_time + round*GameConstants.SIM_MS_PER_ROUND;
+		var round_diff = (round - game.sync_round);
+		var run_time = game.sync_time + round_diff*GameConstants.SIM_MS_PER_ROUND;
 		var time_diff = run_time - get_time();
 		if(time_diff <= 0) {
 			listener();
@@ -274,7 +275,9 @@ var get_time = function() {
 	};
 	game.get_round = function(time) {
 		time = time || get_time();
-		return (time - this.start_time) / GameConstants.SIM_MS_PER_ROUND;
+		var sync_round = this.sync_round;
+		var sync_time = this.sync_time;
+		return sync_round + (time - sync_time) / GameConstants.SIM_MS_PER_ROUND;
 	};
 })(game);
 
@@ -289,10 +292,14 @@ self.onmessage = function(event) {
 		controller.number = data.info.number;
 		controller.team_id = data.info.team_id;
 	} else if(type === "game_start") {
-		game.start_time = data.start_time;//get_time();
+		game.sync_time = data.start_time;
+		game.sync_round = 0;
 		run();
 	} else if(type === "callback") {
 		game.on_event(data);
+	} else if(type === "sync_time") {
+		game.sync_time = data.time;
+		game.sync_round = data.round;
 	}
 };
 

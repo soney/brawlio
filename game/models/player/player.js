@@ -3,6 +3,8 @@ define(function(require) {
 	var MovingObject = require("game/models/moving_object/moving_object");
 	var oo_utils = require("game/util/object_oriented");
 
+	var error_tolerance = 0.0001;
+
 	var Player = function(options) {
 		var radius = 2; //Radius in tiles
 		this.code = options.code;
@@ -82,7 +84,7 @@ define(function(require) {
 		proto.can_fire = function() {
 			var game = this.get_game();
 			var round = game.get_round();
-			return round > this.get_next_fireable_round();
+			return round + error_tolerance > this.get_next_fireable_round();
 		};
 		proto.get_next_fireable_round = function() {
 			return this.next_fireable_round;
@@ -124,6 +126,12 @@ define(function(require) {
 					self.fire();
 				}
 			}, this.get_next_fireable_round());
+		};
+		proto.can_collide_with = function(moving_object) {
+			if(moving_object.is("projectile")) {
+				return moving_object.get_fired_by() !== this;
+			}
+			return true;
 		};
 	})(Player);
 

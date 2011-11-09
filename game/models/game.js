@@ -145,11 +145,31 @@ var Game = function(options) {
 			return player.is_alive();
 		});
 	};
-	proto.get_active_projectiles = function() {
+	proto.get_projectiles = function() {
 		return this.active_projectiles;
 	};
+	proto.add_projectile = function(projectile, round) {
+		this.active_projectiles.push(projectile);
+		var fire_event = create_game_event("player_fired", {
+			fired_by: projectile.get_fired_by()
+			, projectile: projectile
+		});
+		this.replay.push_game_event(fire_event);
+		this.update_state(round, "Fire");
+	};
+	proto.remove_projectile = function(projectile, round) {
+		var index = _.indexOf(this.active_projectiles, projectile);
+		if(index >= 0) {
+			this.active_projectiles.splice(index, 1);
+		}
+		var projectile_hit_event = create_game_event("projectile_removed", {
+			projectile: projectile
+		});
+		this.replay.push_game_event(projectile_hit_event);
+		this.update_state(round, "Projectile hit");
+	};
 	proto.get_active_moving_objects = function() {
-		return this.get_living_players().concat(this.get_active_projectiles());
+		return this.get_living_players().concat(this.get_projectiles());
 	};
 	proto.on_player_fire = function(player, round) {
 		var position = this.get_moving_object_position_on_round(player, round);
@@ -168,13 +188,7 @@ var Game = function(options) {
 			, translational_velocity: {speed: GameConstants.PROJECTILE_SPEED}
 			, fired_by: player
 		});
-		this.active_projectiles.push(projectile);
-		var fire_event = create_game_event("player_fired", {
-			player: player
-			, projectile: projectile
-		});
-		this.replay.push_game_event(fire_event);
-		this.update_state(round, "Fire");
+		this.add_projectile(projectile, round);
 	};
 	proto.start = function() {
 		this.emit({
@@ -376,7 +390,17 @@ var Game = function(options) {
 		if(relevant_state === undefined) {
 			return undefined;
 		}
-		return relevant_state.get_moving_object_position_on_round(moving_object, round);
+		var rv = relevant_state.get_moving_object_position_on_round(moving_object, round);
+		if(rv === undefined) { //Perhaps the state hasn't been created yet for the object
+			if(moving_object.is("projectile")) {
+				return {
+					x: moving_object.x0
+					, y: moving_object.y0
+					, theta: moving_object.theta0
+				};
+			}
+		}
+		return rv;
 	};
 
 	proto.get_moving_object_states = function(round) {
@@ -410,7 +434,7 @@ var Game = function(options) {
 				, game: self
 			}, player.get_state()));
 		});
-		var projectile_states = _.map(this.get_active_projectiles(), function(projectile, index) {
+		var projectile_states = _.map(this.get_projectiles(), function(projectile, index) {
 			var start_position = self.get_moving_object_position_on_round(projectile, round);
 			if(start_position === undefined) {
 				return create_projectile_state(_.extend({
@@ -450,29 +474,41 @@ var Game = function(options) {
 		return restricted_path;
 	};
 
-	proto.handle_projectile_collisions = function() {
-		var collisions = this.get_projectile_collisions();
+	proto.handle_projectile_collisions = function(round) {
+		var collisions = this.get_projectile_collisions(round);
 		var self = this;
+
 		_.forEach(collisions, function(collision) {
-			self.handle_projectile_collision(collision);
+			self.handle_projectile_collision(collision, round);
 		});
 	};
-	proto.handle_projectile_collision = function(collision) {
-		console.log(collision);
+	proto.handle_projectile_collision = function(collision, round) {
+		var projectile = collision.projectile;
+		var other_object = collision.other_object;
+		if(other_object === this.get_map()) {
+			this.remove_projectile(projectile, round);
+		}
 	};
 
-	proto.get_projectile_collisions = function() {
+	proto.get_projectile_collisions = function(round) {
 		var moving_objects = this.get_active_moving_objects();
 		var len = moving_objects.length;
 		var collision_pairs = [];
-		for(i = 0; i<len-1; i++) {
+		var map = this.get_map();
+		for(i = 0; i<len; i++) {
 			var mo_i = moving_objects[i];
 			if(mo_i.is("projectile")) {
+				var position = this.get_moving_object_position_on_round(mo_i, round);
+				if(map.is_touching(mo_i, position)) {
+					collision_pairs.push(new ProjectileCollision({
+						projectile: mo_i
+						, other_object: map
+					}));
+				}
 				for(j = i+1; j<len; j++) {
 					var mo_j = moving_objects[j];
-
-					if(mo_i.is_touching(mo_j)) {
-						collision_pairs.push(new Collision({
+					if(mo_i.can_collide_with(mo_j) && mo_i.is_touching(mo_j)) {
+						collision_pairs.push(new ProjectileCollision({
 							projectile: mo_i
 							, other_object: mo_j
 						}));

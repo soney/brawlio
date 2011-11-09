@@ -5,6 +5,7 @@ define(function(require) {
 	var PlayerState = function(options) {
 		PlayerState.superclass.call(this, options);
 		this.health = options.health;
+		this.path = this.game.restrict_path(this.moving_object, this.specified_path);
 	};
 	oo_utils.extend(PlayerState, MovingObjectState);
 

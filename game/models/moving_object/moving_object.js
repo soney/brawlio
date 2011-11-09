@@ -45,6 +45,9 @@ define(function(require) {
 		proto.is_touching = function(moving_object) {
 			return false;
 		};
+		proto.can_collide_with = function(moving_object) {
+			return true;
+		};
 	})(MovingObject);
 
 	return MovingObject;

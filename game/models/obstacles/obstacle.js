@@ -10,7 +10,7 @@ define(function(require) {
 		proto.next_touch_event = function(moving_object, moving_object_state) {
 			return false;
 		};
-		proto.touching = function(moving_object_state, round) {
+		proto.is_touching = function(moving_object, position) {
 			return false;
 		};
 		proto.restrict_path = function(moving_object, path) {
