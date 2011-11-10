@@ -61,7 +61,7 @@ define(function(require) {
 				brawl.run(function(winner) {
 					var replay_element = $(".replay", self.element);
 					if(winner === undefined) {
-						$(replay_element).replay_viewer("set_result", "Draw");
+						$(replay_element).replay_viewer("set_result", "Time expired");
 					} else if(winner.get_name() === "Me") {
 						BrawlIO.claim_crown(code);
 						$(replay_element).replay_viewer("set_result", "You win!");

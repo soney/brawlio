@@ -1,5 +1,7 @@
 *.swp
 node_modules
 server/brawlio_db.sqlite3
+server/king.txt
+server/king_code.txt
 invited_emails.txt
 .DS_Store

@@ -22,7 +22,8 @@ define(function(require) {
 
 		ctx.translate(state.position.x, state.position.y);
 		ctx.rotate(state.position.theta);
-		ctx.fillStyle = "yellow";
+		var color = player.get_team().get_id()===0 ? "yellow": "#777";
+		ctx.fillStyle = color;
 		ctx.beginPath();
 		ctx.arc(0, 0, player.get_radius(), 0, Math.PI*2, true);
 		ctx.fill();

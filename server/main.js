@@ -116,7 +116,6 @@ var BrawlIOServer = function(production) {
 		});
 		socket.on('get_king_code', function(callback) {
 			database.get_king_code(function(king_code) {
-				console.log(king_code);
 				callback(king_code);
 			});
 		});
