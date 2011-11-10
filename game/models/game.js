@@ -13,6 +13,7 @@ var get_time = function() {
 	return (new Date()).getTime();
 };
 
+
 var GameState = function(options) {
 	this.start_round = options.round;
 	this.start_time  = get_time();
@@ -145,6 +146,19 @@ var Game = function(options) {
 			return player.is_alive();
 		});
 	};
+	proto.clear_projectile_collision_interval = function() {
+		window.clearInterval(this.__projectile_collision_check_interval);
+	};
+	proto.set_projectile_collision_interval = function() {
+		this.__projectile_collision_check_interval = window.setInterval(_.bind(this.check_for_collision, this), GameConstants.SIM_MS_PER_ROUND/10);
+	};
+	proto.check_for_collision = function() {
+		var round = this.get_round();
+		if(this.has_projectile_collision(round)) {
+			this.update_state(round, "Hackey projectile collision detection");
+		}
+	};
+	
 	proto.get_projectiles = function() {
 		return this.active_projectiles;
 	};
@@ -191,9 +205,6 @@ var Game = function(options) {
 		this.add_projectile(projectile, round);
 	};
 	proto.start = function() {
-		this.emit({
-			type: "start"
-		});
 		this.update_state(0, "Game Started");
 		if(this.round_limit !== undefined) {
 			var self = this;
@@ -201,13 +212,21 @@ var Game = function(options) {
 				self.stop(undefined);
 			}, this.round_limit, "End of game");
 		}
+		this.set_projectile_collision_interval();
+		this.emit({
+			type: "start"
+		});
 	};
 	proto.stop = function(winner) {
+		this.clear_round_listeners();
+		this.clear_projectile_collision_interval();
+		this.replay.complete = true;
+		this.replay.set_num_rounds(this.get_round());
+		this.replay.set_winner(winner);
 		this.emit({
 			type: "end"
 			, winner: winner
 		});
-		this.clear_round_listeners();
 	};
 	proto.get_map = function() {
 		return this.map;
@@ -487,6 +506,13 @@ var Game = function(options) {
 		var other_object = collision.other_object;
 		if(other_object === this.get_map()) {
 			this.remove_projectile(projectile, round);
+		} else if(other_object.is("player")) {
+			this.remove_projectile(projectile, round);
+			other_object.remove_health(6);
+			this.check_game_over();
+		} else if(other_object.is("projectile")) {
+			this.remove_projectile(projectile, round);
+			this.remove_projectile(other_object, round);
 		}
 	};
 
@@ -495,28 +521,107 @@ var Game = function(options) {
 		var len = moving_objects.length;
 		var collision_pairs = [];
 		var map = this.get_map();
+		var self = this;
+		var moving_object_positions = _.map(moving_objects, function(moving_object) {
+			return self.get_moving_object_position_on_round(moving_object, round);
+		});
 		for(i = 0; i<len; i++) {
 			var mo_i = moving_objects[i];
 			if(mo_i.is("projectile")) {
-				var position = this.get_moving_object_position_on_round(mo_i, round);
+				var position = moving_object_positions[i];
 				if(map.is_touching(mo_i, position)) {
 					collision_pairs.push(new ProjectileCollision({
 						projectile: mo_i
 						, other_object: map
 					}));
 				}
-				for(j = i+1; j<len; j++) {
+				for(j = 0; j<len; j++) {
+					if(j===i) continue;
 					var mo_j = moving_objects[j];
-					if(mo_i.can_collide_with(mo_j) && mo_i.is_touching(mo_j)) {
-						collision_pairs.push(new ProjectileCollision({
-							projectile: mo_i
-							, other_object: mo_j
-						}));
+					if(mo_i.can_collide_with(mo_j)) {
+						var pos_i = moving_object_positions[i];
+						var pos_j = moving_object_positions[j];
+						if(Math.pow(pos_i.x - pos_j.x, 2) + Math.pow(pos_i.y - pos_j.y, 2) <= Math.pow(mo_i.get_radius() + mo_j.get_radius(), 2) + error_tolerance) {
+							collision_pairs.push(new ProjectileCollision({
+								projectile: mo_i
+								, other_object: mo_j
+							}));
+						}
 					}
 				}
 			}
 		}
 		return collision_pairs;
+	};
+	var error_tolerance = 0.00001;
+	proto.has_projectile_collision = function(round) {
+		round = round || this.get_round();
+		var moving_objects = this.get_active_moving_objects();
+		var len = moving_objects.length;
+		var self = this;
+		var moving_object_positions = _.map(moving_objects, function(moving_object) {
+			return self.get_moving_object_position_on_round(moving_object, round);
+		});
+		for(i = 0; i<len; i++) {
+			var mo_i = moving_objects[i];
+			if(mo_i.is("projectile")) {
+				for(j = 0; j<len; j++) {
+					if(i === j) {
+						continue;
+					}
+					var mo_j = moving_objects[j];
+					if(mo_i.can_collide_with(mo_j)) {
+						var pos_i = moving_object_positions[i];
+						var pos_j = moving_object_positions[j];
+						if(Math.pow(pos_i.x - pos_j.x, 2) + Math.pow(pos_i.y - pos_j.y, 2) <= Math.pow(mo_i.get_radius() + mo_j.get_radius(), 2) + error_tolerance) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	};
+	proto.get_snapshot = function() {
+		var map = this.get_map();
+		var self = this;
+		var round = this.get_round();
+		var players = this.get_living_players().map(function(player) {
+				var position = self.get_moving_object_position_on_round(player, round);
+				return {
+					x: position.x
+					, y: position.y
+					, theta: position.theta
+					, player: player
+					, number: player.get_number()
+					, team_id: player.get_team().get_id()
+				};
+			});
+
+		var data = {
+			round: this.get_round()
+			, players: players
+			, map: {
+				width: map.get_width()
+				, height: map.get_height()
+			}
+		};
+			return data;
+	};
+	proto.check_game_over = function() {
+		var living_players = this.get_living_players();
+		var living_team = undefined;
+		for(var i = 0, len = living_players.length; i<len; i++) {
+			var player = living_players[i];
+			var team = player.get_team();
+			if(living_team === undefined) {
+				living_team = team;
+			} else if(living_team !== team) {
+				return false;
+			}
+		}
+		//Only one team left
+		this.stop(living_team);
 	};
 })(Game);
 return function(options) {

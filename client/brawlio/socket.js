@@ -37,6 +37,8 @@ define(function(require, exports, module) {
 				};
 
 				this.set_team_code = function(team_id, code) {
+					var team = this.get_team_by_id(team_id);
+					team.code = code;
 					socket.emit('set_team_code', team_id, code, function() {
 						var team = self.get_team_by_id(team_id);
 						team.code = code;
@@ -84,8 +86,8 @@ define(function(require, exports, module) {
 						callback(code);
 					});
 				};
-				this.claim_crown = function(callback) {
-					socket.emit('claim_crown', function() {
+				this.claim_crown = function(code, callback) {
+					socket.emit('claim_crown', code, function() {
 						if(callback) {
 							callback();
 						}

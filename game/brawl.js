@@ -169,9 +169,6 @@ var Brawl = function(options) {
 						game.on_round(do_stop_firing, request.round, "Stop firing");
 					} else if(action === Actions.sense) {
 						var snapshot_data = game.get_snapshot();
-						snapshot_data.projectiles.forEach(function(projectile) {
-							delete projectile.projectile;
-						});
 						snapshot_data.players.forEach(function(player) {
 							delete player.player;
 						});
@@ -205,7 +202,8 @@ var Brawl = function(options) {
 				self.post(worker, {type: "game_start", start_time: start_time});
 			});
 		});
-		this.game.on("end", function(winner) {
+		this.game.on("end", function(event) {
+			var winner = event.winner;
 			if(_.isFunction(self.game_callback)) {
 				self.game_callback(winner);
 			}

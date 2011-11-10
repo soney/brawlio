@@ -19,10 +19,10 @@ define(function(require) {
 				$("a.save").click();
 				if(self.current_brawl!==undefined) {
 					self.current_brawl.terminate();
+					self.current_brawl = undefined;
 				}
 				self.test();
 			});
-			self.test();
 		}
 
 		, destroy: function() {
@@ -34,19 +34,18 @@ define(function(require) {
 			var self = this
 				, options = this.options
 				, team = BrawlIO.get_team_by_id(options.team_id);
-
-
+			var code = team.code;
 			BrawlIO.get_king_code(function(king_code) {
 				var brawl = create_brawl({
 					teams: [ {
 							name: "Me"
 							, players: [{
-								code: team.code
+								code: code
 							}]
 						} , {
 							name: "Opponent"
 							, players: [{
-								code: ""
+								code: king_code
 							}]
 						}
 					]
@@ -54,22 +53,23 @@ define(function(require) {
 						width: 50
 						, height: 50
 					}
-					//, round_limit: 20
-				});
-				brawl.run(function(winner) {
-					if(winner === 0) {
-						//BrawlIO.claim_crown();
-					}
+					, round_limit: 40
 				});
 				self.current_brawl = brawl;
 
 				var replay = brawl.get_replay();
 				brawl.run(function(winner) {
-					if(winner === 0) {
-						BrawlIO.claim_crown();
+					var replay_element = $(".replay", self.element);
+					if(winner === undefined) {
+						$(replay_element).replay_viewer("set_result", "Draw");
+					} else if(winner.get_name() === "Me") {
+						BrawlIO.claim_crown(code);
+						$(replay_element).replay_viewer("set_result", "You win!");
+					} else {
+						$(replay_element).replay_viewer("set_result", "You lose");
 					}
 				});
-				self.show_replay(replay);
+				var replay_element = self.show_replay(replay);
 			});
 		}
 
@@ -83,6 +83,7 @@ define(function(require) {
 			replay_element.replay_viewer({
 				replay: replay
 			});
+			return replay_element;
 		}
 	};
 

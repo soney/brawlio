@@ -15,7 +15,7 @@ define(["ace/ace", "ace/mode/javascript", "ace/theme/idle_fingers", "vendor/jque
 			var self = this;
 			$("a.save", element).click(function() {
 				self.save();
-			});
+			}).hide();
 			var check_length = function() {
 				self.check_length(team);
 			};

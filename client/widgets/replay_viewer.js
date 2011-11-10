@@ -24,6 +24,15 @@ define(function(require) {
 		, destroy: function() {
 			$.Widget.prototype.destroy.apply(this, arguments);
 			this.renderer.destroy();
+			this.clear_result();
+		}
+		
+		, set_result: function(text) {
+			$(".result", this.element).text(text);
+		}
+
+		, clear_result: function() {
+			return this.set_result("");
 		}
 	};
 

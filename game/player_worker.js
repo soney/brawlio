@@ -176,9 +176,6 @@ var get_time = function() {
 					data.players = data.players.map(function(pi) {
 						return new Player(pi.number, pi.team_id, {x: pi.x, y: pi.y, theta: pi.theta});
 					});
-					data.projectiles = data.projectiles.map(function(pi) {
-						return new Projectile();
-					});
 					data.map = new Map({width: data.map.width, height: data.map.height});
 
 					callback(data);

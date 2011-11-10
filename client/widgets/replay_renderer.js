@@ -49,8 +49,14 @@ define(function(require) {
 		ctx.restore();
 	}
 
-	var ReplayRenderer = function(replay) {
+	function draw_message(message, ctx) {
+		ctx.save();
+		ctx.restore();
+	};
+
+	var ReplayRenderer = function(replay, my_team) {
 		this.replay = replay;
+		this.my_team = my_team;
 		this._destroy = false;
 	};
 	(function() {
@@ -63,12 +69,15 @@ define(function(require) {
 				self.render(ctx);
 			}, 0);
 		};
-		this.stop = function() {
-			console.log("Replay done");
+		this.stop = function() { };
+		this.get_round = function() {
+			var time_diff = get_time() - this.start_time;
+			var round = time_diff/GameConstants.REPLAY_MS_PER_ROUND;
+			return round;
 		};
 		this.render = function(ctx) {
 			this.do_render(ctx);
-			if(this.replay.is_complete() && this.snapshot_index >= this.replay.num_snapshots() - 1) {
+			if(this.replay.is_complete() && this.get_round() >= this.replay.get_num_rounds()) {
 				this.stop();
 				return;
 			}
@@ -79,8 +88,7 @@ define(function(require) {
 			}, 1000/FPS);
 		};
 		this.do_render = function(ctx) {
-			var time_diff = get_time() - this.start_time;
-			var round = time_diff/GameConstants.REPLAY_MS_PER_ROUND;
+			var round = this.get_round();
 			var snapshot = this.replay.get_snapshot_at(round);
 			this.render_snapshot(snapshot, ctx);
 		};
@@ -98,16 +106,6 @@ define(function(require) {
 					draw_projectile(moving_object, moving_object_state, ctx);
 				}
 			});
-			/*
-			snapshot.players.forEach(function(player_state) {
-				var player = player_state.player;
-				draw_player(player, player_state, ctx);
-			});
-			snapshot.projectiles.forEach(function(projectile_state) {
-				var projectile = projectile_state.projectile;
-				draw_projectile(projectile, projectile_state, ctx);
-			});
-			*/
 			ctx.restore();
 		};
 		this.destroy = function() {

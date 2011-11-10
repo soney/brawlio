@@ -417,12 +417,26 @@ var DBBrawl = function(id, team_1_fk, user_1_fk, team_2_fk, user_2_fk, result, s
 			callback();
 		});
 	};
+	proto.set_king_code = function(code, callback) {
+		fs.writeFile(__dirname+"/king_code.txt", code+"", function(err) {
+			if (err) throw err;
+			callback();
+		});
+	};
+
 
 	proto.get_king = function(callback) {
-		fs.readFile(__dirname+"/king.txt", function(err, data) {
+		fs.readFile(__dirname+"/king.txt", 'ascii', function(err, data) {
 			if (err) throw err;
 			var id = parseInt(data);
 			callback(id);
+		});
+	};
+	proto.get_king_code = function(callback) {
+		fs.readFile(__dirname+"/king_code.txt", 'ascii', function(err, data) {
+			console.log(data,err);
+			if (err) { callback(""); }
+			callback(data);
 		});
 	};
 })(Database);

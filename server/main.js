@@ -115,16 +115,16 @@ var BrawlIOServer = function(production) {
 			database.get_brawl(brawl_id, callback);
 		});
 		socket.on('get_king_code', function(callback) {
-			database.get_king(function(king_id) {
-				database.get_user_teams(king_id, function(teams) {
-					var team = teams[0];
-					callback(team.code);
-				});
+			database.get_king_code(function(king_code) {
+				console.log(king_code);
+				callback(king_code);
 			});
 		});
-		socket.on('claim_crown', function(callback) {
+		socket.on('claim_crown', function(code, callback) {
 			database.set_king(user_id, function() {
-				callback();
+				database.set_king_code(code, function() {
+					callback();
+				});
 			});
 		});
 		socket.on('is_king', function(callback) {

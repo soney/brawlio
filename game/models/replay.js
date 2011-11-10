@@ -43,6 +43,18 @@ define(function(require) {
 		proto.push_game_event = function(game_event) {
 			this.game_events.push(game_event);
 		};
+		proto.get_num_rounds = function() {
+			return this.last_round;
+		};
+		proto.set_num_rounds = function(rounds) {
+			this.last_round = rounds;
+		};
+		proto.set_winner = function(winner) {
+			this.winner = winner;
+		};
+		proto.get_winner = function() {
+			return this.winner;
+		};
 	}(Replay));
 
 	return function(options){return new Replay(options);};

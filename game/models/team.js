@@ -5,8 +5,9 @@ define(function(require) {
 	var Team = function(options) {
 		this.name = options.name;
 		this.id = options.id;
+		var self = this;
 		this.players = _.map(options.players, function(player_options, index) {
-			return create_player(_.extend({number: index}, player_options));
+			return create_player(_.extend({number: index, team: self}, player_options));
 		});
 	};
 
@@ -24,6 +25,7 @@ define(function(require) {
 		proto.num_players = function() { return this.get_players().length; };
 		proto.get_id = function() { return this.id; };
 		proto.set_id = function(id) { this.id = id; };
+		proto.get_name = function(){return this.name;};
 	})(Team);
 
 	return function(options) {
