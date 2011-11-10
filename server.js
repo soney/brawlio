@@ -1,11 +1,24 @@
 #!/usr/bin/env node
 
-var BrawlIOServer = require('./server/main');
+var BrawlIOServer = require(__dirname+'/server/main');
 
-var argv = process.argv;
+function isRoot() { return process.getuid() == 0; }
+
 var port = 8000;
-if(argv.length === 3 && argv[2] === "production") {
+var production = true;
+if(process.argv.length === 3 && process.argv[2] === "dev") {
+	production = false;
+}
+
+if(production) {
 	port = 80;
 }
-var bio = new BrawlIOServer();
+
+var bio = new BrawlIOServer(production);
 bio.start(__dirname, port, "Good times to be had at localhost:"+port);
+/*
+try {
+} catch(e) {
+	console.log(e.);
+}
+*/

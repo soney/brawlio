@@ -7,13 +7,17 @@ var socket_io = require('socket.io');
 var database = require('./database').database;
 var constants = require('./constants');
 
-//var Brawl = require('../game/brawl');
-//var Map = require('../game/models/map');
-//var Team = require('../game/models/team');
-
 var BrawlIOServer = function(production) {
 	this.check_invite = production === true;
+	this.auto_login = production === false;
+	this.session_to_user = {};
 };
+
+function bind(fn, scope) {
+  return function () {
+    return fn.apply(scope, arguments);
+  }
+}
 
 (function(my) {
 	var proto = my.prototype;
@@ -21,36 +25,36 @@ var BrawlIOServer = function(production) {
 	var server = undefined,
 		io = undefined;
 
-	var start_server = function(bio_server, port, path) {
+	proto.start_server = function(path, port) {
 		server = express.createServer(
 				express.cookieParser()
 				, express.session({secret: constants.session_secret})
-				, express.router(routes)
+				, express.router(bind(this.routes, this))
 				, express.static(path)
 			);
 		io = socket_io.listen(server);
 		io.set("log level", 0);
 
-		initialize_sockets(bio_server, io);
+		this.initialize_sockets(io);
 
 		server.listen(port);
 	};
 
-	var session_to_user = {};
-	var initialize_sockets = function(bio_server, io) {
+	proto.initialize_sockets = function(io) {
+		var self = this;
 		io.sockets.on('connection', function(socket) {
 			socket.on('session_key', function(key, callback) {
-				var user_id = session_to_user[key];
+				var user_id = self.session_to_user[key];
 				if(user_id) {
-					delete session_to_user[key];
-					initialize_socket(bio_server, socket, user_id);
+					delete self.session_to_user[key];
+					self.initialize_socket(socket, user_id);
 					callback();
 				}
 			});
 		});
 	};
 
-	var initialize_socket = function(bio_server, socket, user_id) {
+	proto.initialize_socket = function(socket, user_id) {
 		socket.on('get_user', function(username, callback) {
 			if(username!=null) {
 				database.get_user_with_username(username, callback);
@@ -131,6 +135,7 @@ var BrawlIOServer = function(production) {
 				callback(king_id===user_id);
 			});
 		});
+		/*
 		socket.on('run_brawl', function(my_team_id, opponent_team_id, callback) {
 			database.get_teams([my_team_id, opponent_team_id], function(teams) {
 				var my_team = teams[0]
@@ -173,19 +178,19 @@ var BrawlIOServer = function(production) {
 			});
 			
 		});
+		*/
 	};
 
 	var relyingParty;
 
-	var _debug = true;
-	function render_home(req, res, next) {
+	proto.render_home = function(req, res, next) {
 		var session = req.session;
-		if(_debug) {
+		if(this.auto_login) {
 			session.user_id = 1;
 		}
 
 		if(session.user_id) {
-			session_to_user[req.sessionID] = session.user_id;
+			this.session_to_user[req.sessionID] = session.user_id;
 			res.render("dashboard.jade", {layout: false, session_key: req.sessionID});
 		}
 		else {
@@ -193,9 +198,10 @@ var BrawlIOServer = function(production) {
 		}
 	}
 
-	var routes = function(server) {
+	proto.routes = function(server) {
+		var  self = this;
 		server.get("/", function(req, res, next) {
-			render_home(req, res, next);
+			self.render_home(req, res, next);
 		});
 
 		server.get("/authenticate", function(req, res, next) {
@@ -311,7 +317,7 @@ var BrawlIOServer = function(production) {
 	//Public members
 	proto.start = function(path, port, message) {
 		if(!path) path = __dirname;
-		start_server(this, port||8000, path);
+		this.start_server(path, port);
 		if(message) {
 			console.log(message);
 		}

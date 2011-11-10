@@ -15,30 +15,11 @@ define(function(require, exports, module) {
 
 	(function() {
 		this.initialize = function(key, dashboard_tag) {
-			this.initialize_templates();
 			this.dashboard_tag = dashboard_tag;
 
 			this.initialize_socket(key, function() {
 				dashboard_tag.dashboard();
 			});
-		};
-
-		this.initialize_templates = function() {
-			var get_template = function(jq_query) {
-				var template_html = $(jq_query).html();
-				var template = Handlebars.compile(template_html);
-
-				return template;
-			};
-
-			this.templates = {
-			/*
-				dashboard: get_template("script#dashboard_template")
-				, sidebar_team: get_template("script#sidebar_team_template")
-				, dashboard_team: get_template("script#dashboard_team_template")
-				, dashboard_me: get_template("script#dashboard_me_user_template")
-				*/
-			};
 		};
 
 		this.db_do = function() {

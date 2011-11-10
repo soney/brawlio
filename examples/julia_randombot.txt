@@ -1,0 +1,18 @@
+turn("right");
+move("forward");
+function doFire (){
+    fire();
+
+    setTimeout(function(){doFire()}, 0.1);
+}
+
+
+function doChangeDir() {
+    dirs = ["left", "right", "forward", "backward"];
+    dir = dirs[Math.floor(Math.random() * 4)];
+    move(dir);
+    setTimeout(doChangeDir, 3);
+}
+
+setTimeout(doFire, 0.1);
+setTimeout(doChangeDir, 3);
