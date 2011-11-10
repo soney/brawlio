@@ -1,4 +1,4 @@
-define(function(require, exports, module) {
+define(function() {
 	var make_listenable = function(obj) {
 		var id = 0;
 		var listeners = [];

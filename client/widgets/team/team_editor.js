@@ -1,4 +1,4 @@
-define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mode/javascript", "ace/theme/idle_fingers", "vendor/jquery", "vendor/jquery-ui"], function(Brawl, Map, Team, ace) {
+define(["ace/ace", "ace/mode/javascript", "ace/theme/idle_fingers", "vendor/jquery", "vendor/jquery-ui"], function(ace) {
 	//var JavaScriptMode = JSMode.Mode;
     var JavaScriptMode = require("ace/mode/javascript").Mode;
 	var TeamEditor = {
@@ -15,7 +15,7 @@ define(["game/brawl", "game/models/map", "game/models/team", "ace/ace", "ace/mod
 			var self = this;
 			$("a.save", element).click(function() {
 				self.save();
-			});
+			}).hide();
 			var check_length = function() {
 				self.check_length(team);
 			};

@@ -2,13 +2,14 @@
 html(lang="en")
   head
     title Brawl IO
+    link(rel="shortcut icon", href="favicon.ico")
     link(type="text/css", rel="stylesheet", href="client/css/main.css")
     link(type="text/css", rel="stylesheet", href="client/css/dashboard.css")
     link(type="text/css", rel="stylesheet", href="vendor/jquery-ui-1.8.14.custom/css/ui-lightness/jquery-ui-1.8.14.custom.css")
     script(src="vendor/require.js")
     script(src="client/require_paths.js")
     script
-      require(["vendor/jquery", "client/brawlio"], function() {
+      require(["vendor/jquery", "vendor/underscore", "client/brawlio"], function() {
         $(function() {
           BrawlIO.initialize("#{session_key}", $(".content"));
         });
@@ -38,10 +39,7 @@ html(lang="en")
               #ace_editor
         #challenge_tab(style="margin-top: 20px")
           center
-            a#king_challenge(href="javascript:void(0)", style="font-size: 32px;") Challenge the king
-            .replay
-              .controls(style="display:none")
-                a.play(href="javascript:void(0)") Play
-                a.stop(href="javascript:void(0)") Stop
+            a#king_challenge(href="javascript:void(0)", style="margin-top: 10px; font-size: 32px;") Submit
+            .replay(style="position:relative;")
+              .result(style="font-size: 34pt;position:absolute;top:30px;text-align:middle;width:400px;left:160px;color:white;text-shadow: black 2px 2px 12px;")
               canvas.viewer(width="400", height="400")
-              .console

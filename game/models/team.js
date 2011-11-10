@@ -1,17 +1,14 @@
-define(['../constants', './player'], function(Constants, Player) {
-	var Team = function(options) {
-		this.code = options.code;
-		this.players = [];
-		for(var i = 0; i<Constants.TEAM_SIZE; i++) {
-			var player = new Player({
-				number: i+1
-				, team: this
-				, code: this.code
-			});
+define(function(require) {
+	require("vendor/underscore");
+	var create_player = require('game/models/player/player');
 
-			this.players.push(player);
-		}
+	var Team = function(options) {
+		this.name = options.name;
 		this.id = options.id;
+		var self = this;
+		this.players = _.map(options.players, function(player_options, index) {
+			return create_player(_.extend({number: index, team: self}, player_options));
+		});
 	};
 
 	(function(my) {
@@ -28,7 +25,10 @@ define(['../constants', './player'], function(Constants, Player) {
 		proto.num_players = function() { return this.get_players().length; };
 		proto.get_id = function() { return this.id; };
 		proto.set_id = function(id) { this.id = id; };
+		proto.get_name = function(){return this.name;};
 	})(Team);
 
-	return Team;
+	return function(options) {
+		return new Team(options);
+	};
 });

@@ -1,18 +1,5 @@
-var controller = {}
-	, game = {};
-
+importScripts("../vendor/require.js");
 var is_node = typeof importScripts === "undefined";
-if(is_node) {
-	var actions = require(__dirname+'/actions');
-	var Actions = actions.Actions;
-
-	var utils = require(__dirname+'/util/worker_utils');
-	var Hash = utils.Hash;
-	var CONST = utils.CONST;
-}
-else {
-	importScripts('actions.js', '../util/worker_utils.js');
-}
 
 var post = function() {
 	if(is_node) {
@@ -32,6 +19,26 @@ var console = {
 				, args: args});
 	}
 };
+var controller = {}
+	, game = {}
+	, GameConstants
+	, Actions;
+
+require(["constants"], function(constants) {
+	GameConstants = constants.game_constants;
+	Actions = constants.actions;
+});
+
+var is_node = typeof importScripts === "undefined";
+
+var post = function() {
+	if(is_node) {
+		return postMessage.apply(self, arguments);
+	} else {
+		return self.postMessage.apply(self, arguments);
+	}
+};
+
 
 var get_time = function() {
 	return new Date().getTime();
@@ -51,6 +58,7 @@ var get_time = function() {
 		} else {
 			action = Actions.move.forward;
 		}
+		user_options = user_options || {};
 
 		var options = {
 			delay: user_options.delay
@@ -75,7 +83,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 	controller.turn = function(direction, user_options) {
@@ -87,6 +95,8 @@ var get_time = function() {
 		} else {
 			action = Actions.rotate.counter_clockwise;
 		}
+
+		user_options = user_options || {};
 
 		var options = {
 			delay: user_options.delay
@@ -111,7 +121,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 	controller.fire = function(param, user_options) {
@@ -127,6 +137,8 @@ var get_time = function() {
 		} else {
 			action = Actions.fire;
 		}
+
+		user_options = user_options || {};
 
 		var options = {
 			automatic: automatic
@@ -149,7 +161,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 	controller.sense = function(callback) {
@@ -164,9 +176,6 @@ var get_time = function() {
 					data.players = data.players.map(function(pi) {
 						return new Player(pi.number, pi.team_id, {x: pi.x, y: pi.y, theta: pi.theta});
 					});
-					data.projectiles = data.projectiles.map(function(pi) {
-						return new Projectile();
-					});
 					data.map = new Map({width: data.map.width, height: data.map.height});
 
 					callback(data);
@@ -177,7 +186,7 @@ var get_time = function() {
 			type: "action"
 			, action: action
 			, options: options
-			, time: get_time()
+			, round: game.get_round()
 		});
 	};
 
@@ -220,11 +229,11 @@ var get_time = function() {
 		};
 	})();
 
-	var event_listeners = new Hash();
+	var event_listeners = [];
 
 	var addCallback = function(options, listener) {
 		var id = get_id();
-		event_listeners.set(id, listener);
+		event_listeners[id] = listener;
 		return id;
 	};
 
@@ -233,7 +242,8 @@ var get_time = function() {
 	};
 
 	game.onRound = function(listener, round) {
-		var run_time = game.start_time + round/CONST.ROUNDS_PER_MS;
+		var round_diff = (round - game.sync_round);
+		var run_time = game.sync_time + round_diff*GameConstants.SIM_MS_PER_ROUND;
 		var time_diff = run_time - get_time();
 		if(time_diff <= 0) {
 			listener();
@@ -243,22 +253,28 @@ var get_time = function() {
 	};
 
 	game.setInterval = function(callback, rounds) {
-		return setInterval(callback, rounds / CONST.ROUNDS_PER_MS);
+		return setInterval(callback, rounds * GameConstants.SIM_MS_PER_ROUND);
 	};
 	game.clearInterval = function(id) {
 		return clearInterval(id);
 	};
 
 	game.setTimeout = function(callback, rounds) {
-		return setTimeout(callback, rounds / CONST.ROUNDS_PER_MS);
+		return setTimeout(callback, rounds * GameConstants.SIM_MS_PER_ROUND);
 	};
 	game.clearTimeout = function(id) {
 		return clearTimeout(id);
 	};
 
 	game.on_event = function(data) {
-		var event_listener = event_listeners.get(data.event_id);
+		var event_listener = event_listeners[data.event_id];
 		event_listener(data.event);
+	};
+	game.get_round = function(time) {
+		time = time || get_time();
+		var sync_round = this.sync_round;
+		var sync_time = this.sync_time;
+		return sync_round + (time - sync_time) / GameConstants.SIM_MS_PER_ROUND;
 	};
 })(game);
 
@@ -273,10 +289,14 @@ self.onmessage = function(event) {
 		controller.number = data.info.number;
 		controller.team_id = data.info.team_id;
 	} else if(type === "game_start") {
-		game.start_time = data.start_time;
+		game.sync_time = data.start_time;
+		game.sync_round = 0;
 		run();
 	} else if(type === "callback") {
 		game.on_event(data);
+	} else if(type === "sync_time") {
+		game.sync_time = data.time;
+		game.sync_round = data.round;
 	}
 };
 
@@ -297,3 +317,4 @@ var run = function() {
 		eval(code);
 	}).call();
 };
+post("ready");

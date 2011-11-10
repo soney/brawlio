@@ -1,4 +1,7 @@
-define(function(require, exports, module) {
+define(function(require) {
+	require("vendor/underscore");
+	var MapBoundaryObstacle = require('game/models/obstacles/map_boundary_obstacle');
+
 	var Map = function(options) {
 		if(options == null) {
 			options = {};
@@ -11,6 +14,12 @@ define(function(require, exports, module) {
 				, [{x: 40, y: 40, theta: 0}]
 			]
 		};
+		this.obstacles = [
+			new MapBoundaryObstacle({
+				width: this.get_width()
+				, height: this.get_height()
+			})
+		];
 	};
 
 	(function(my) {
@@ -18,46 +27,60 @@ define(function(require, exports, module) {
 
 		proto.get_width = function() { return this.attributes.width; };
 		proto.get_height = function() { return this.attributes.height; };
-
-		proto.check_bounds = function(old_pos, new_pos, player) {
-			var rv = {x: new_pos.x, y: new_pos.y, theta: new_pos.theta};
-			var radius = player.get_radius();
-			var map_width = this.get_width();
-			var map_height = this.get_height();
-
-			var min_x = rv.x - radius;
-			var max_x = rv.x + radius;
-			var min_y = rv.y - radius;
-			var max_y = rv.y + radius;
-
-			if(min_x < 0) {
-				rv.x = radius;
-			} else if(max_x > map_width) {
-				rv.x = map_width - radius;
-			}
-
-			if(min_y < 0) {
-				rv.y = radius;
-			} else if(max_y > map_height) {
-				rv.y = map_height - radius;
-			}
-			return rv;
-		};
 		proto.get_start_positions = function() {
 			return this.attributes.start_positions;
 		};
-		proto.projectile_left = function(projectile, old_pos, new_pos) {
-			var map_width = this.get_width();
-			var map_height = this.get_height();
-			var radius = projectile.get_radius();
+		proto.get_next_event = function(moving_object, moving_object_state) {
+			var touch_events = _(this.obstacles).chain()
+												.map(function(obstacle) {
+													var touch_info = obstacle.next_touch_event(moving_object, moving_object_state);
+													if(touch_info === false) { return false; }
+													else { return _.extend({obstacle: obstacle}, touch_info); }
+												})
+												.filter(function(touch_info) {
+													return touch_info !== false;
+												})
+												.value();
 
-			var min_x = new_pos.x - radius;
-			var max_x = new_pos.x + radius;
-			var min_y = new_pos.y - radius;
-			var max_y = new_pos.y + radius;
-			return max_x <= 0 || max_y <= 0 || min_x >= map_height || min_y >= map_height;
+			var next_touch_event = false;
+			touch_events.forEach(function(touch_event) {
+				if(next_touch_event === false || touch_event.time < next_touch_event.time) {
+					next_touch_event = touch_event;
+				}
+			});
+			if(next_touch_event === false) { return false; }
+			else { return next_touch_event; }
+		};
+		proto.restrict_path = function(moving_object, path) {
+			var restricted_path = path;
+			var touching_obstacles = _(this.obstacles)	.forEach(function(obstacle) {
+															restricted_path = obstacle.restrict_path(moving_object, restricted_path);
+														});
+			return restricted_path;
+		};
+		proto.is_touching = function(moving_object, position) {
+			for(var i = 0, len = this.obstacles.length; i<len; i++) {
+				var obstacle = this.obstacles[i];
+				if(obstacle.is_touching(moving_object, position)) {
+					return true;
+				}
+			}
+			return false;
+		};
+		proto.get_constraining_obstacles = function(moving_object, round) {
+			var touching_obstacles = _(this.obstacles)	.chain()
+														.map(function(obstacle) {
+															return {obstacle: obstacle, signature: obstacle.touching(moving_object, round)};
+														})
+														.filter(function(touch_info) {
+															return touch_info.signature !== 0;
+														})
+														.value();
+			return touching_obstacles;
 		};
 	})(Map);
 
-	return Map;
+	return function(options) {
+		return new Map(options);
+	};
 });

@@ -1,303 +1,231 @@
-define(["game/models/game", "game/replay/replay"], function(Game, Replay) {
-var Actions = {
-	move_type: 0
-	, move: {
-		stop: 00
-		, forward: 01
-		, backward: 02
-		, left: 03
-		, right: 04
-	}
-
-	, rotate_type: 1
-	, rotate: {
-		stop: 10
-		, clockwise: 11
-		, counter_clockwise: 12
-	}
-
-	, instantaneous_type: 2
-	, fire: 20
-	, stop_firing: 21
-	, sense: 22
-
-	, get_type: function(action) {
-		if(action >= 00 && action <= 09) {
-			return Actions.move_type;
-		} else if(action >= 10 && action <= 19) {
-			return Actions.rotate_type;
-		} else if(action >= 20 && action <= 29) {
-			return Actions.instantaneous_type;
-		}
-	}
+define(function(require) {
+require("vendor/underscore");
+var constants = require("game/constants")
+	, create_game = require("game/models/game")
+	, create_map = require("game/models/map")
+	, create_team = require("game/models/team")
+	, Actions = constants.actions
+	, GameConstants = constants.game_constants;
+var get_time = function() {
+	return (new Date()).getTime();
 };
 
-var PLAYER_WORKER_PATH = "game/workers/player_worker.js";
-
 var Brawl = function(options) {
-	this.updates_per_round = 5.0;
-	this.ms_per_round = 1000.0;
-	this.game = new Game($.extend({
-		ms_per_round: this.ms_per_round
-	}, options));
-	this.replay = new Replay({ 
-		map: this.game.get_map()
+	var map = create_map(options.map);
+	var teams = _.map(options.teams, function(team_options, index) {
+		return create_team(_.extend({id: index}, team_options));
 	});
-	this.initialize_player_workers();
+
+	this.game = create_game({
+		map: map
+		, teams: teams
+		, round_limit: options.round_limit
+	});
+	this.initialize();
+	this.asked_to_run = false;
+	this.workers_ready = false;
+	this.game_callback = undefined;
+	this.worker_sync_interval = undefined;
 };
 
 (function(my) {
 	var proto = my.prototype;
-	var get_time = function() {
-		return (new Date()).getTime();
+	proto.initialize = function() {
+		this.create_player_workers();
 	};
-
-	proto.initialize_player_workers = function() {
+	//WORKERS=======
+	proto.create_player_workers = function() {
 		var self = this;
-
-		this.player_workers = this.game.get_players().map(function(player) {
-			var player_worker = new Worker(PLAYER_WORKER_PATH);
-			player.worker = player_worker;
-
+		var players = this.game.get_players();
+		this._waiting_for_workers = players.length;
+		this.player_workers = _.map(players, function(player) {
+			var player_worker = new Worker("game/player_worker.js");
 			player_worker.onmessage = function(event) {
-				self.on_player_message(player, event);
+				var data = event.data;
+				self.on_player_message(player, player_worker, data, event);
 			};
-
-			player_worker.postMessage({
+			return player_worker;
+		});
+		/*
+		this.worker_sync_interval = window.setInterval(function() {
+			_.forEach(self.player_workers, function(worker) {
+				self.sync_worker(worker);
+			});
+		}, 5000);
+		/**/
+	};
+	proto.terminate_player_workers = function() {
+		_.forEach(this.player_workers, function(player_worker) {
+			player_worker.terminate();
+		});
+		window.clearInterval(this.worker_sync_interval);
+	};
+	proto.post = function(worker, message) {
+		return worker.postMessage(message);
+	};
+	proto.on_player_message = function(player, worker, data) {
+		if(data === "ready") {
+			this._waiting_for_workers--;
+			this.post(worker, {
 				type: "initialize"
 				, info: player.serialize()
 			});
-
-			return player_worker;
-		});
-	};
-	proto.terminate_player_workers = function() {
-		this.player_workers.forEach(function(player_worker) {
-			player_worker.terminate();
-		});
-	};
-
-	proto.run = function(callback) {
-		var self = this;
-		this.game.on("update", function() {
-			var snapshot = self.game.get_snapshot();
-			self.replay.concat_snapshot(snapshot);
-		});
-		this.game.on("end", function(event) {
-			var winner = event.winner;
-			self.terminate();
-			if(callback) {
-				callback(winner.get_id());
+			if(this._waiting_for_workers === 0) {
+				delete this._waiting_for_workers;
+				this.workers_ready = true;
+				this.run_if_ready();
 			}
-		});
-		this.game.start();
-		var start_time = this.game.get_start_time();
-		this.game.players.forEach(function(player) {
-			player.on("fire", function(event) {
-				self.on_player_fire(player, event);
-			});
-		});
-		this.player_workers.forEach(function(player_worker) {
-			player_worker.postMessage({
-				type: "game_start"
-				, start_time: start_time
-			});
-		});
-		this.game_update_interval = window.setInterval(function() {
-			self.game.update();
-		}, this.ms_per_round / this.updates_per_round);
-	};
-	proto.terminate = function() {
-		window.clearInterval(this.game_update_interval);
-		this.terminate_player_workers();
-	};
-	proto.get_replay = function() {
-		return this.replay;
-	};
-
-	proto.compute_request_timing = function(request) {
-		var request_time = request.time;
-		var options = request.options;
-
-		var delay_rounds = 0;
-		if(options.delay != null) {
-			delay_rounds = options.delay;
-		}
-
-		if(isNaN(delay_rounds)) {
-			delay_rounds = 0;
 		} else {
-			delay_rounds = Math.max(0, delay_rounds);
-		}
-		var delay_ms = delay_rounds * this.ms_per_round;
+			var type = data.type;
+			if(type === "console.log") {
+				console.log.apply(console, data.args);
+			} else if(type === "action") {
+				var self = this;
+				var request = data;
+				var action = request.action;
+				var action_type = Actions.get_type(action);
+				var options = request.options || {};
+				var game = this.game;
 
-		var desired_start_time_ms = request_time + delay_ms;
+				var callback = function() {};
 
-		var rv = {
-			start_time_ms: desired_start_time_ms
-			, stop_time_ms: undefined
-		};
-
-		if(options.duration) {
-			var duration = options.duration;
-			if(!isNaN(duration)) {
-				duration = Math.max(0, duration);
-				var duration_ms = duration * this.ms_per_round;
-				var desired_stop_time_ms = desired_start_time_ms + duration_ms;
-
-				rv.stop_time_ms = desired_stop_time_ms;
-			}
-		}
-		return rv;
-	};
-	var at_time = function(callback, time) {
-		var curr_time = get_time();
-		var time_diff = time - curr_time;
-		if(time_diff > 0) {
-			setTimeout(callback, time_diff);
-		} else {
-			callback();
-		}
-	};
-
-	proto.do_at_time = function(callback, time) {
-		var at_round = this.game.get_round(time);
-		at_time(function() {
-			callback(at_round);
-		}, time);
-	};
-	proto.on_player_fire = function(player, event) {
-		var callback = this._fire_callback;
-		if(callback) {
-			if(event.type === "fire") {
-				callback({
-					type: "fire"
-					, fired: event.fired
-				});
-			}
-			this.game.on_round(function() {
-				callback({
-					type: "weapon_ready"
-				});
-			}, player.get_next_fireable_round());
-		}
-	};
-	proto.on_player_message = function(player, event) {
-		var data = event.data;
-		var type = data.type;
-		if(type === "console.log") {
-			console.log.apply(console, data.args);
-		}
-		else if(type === "action") {
-			var self = this;
-			var request = data;
-			var action = request.action;
-			var action_type = Actions.get_type(action);
-			var options = request.options;
-
-			var request_timing = this.compute_request_timing(request);
-
-			var callback = function() {};
-
-			if(options.callback) {
-				var callback_id = options.callback_id;
-				var worker = player.worker;
-				callback = function(event) {
-					worker.postMessage({
-						type: "callback"
-						, event_id: callback_id
-						, event: event
-					});
-				};
-			}
-
-			if(action_type === Actions.move_type) {
-				var do_action = function() {
-					var angle = 0;
-					if(action === Actions.move.forward) angle = 0;
-					else if(action === Actions.move.left) angle = Math.PI/2.0;
-					else if(action === Actions.move.right) angle = -1 * Math.PI/2.0;
-					else if(action === Actions.move.backward) angle = Math.PI;
-
-					var speed = options.speed || player.get_max_movement_speed();
-					if(action === Actions.move.stop) speed = 0;
-
-					self.game.update();
-					player.set_velocity(speed, angle);
-					callback({
-						type: "start"
-						, action: action
-					});
-
-					if(request_timing.stop_time_ms) {
-						var stop_action = function(round) {
-							self.game.update();
-							player.set_velocity(0, 0);
-							callback({
-								type: "stop"
-								, action: action
-							});
-						};
-						self.do_at_time(stop_action, request_timing.stop_time_ms);
-					}
-				};
-				this.do_at_time(do_action, request_timing.start_time_ms);
-			} else if(action_type === Actions.rotate_type) {
-				var do_action = function() {
-					var speed = options.speed || player.get_max_rotation_speed();
-					if(action === Actions.rotate.stop) speed = 0;
-					else if(action === Actions.rotate.counter_clockwise) speed *= -1;
-
-					self.game.update();
-					player.set_rotation_speed(speed);
-					callback({
-						type: "start"
-						, action: action
-					});
-
-					if(request_timing.stop_time_ms) {
-						var stop_action = function(round) {
-							self.game.update();
-							player.set_rotation_speed(0);
-							callback({
-								type: "stop"
-								, action: action
-							});
-						};
-						self.do_at_time(stop_action, request_timing.stop_time_ms);
-					}
-				};
-				this.do_at_time(do_action, request_timing.start_time_ms);
-			} else if(action_type === Actions.instantaneous_type) {
-				if(action === Actions.fire) {
-					var do_fire = function() {
-						player.set_auto_fire(options.automatic);
-						player.fire();
+				if(options.callback) {
+					var callback_id = options.callback_id;
+					callback = function(event) {
+						self.post(worker, {
+							type: "callback"
+							, event_id: callback_id
+							, event: event
+						});
 					};
+				}
 
-					this._fire_callback = callback;
-					this.do_at_time(do_fire, request_timing.start_time_ms);
-				} else if(action === Actions.stop_firing) {
-					var do_stop_firing = function() {
-						player.set_auto_fire(false);
+				if(action_type === Actions.move_type) {
+					var delay = options.delay || 0;
+					var do_action = function(round) {
+						var angle = 0;
+						if(action === Actions.move.forward) angle = 0;
+						else if(action === Actions.move.left) angle = -1 * Math.PI/2.0;
+						else if(action === Actions.move.right) angle = Math.PI/2.0;
+						else if(action === Actions.move.backward) angle = Math.PI;
+
+						var speed = options.speed || player.get_max_movement_speed();
+						if(action === Actions.move.stop) speed = 0;
+
+						player.set_velocity(speed, angle, round);
+						callback({
+							type: "start"
+							, action: action
+						});
+
+						if(options.duration!==undefined) {
+							var stop_action = function(round) {
+								player.set_velocity(0, 0, round);
+								callback({
+									type: "stop"
+									, action: action
+								});
+							};
+							game.on_round(stop_action, request.round+delay+options.duration, "Stop moving");
+						}
 					};
-					this.do_at_time(do_stop_firing, request_timing.start_time_ms);
-				} else if(action === Actions.sense) {
-					var snapshot_data = this.game.get_snapshot();
-					snapshot_data.projectiles.forEach(function(projectile) {
-						delete projectile.projectile;
-					});
-					snapshot_data.players.forEach(function(player) {
-						delete player.player;
-					});
-					callback({
-						type: "sense"
-						, data: snapshot_data
-					});
+					game.on_round(do_action, request.round+delay, "Move");
+				} else if(action_type === Actions.rotate_type) {
+					var delay = options.delay || 0;
+					var do_action = function(round) {
+						var speed = options.speed || player.get_max_rotation_speed();
+						if(action === Actions.rotate.stop) speed = 0;
+						else if(action === Actions.rotate.counter_clockwise) speed *= -1;
+
+						player.set_rotation_speed(speed, round);
+						callback({
+							type: "start"
+							, action: action
+						});
+
+						if(options.duration !== undefined) {
+							var stop_action = function(round) {
+								player.set_rotation_speed(0, round);
+								callback({
+									type: "stop"
+									, action: action
+								});
+							};
+							game.on_round(stop_action, request.round+delay+options.duration, "Stop rotating");
+						}
+					};
+					game.on_round(do_action, request.round+delay, "Rotate");
+				} else if(action_type === Actions.instantaneous_type) {
+					if(action === Actions.fire) {
+						var do_fire = function() {
+							player.set_auto_fire(options.automatic);
+							player.fire();
+						};
+						game.on_round(do_fire, request.round, "Fire");
+					} else if(action === Actions.stop_firing) {
+						var do_stop_firing = function() {
+							player.set_auto_fire(false);
+						};
+						game.on_round(do_stop_firing, request.round, "Stop firing");
+					} else if(action === Actions.sense) {
+						var snapshot_data = game.get_snapshot();
+						snapshot_data.players.forEach(function(player) {
+							delete player.player;
+						});
+						callback({
+							type: "sense"
+							, data: snapshot_data
+						});
+					}
 				}
 			}
 		}
 	};
+	proto.run = function(callback) {
+		this.game_callback = callback || undefined;
+		this.asked_to_run = true;
+		this.run_if_ready();
+	};
+	proto.ready_to_run = function() {
+		return this.workers_ready;
+	};
+	proto.run_if_ready = function() {
+		if(this.ready_to_run() && this.asked_to_run) {
+			this.do_run();
+		}
+	};
+	proto.do_run = function() {
+		var self = this;
+		this.game.on("start", function() {
+			var start_time = get_time();
+			_.forEach(self.player_workers, function(worker) {
+				self.post(worker, {type: "game_start", start_time: start_time});
+			});
+		});
+		this.game.on("end", function(event) {
+			var winner = event.winner;
+			if(_.isFunction(self.game_callback)) {
+				self.game_callback(winner);
+			}
+		});
+
+		this.game.start();
+	};
+	proto.terminate = function() {
+		this.terminate_player_workers();
+		this.game.stop();
+	};
+	proto.get_replay = function() {
+		return this.game.get_replay();
+	};
+	proto.sync_worker = function(player_worker) {
+		var game_round = this.game.get_round();
+		var time = get_time();
+		this.post(player_worker, {type: "sync_time", time: time, round: game_round});
+	};
 })(Brawl);
-return Brawl;
+
+return function(options) {
+	return new Brawl(options);
+};
 });

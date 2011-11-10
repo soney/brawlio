@@ -1,241 +1,630 @@
-define(['game/util/listenable', 'game/models/projectile', 'game/util/brawl_utils'], function(make_listenable, Projectile, distanceFromLineSegment) {
-	var Game = function(options) {
-		this.teams = options.teams;
-		this.map = options.map;
-		this.projectiles = [];
+define(function(require) {
+require("vendor/underscore");
+var constants = require("game/constants")
+	, GameConstants = constants.game_constants
+	, create_replay = require("game/models/replay")
+	, create_projectile = require("game/models/projectile/projectile")
+	, create_player_state = require("game/models/player/player_state")
+	, create_projectile_state = require("game/models/projectile/projectile_state")
+	, create_game_event = require("game/game_events/game_event_factory");
+var make_listenable = require('game/util/listenable');
 
-		this.round_limit = options.round_limit;
-		this.running = false;
-		this.start_time = undefined;
-		this.rounds_per_ms = 1.0/options.ms_per_round;
-		make_listenable(this);
-		this.initialize();
+var get_time = function() {
+	return (new Date()).getTime();
+};
+
+
+var GameState = function(options) {
+	this.start_round = options.round;
+	this.start_time  = get_time();
+	this.trigger_action = options.trigger;
+	this.end_round = undefined;
+	this.moving_object_states = options.moving_object_states;
+};
+(function(my) {
+var proto = my.prototype;
+	proto.set_end_round = function(round) {
+		this.end_round = round;
+	};
+	proto.is_relevant_to_round = function(round) {
+		return round >= this.start_round && (this.end_round === undefined || round < this.end_round);
+	};
+	proto.get_state_for_moving_object = function(moving_object) {
+		var i, len = this.moving_object_states.length;
+		for(i=0;i<len;i++) {
+			var moving_object_state = this.moving_object_states[i];
+			if(moving_object_state.get_moving_object() === moving_object) {
+				return moving_object_state;
+			}
+		}
+		return undefined;
+	};
+	proto.get_moving_object_position_on_round = function(moving_object, round) {
+		var moving_object_state = this.get_state_for_moving_object(moving_object);
+		if(moving_object_state === undefined) {
+			return undefined;
+		}
+
+		var round_delta = round - this.start_round;
+		return moving_object_state.get_position_after(round_delta);
+	};
+	proto.get_moving_object_states = function(round) {
+		var round_diff = round - this.start_round;
+		return _.map(this.moving_object_states, function(moving_object_state) {
+			return {
+				position: moving_object_state.get_position_after(round_diff)
+				, moving_object: moving_object_state.get_moving_object()
+			};
+			return moving_object_state.get_position_after(round_diff);
+		});
+		return this.moving_object_states;
+	};
+})(GameState);
+
+var RoundListener = function(options) {
+	this.on_round = options.on_round;
+	this.callback = options.callback;
+	this.description = options.description;
+	this.timeout_id = undefined;
+	this.for_state = undefined;
+};
+(function(my) {
+	var proto = my.prototype;
+	proto.set_timeout = function(milliseconds) {
+		if(milliseconds < 0) {
+			this.callback();
+		} else {
+			this.timeout_id = window.setTimeout(this.callback, milliseconds);
+		}
+	};
+	proto.clear_timeout = function() {
+		window.clearTimeout(this.timeout_id);
+	};
+	proto.get_round = function() {
+		return this.on_round;
+	};
+})(RoundListener);
+
+var ProjectileCollision = function(options) {
+	this.projectile = options.projectile;
+	this.other_object = options.other_object;
+};
+(function(my) {
+	var proto = my.prototype;
+	proto.get_projectile = function() { return this.projectile; };
+	proto.get_other_object = function() { return this.other_object; };
+}(ProjectileCollision));
+
+var Game = function(options) {
+	this.teams = options.teams;
+	this.map = options.map;
+	this.round_limit = options.round_limit;
+	make_listenable(this);
+	this.states = [];
+	this.round_listeners = [];
+	this.replay = create_replay({ game: this });
+	this.initialize();
+	this.active_projectiles = [];
+	this.special_timeouts = {
+		'end_game': undefined
+		, 'next_interesting_round': undefined	
+	};
+};
+(function(my) {
+	var proto = my.prototype;
+	proto.initialize = function() {
+		var self = this;
+		_.map(this.get_players(), function(player) {
+			self.initialize_player(player);
+		});
+	};
+	proto.initialize_player = function(player) {
+		var self = this;
+		player.set_game(this);
+		player.on("state_change", function(event) {
+			var round = event.round;
+			var trigger = event.change_type;
+			self.update_state(round, trigger);
+		});
+		player.on("fire", function(event) {
+			if(event.fired) {
+				var round = event.round;
+				self.on_player_fire(player, round);
+			}
+		});
+	};
+	proto.get_players = function() {
+		return _(this.teams).chain()
+							.map(function(team) {
+								return team.get_players();
+							})
+							.flatten()
+							.value();
+	};
+	proto.get_living_players = function() {
+		return _.filter(this.get_players(), function(player) {
+			return player.is_alive();
+		});
+	};
+	proto.clear_projectile_collision_interval = function() {
+		window.clearInterval(this.__projectile_collision_check_interval);
+	};
+	proto.set_projectile_collision_interval = function() {
+		this.__projectile_collision_check_interval = window.setInterval(_.bind(this.check_for_collision, this), GameConstants.SIM_MS_PER_ROUND/10);
+	};
+	proto.check_for_collision = function() {
+		var round = this.get_round();
+		if(this.has_projectile_collision(round)) {
+			this.update_state(round, "Hackey projectile collision detection");
+		}
+	};
+	
+	proto.get_projectiles = function() {
+		return this.active_projectiles;
+	};
+	proto.add_projectile = function(projectile, round) {
+		this.active_projectiles.push(projectile);
+		var fire_event = create_game_event("player_fired", {
+			fired_by: projectile.get_fired_by()
+			, projectile: projectile
+		});
+		this.replay.push_game_event(fire_event);
+		this.update_state(round, "Fire");
+	};
+	proto.remove_projectile = function(projectile, round) {
+		var index = _.indexOf(this.active_projectiles, projectile);
+		if(index >= 0) {
+			this.active_projectiles.splice(index, 1);
+		}
+		var projectile_hit_event = create_game_event("projectile_removed", {
+			projectile: projectile
+		});
+		this.replay.push_game_event(projectile_hit_event);
+		this.update_state(round, "Projectile hit");
+	};
+	proto.get_active_moving_objects = function() {
+		return this.get_living_players().concat(this.get_projectiles());
+	};
+	proto.on_player_fire = function(player, round) {
+		var position = this.get_moving_object_position_on_round(player, round);
+		var player_radius = player.get_radius();
+		var projectile_radius = 1;
+		var radius = player_radius + projectile_radius;
+		var dx = radius * Math.cos(position.theta);
+		var dy = radius * Math.sin(position.theta);
+		var projectile_x = position.x + dx;
+		var projectile_y = position.y + dy;
+		var projectile = create_projectile({
+			radius: projectile_radius
+			, x0: projectile_x
+			, y0: projectile_y
+			, theta0: position.theta
+			, translational_velocity: {speed: GameConstants.PROJECTILE_SPEED}
+			, fired_by: player
+		});
+		this.add_projectile(projectile, round);
+	};
+	proto.start = function() {
+		this.update_state(0, "Game Started");
+		if(this.round_limit !== undefined) {
+			var self = this;
+			this.special_timeouts.end_game = this.on_round(function() {
+				self.stop(undefined);
+			}, this.round_limit, "End of game");
+		}
+		this.set_projectile_collision_interval();
+		this.emit({
+			type: "start"
+		});
+	};
+	proto.stop = function(winner) {
+		this.clear_round_listeners();
+		this.clear_projectile_collision_interval();
+		this.replay.complete = true;
+		this.replay.set_num_rounds(this.get_round());
+		this.replay.set_winner(winner);
+		this.emit({
+			type: "end"
+			, winner: winner
+		});
+	};
+	proto.get_map = function() {
+		return this.map;
+	};
+	proto.on_round = function(callback, round, description) {
+		var round_diff = round - this.get_round();
+		if(round_diff <= 0) {
+			callback(round);
+			return undefined;
+		} else {
+			var self = this;
+			var round_listener = new RoundListener({
+				on_round: round
+				, callback: function() {
+					self.remove_round_listener(round_listener);
+					callback(round);
+				}
+				, description: description
+			});
+			this.round_listeners.push(round_listener);
+			this.update_round_listeners();
+			return round_listener;
+		}
+	};
+	proto.remove_round_listener = function(round_listener) {
+		round_listener.clear_timeout();
+		this.round_listeners = _.without(this.round_listeners, round_listener);
+	};
+	proto.clear_round_listeners = function() {
+		_.forEach(this.round_listeners, function(round_listener) {
+			round_listener.clear_timeout();
+		});
+		this.round_listeners = [];
+	};
+	proto.update_round_listeners = function() {
+		var self = this;
+		var latest_state = this.peek_state();
+		_.forEach(this.round_listeners, function(round_listener) {
+			if(round_listener.for_state !== latest_state) {
+				round_listener.for_state = latest_state;
+				round_listener.clear_timeout();
+				var round_diff = round_listener.get_round() - self.get_round();
+				var time_diff = round_diff * GameConstants.SIM_MS_PER_ROUND;
+				round_listener.set_timeout(time_diff);
+			}
+		});
+	};
+	proto.get_round = function(time) {
+		var last_state = this.peek_state();
+		if(last_state === undefined) {
+			return 0;
+		} else {
+			time = time || get_time();
+			var time_diff = time - last_state.start_time;
+			var round_diff = time_diff / GameConstants.SIM_MS_PER_ROUND;
+			return last_state.start_round + round_diff;
+		}
+	};
+	proto.push_state = function(options) {
+		var round = options.round;
+		var last_state = this.peek_state();
+		if(last_state !== undefined) {
+			last_state.set_end_round(round);
+		}
+		var new_state = new GameState(options);
+		this.states.push(new_state);
+		this.update_round_listeners();
+	};
+	proto.peek_state = function() {
+		return _.last(this.states);
 	};
 
-	(function(my) {
-		var unique_object_id = 0;
+	proto.update_state = function(round, trigger, more_info) {
+		console.log("------", round, trigger, "------");
+		this.clear_interesting_round_timeout();
+		this.handle_projectile_collisions(round);
+		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
+		var next_event = this.get_next_touch_event();
+		if(next_event !== false) {
+			var next_event_round = round + next_event.time;
+			this.set_interesting_round_timeout(next_event_round, next_event);
+		}
+	};
+	proto.set_interesting_round_timeout = function(round, event) {
+		var self = this;
+		this.special_timeouts.next_interesting_round = this.on_round(function() {
+			self.update_state(round, "Interesting Round ("+event.event_type+")");
+		}, round, "Update timer");
+	};
+	proto.clear_interesting_round_timeout = function() {
+		if(this.special_timeouts.next_interesting_round !== undefined) {
+			this.remove_round_listener(this.special_timeouts.next_interesting_round);
+			this.special_timeouts.next_interesting_round = undefined;
+		}
+	};
+	proto.get_next_touch_event = function() {
+		var map_event = this.get_next_map_event();
+		var moving_object_event= this.get_next_moving_object_event();
+		if(map_event === false) {
+			return moving_object_event;
+		} else if(moving_object_event=== false) {
+			return map_event;
+		} else {
+			if(map_event.time < moving_object_event.time) {
+				return map_event;
+			} else {
+				return moving_object_event;
+			}
+		}
+	};
 
-		var proto = my.prototype;
-		var get_time = function() {
-			return (new Date()).getTime();
-		};
+	proto.get_next_map_event = function() {
+		var moving_objects = this.get_active_moving_objects();
+		var map = this.get_map();
+		var game_state = this.peek_state();
 
-		proto.initialize = function() {
-			this.players = [];
-			var id = 0;
+		var self = this;
+		var touch_events = _(moving_objects)	.chain()
+												.map(function(moving_object) {
+													var moving_object_state = game_state.get_state_for_moving_object(moving_object);
+													var next_event = map.get_next_event(moving_object, moving_object_state);
+													return next_event;
+												})
+												.filter(function(map_event) {
+													return map_event !== false;
+												})
+												.value();
+		var next_touch_event = false;
+		touch_events.forEach(function(touch_event) {
+			if(next_touch_event === false || touch_event.time < next_touch_event.time) {
+				next_touch_event = touch_event;
+			}
+		});
+		if(next_touch_event === false) { return false; }
+		else { return next_touch_event; }
+	};
+	proto.get_next_moving_object_event = function() {
+		var moving_objects = this.get_active_moving_objects();
+		var i,j, len = moving_objects.length;
+		var events = [];
+
+		for(i = 0; i<len-1; i++) {
+			var mo_i = moving_objects[i];
+			for(j = i+1; j<len; j++) {
+				var mo_j = moving_objects[j];
+				
+				var event = mo_i.get_next_event(mo_j);
+				if(event !== false) {
+					events.push(event);
+				}
+			}
+		}
+
+		var next_event = false;
+		events.forEach(function(event) {
+			if(next_event === false || event.time < next_event.time) {
+				next_event = event;
+			}
+		});
+		if(next_event === false) { return false; }
+		else { return next_event; }
+	};
+
+	proto.get_replay = function() {
+		return this.replay;
+	};
+
+	proto.get_relevant_state = function(round) {
+		for(var i = this.states.length-1; i>=0; i--) {
+			var state = this.states[i];
+			if(state.is_relevant_to_round(round)) {
+				return state;
+			}
+		}
+		return undefined;
+	};
+
+	proto.get_moving_object_position_on_round = function(moving_object, round) {
+		var relevant_state = this.get_relevant_state(round);
+		if(relevant_state === undefined) {
+			return undefined;
+		}
+		var rv = relevant_state.get_moving_object_position_on_round(moving_object, round);
+		if(rv === undefined) { //Perhaps the state hasn't been created yet for the object
+			if(moving_object.is("projectile")) {
+				return {
+					x: moving_object.x0
+					, y: moving_object.y0
+					, theta: moving_object.theta0
+				};
+			}
+		}
+		return rv;
+	};
+
+	proto.get_moving_object_states = function(round) {
+		var relevant_state = this.get_relevant_state(round);
+		if(relevant_state === undefined) {
+			return undefined;
+		}
+		return relevant_state.get_moving_object_states(round);
+	};
+
+	proto.create_moving_object_states = function(round) {
+		var self = this;
+		var start_positions;
+		if(round === 0) {
 			var map = this.get_map();
-			var start_positions = map.get_start_positions();
-			for(var i = 0, len = this.teams.length; i<len; i++) {
-				var team = this.teams[i];
-				team.set_id(i);
-				var team_players = team.get_players();
-				var team_start_positions = start_positions[i];
-				for(var j = 0, len_j = team_players.length; j<len_j; j++) {
-					var player = team_players[j];
-					var player_start_position = team_start_positions[j];
-					player.set_game(this);
-					player.set_id(unique_object_id);
-					player._set_x(player_start_position.x);
-					player._set_y(player_start_position.y);
-					player._set_theta(player_start_position.theta);
-					this.initialize_player(player);
-					this.players.push(player);
+			start_positions = _.flatten(map.get_start_positions());
+		} else {
+			start_positions = _.map(this.get_players(), function(player) {
+				return self.get_moving_object_position_on_round(player, round);
+			});
+		}
+
+		var player_states = _.map(this.get_players(), function(player, index) {
+			var start_position = start_positions[index];
+			return create_player_state(_.extend({
+				moving_object: player
+				, x0: start_position.x
+				, y0: start_position.y
+				, theta0: start_position.theta
+				, health: player.get_health()
+				, game: self
+			}, player.get_state()));
+		});
+		var projectile_states = _.map(this.get_projectiles(), function(projectile, index) {
+			var start_position = self.get_moving_object_position_on_round(projectile, round);
+			if(start_position === undefined) {
+				return create_projectile_state(_.extend({
+					moving_object: projectile
+					, x0: projectile.x0
+					, y0: projectile.y0
+					, theta0: projectile.theta0
+					, game: self
+				}, projectile.get_state()));
+			} else {
+				return create_projectile_state(_.extend({
+					moving_object: projectile
+					, x0: start_position.x
+					, y0: start_position.y
+					, theta0: start_position.theta
+					, game: self
+				}, projectile.get_state()));
+			}
+		});
+
+		return player_states.concat(projectile_states);
+	};
+
+	proto.restrict_path = function(moving_object, path) {
+		var map = this.get_map();
+		var moving_objects = this.get_active_moving_objects();
+		var i, len = moving_objects.length;
+		var restricted_path = path;
+		restricted_path = map.restrict_path(moving_object, restricted_path);
+		for(i=0; i<len; i++) {
+			var mo = moving_objects[i];
+			if(moving_object !== mo) {
+				restricted_path = mo.restrict_path(moving_object, restricted_path);
+			}
+		}
+
+		return restricted_path;
+	};
+
+	proto.handle_projectile_collisions = function(round) {
+		var collisions = this.get_projectile_collisions(round);
+		var self = this;
+
+		_.forEach(collisions, function(collision) {
+			self.handle_projectile_collision(collision, round);
+		});
+	};
+	proto.handle_projectile_collision = function(collision, round) {
+		var projectile = collision.projectile;
+		var other_object = collision.other_object;
+		if(other_object === this.get_map()) {
+			this.remove_projectile(projectile, round);
+		} else if(other_object.is("player")) {
+			this.remove_projectile(projectile, round);
+			other_object.remove_health(6);
+			this.check_game_over();
+		} else if(other_object.is("projectile")) {
+			this.remove_projectile(projectile, round);
+			this.remove_projectile(other_object, round);
+		}
+	};
+
+	proto.get_projectile_collisions = function(round) {
+		var moving_objects = this.get_active_moving_objects();
+		var len = moving_objects.length;
+		var collision_pairs = [];
+		var map = this.get_map();
+		var self = this;
+		var moving_object_positions = _.map(moving_objects, function(moving_object) {
+			return self.get_moving_object_position_on_round(moving_object, round);
+		});
+		for(i = 0; i<len; i++) {
+			var mo_i = moving_objects[i];
+			if(mo_i.is("projectile")) {
+				var position = moving_object_positions[i];
+				if(map.is_touching(mo_i, position)) {
+					collision_pairs.push(new ProjectileCollision({
+						projectile: mo_i
+						, other_object: map
+					}));
 				}
-				unique_object_id++;
-			}
-		};
-		proto.initialize_player = function(player) {
-			var self = this;
-			player.on("fire", function() {
-				self.on_player_fire(player);
-			});
-		};
-		proto.get_players = function() {
-			return this.players;
-		};
-		proto.get_projectiles = function() {
-			return this.projectiles;
-		};
-		proto.get_living_players = function() {
-			return this.get_players().filter(function(player) {
-				return player.is_alive();
-			});
-		};
-		proto.start = function() {
-			this.start_time = get_time();
-			this.running = true;
-			this.update();
-			this.emit({
-				type: "start"
-			});
-		};
-		proto.get_start_time = function() { return this.start_time; };
-		proto.end = function(winner) {
-			this.running = false;
-			this.emit({
-				type: "end"
-				, winner: winner
-			});
-		};
-		proto.get_round = function(current_time) {
-			if(arguments.length === 0) current_time = get_time();
-			var time = current_time - this.get_start_time();
-			return time * this.rounds_per_ms;
-		};
-		proto.get_map = function() { return this.map; };
-
-		proto.on_player_fire = function(player) {
-			var player_position = player.get_position();
-			var projectile = new Projectile({source: player, game: this});
-
-			var dist = player.get_radius() + projectile.get_radius();
-			projectile.set_position({
-				x: player_position.x + dist*Math.cos(player_position.theta)
-				, y: player_position.y + dist*Math.sin(player_position.theta)
-			});
-			projectile.set_velocity(10, player_position.theta);
-			this.add_projectile(projectile);
-		};
-		proto.add_projectile = function(projectile) {
-			this.projectiles.push(projectile);
-		};
-
-
-		//Update functions
-		proto.update = function() {
-			this.do_update();
-			this.emit({
-				type: "update"
-			});
-		};
-		proto.do_update = function() {
-			if(!this.running) return false;
-
-			var round = this.get_round();
-			if(this.round_limit > 0 && round >= this.round_limit) {
-				this.end(null);
-				return false;
-			} else if(this.teams[0].is_dead()) {
-				this.end(this.teams[1]);
-				return false;
-			} else if(this.teams[1].is_dead()) {
-				this.end(this.teams[0]);
-				return false;
-			}
-
-			var self = this;
-			this.get_living_players().forEach(function(player) {
-				self.update_player(player);
-			});
-			this.get_projectiles().forEach(function(projectile) {
-				self.update_projectile(projectile);
-			});
-			for(var i = 0, len = this.projectiles.length; i<len; i++) {
-				var projectile = this.projectiles[i];
-				if(projectile == null) continue;
-				this.update_projectile(projectile);
-			}
-			return true;
-		};
-		proto.update_player = function(player) {
-			var old_pos = player.get_position();
-			var new_pos = this.check_player_collisions(this.map.check_bounds(old_pos, player.get_updated_position(), player));
-			player.set_updated_position(new_pos);
-		};
-
-		proto.update_projectile = function(projectile) {
-			var old_pos = projectile.get_position();
-			var new_pos = projectile.get_updated_position();
-			var projectile_left_map = this.map.projectile_left(projectile, old_pos, new_pos);
-			var projectile_hit_player = false;
-
-			if(!projectile_left_map) {
-				var player = this.projectile_hit_player(projectile, old_pos, new_pos);
-				if(player !== false) {
-					player.remove_health(1);
-					projectile_hit_player = true;
-				}
-			}
-			if(projectile_left_map || projectile_hit_player) {
-				for(var i = 0, len = this.projectiles.length; i<len; i++) {
-					if(this.projectiles[i]===projectile) {
-						this.projectiles.splice(i, 1);
-						return;
+				for(j = 0; j<len; j++) {
+					if(j===i) continue;
+					var mo_j = moving_objects[j];
+					if(mo_i.can_collide_with(mo_j)) {
+						var pos_i = moving_object_positions[i];
+						var pos_j = moving_object_positions[j];
+						if(Math.pow(pos_i.x - pos_j.x, 2) + Math.pow(pos_i.y - pos_j.y, 2) <= Math.pow(mo_i.get_radius() + mo_j.get_radius(), 2) + error_tolerance) {
+							collision_pairs.push(new ProjectileCollision({
+								projectile: mo_i
+								, other_object: mo_j
+							}));
+						}
 					}
 				}
-			} else {
-				projectile.set_position(new_pos);
 			}
-		};
-		proto.check_player_collisions = function(new_pos) {
-			return new_pos;
-		};
-
-		proto.get_snapshot = function() {
-			var players = this.get_players().map(function(player) {
-				var position = player.get_position();
+		}
+		return collision_pairs;
+	};
+	var error_tolerance = 0.00001;
+	proto.has_projectile_collision = function(round) {
+		round = round || this.get_round();
+		var moving_objects = this.get_active_moving_objects();
+		var len = moving_objects.length;
+		var self = this;
+		var moving_object_positions = _.map(moving_objects, function(moving_object) {
+			return self.get_moving_object_position_on_round(moving_object, round);
+		});
+		for(i = 0; i<len; i++) {
+			var mo_i = moving_objects[i];
+			if(mo_i.is("projectile")) {
+				for(j = 0; j<len; j++) {
+					if(i === j) {
+						continue;
+					}
+					var mo_j = moving_objects[j];
+					if(mo_i.can_collide_with(mo_j)) {
+						var pos_i = moving_object_positions[i];
+						var pos_j = moving_object_positions[j];
+						if(Math.pow(pos_i.x - pos_j.x, 2) + Math.pow(pos_i.y - pos_j.y, 2) <= Math.pow(mo_i.get_radius() + mo_j.get_radius(), 2) + error_tolerance) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	};
+	proto.get_snapshot = function() {
+		var map = this.get_map();
+		var self = this;
+		var round = this.get_round();
+		var players = this.get_living_players().map(function(player) {
+				var position = self.get_moving_object_position_on_round(player, round);
 				return {
 					x: position.x
 					, y: position.y
 					, theta: position.theta
 					, player: player
 					, number: player.get_number()
-					, team_id: player.get_team().id
-				};
-			});
-			var projectiles = this.projectiles.map(function(projectile) {
-				var position = projectile.get_position();
-				return {
-					x: position.x
-					, y: position.y
-					, projectile: projectile
+					, team_id: player.get_team().get_id()
 				};
 			});
 
-			var data = {
-				round: this.get_round()
-				, players: players
-				, projectiles: projectiles
-				, map: {
-					width: this.map.attributes.width
-					, height: this.map.attributes.height
-				}
-			};
+		var data = {
+			round: this.get_round()
+			, players: players
+			, map: {
+				width: map.get_width()
+				, height: map.get_height()
+			}
+		};
 			return data;
-		};
-		proto.projectile_hit_player = function(projectile, old_pos, new_pos) {
-			var source = projectile.get_source();
-			var delta_x = new_pos.x - old_pos.x;
-			var delta_y = new_pos.y - old_pos.y;
-			var m = delta_y/delta_x;
-			var b = new_pos.y - m*new_pos.x;
-
-			var denom = Math.sqrt(m*m+1);
-			var projectile_radius = projectile.get_radius();
-			var living_players = this.get_living_players();
-			for(var i = 0, len = living_players.length; i<len; i++) {
-				var player = living_players[i];
-				if(player === source) continue;
-				var distance = distanceFromLineSegment({x: player.get_x(), y: player.get_y()}, old_pos, new_pos);
-				var closest_distance = distance.segment;
-				if(closest_distance < player.get_radius() + projectile_radius) {
-					return player;
-				}
+	};
+	proto.check_game_over = function() {
+		var living_players = this.get_living_players();
+		var living_team = undefined;
+		for(var i = 0, len = living_players.length; i<len; i++) {
+			var player = living_players[i];
+			var team = player.get_team();
+			if(living_team === undefined) {
+				living_team = team;
+			} else if(living_team !== team) {
+				return false;
 			}
-
-			return false;
-		};
-		proto.on_round = function(callback, round) {
-			var round_diff = round - this.get_round();
-			if(round_diff <= 0) {
-				callback();
-			} else {
-				var time_ms = round_diff / this.rounds_per_ms;
-				window.setTimeout(callback, time_ms);
-			}
-		};
-		
-	})(Game);
-
-	return Game;
+		}
+		//Only one team left
+		this.stop(living_team);
+	};
+})(Game);
+return function(options) {
+	return new Game(options);
+};
 });
