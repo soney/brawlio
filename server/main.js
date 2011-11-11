@@ -7,9 +7,10 @@ var socket_io = require('socket.io');
 var database = require('./database').database;
 var constants = require('./constants');
 
-var BrawlIOServer = function(production) {
-	this.check_invite = production === true;
-	this.auto_login = production === false;
+var BrawlIOServer = function(options) {
+	options = options || {};
+	this.check_invite = options.check_invite || true;
+	this.auto_login = options.auto_login || false;
 	this.session_to_user = {};
 };
 

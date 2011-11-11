@@ -22,13 +22,14 @@
 	margin-top: 0px;
 	margin-left: 15px;
 	background-image: url('../images/noise.png');
+	border: 2px solid #4169E1;
 }
 
 .login_button a:hover {
 	background-color: #707070;
 	color: #222;
 	box-shadow: 0px 0px 8px #000;
-	border: 1px solid #4169E1;
+	border: 2px solid #4169E1;
 }
 
 .login_buton a:active {
