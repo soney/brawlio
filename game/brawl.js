@@ -46,7 +46,6 @@ var Brawl = function(options) {
 			};
 			return player_worker;
 		});
-		/*
 		this.worker_sync_interval = window.setInterval(function() {
 			_.forEach(self.player_workers, function(worker) {
 				self.sync_worker(worker);
@@ -223,7 +222,7 @@ var Brawl = function(options) {
 		var time = get_time();
 		this.post(player_worker, {type: "sync_time", time: time, round: game_round});
 	};
-})(Brawl);
+}(Brawl));
 
 return function(options) {
 	return new Brawl(options);
