@@ -71,6 +71,7 @@ var RoundListener = function(options) {
 (function(my) {
 	var proto = my.prototype;
 	proto.set_timeout = function(milliseconds) {
+		this.clear_timeout();
 		if(milliseconds < 0) {
 			this.callback();
 		} else {
@@ -79,6 +80,7 @@ var RoundListener = function(options) {
 	};
 	proto.clear_timeout = function() {
 		window.clearTimeout(this.timeout_id);
+		this.timeout_id = undefined;
 	};
 	proto.get_round = function() {
 		return this.on_round;
@@ -109,6 +111,7 @@ var Game = function(options) {
 		'end_game': undefined
 		, 'next_interesting_round': undefined	
 	};
+	this.running = false;
 };
 (function(my) {
 	var proto = my.prototype;
@@ -147,10 +150,10 @@ var Game = function(options) {
 		});
 	};
 	proto.clear_projectile_collision_interval = function() {
-		window.clearInterval(this.__projectile_collision_check_interval);
+		//window.clearInterval(this.__projectile_collision_check_interval);
 	};
 	proto.set_projectile_collision_interval = function() {
-		this.__projectile_collision_check_interval = window.setInterval(_.bind(this.check_for_collision, this), GameConstants.SIM_MS_PER_ROUND/10);
+		//this.__projectile_collision_check_interval = window.setInterval(_.bind(this.check_for_collision, this), GameConstants.SIM_MS_PER_ROUND/10);
 	};
 	proto.check_for_collision = function() {
 		var round = this.get_round();
@@ -205,6 +208,7 @@ var Game = function(options) {
 		this.add_projectile(projectile, round);
 	};
 	proto.start = function() {
+		this.running = true;
 		this.update_state(0, "Game Started");
 		if(this.round_limit !== undefined) {
 			var self = this;
@@ -218,6 +222,7 @@ var Game = function(options) {
 		});
 	};
 	proto.stop = function(winner) {
+		this.running = false;
 		this.clear_round_listeners();
 		this.clear_projectile_collision_interval();
 		this.replay.complete = true;
@@ -233,23 +238,18 @@ var Game = function(options) {
 	};
 	proto.on_round = function(callback, round, description) {
 		var round_diff = round - this.get_round();
-		if(round_diff <= 0) {
-			callback(round);
-			return undefined;
-		} else {
-			var self = this;
-			var round_listener = new RoundListener({
-				on_round: round
-				, callback: function() {
-					self.remove_round_listener(round_listener);
-					callback(round);
-				}
-				, description: description
-			});
-			this.round_listeners.push(round_listener);
-			this.update_round_listeners();
-			return round_listener;
-		}
+		var self = this;
+		var round_listener = new RoundListener({
+			on_round: round
+			, callback: function() {
+				self.remove_round_listener(round_listener);
+				callback(round);
+			}
+			, description: description
+		});
+		this.round_listeners.push(round_listener);
+		this.update_round_listeners();
+		return round_listener;
 	};
 	proto.remove_round_listener = function(round_listener) {
 		round_listener.clear_timeout();

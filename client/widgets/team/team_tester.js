@@ -45,7 +45,7 @@ define(function(require) {
 						} , {
 							name: "Opponent"
 							, players: [{
-								code: king_code
+								code: ""//king_code
 							}]
 						}
 					]
