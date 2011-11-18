@@ -73,8 +73,10 @@ var RoundListener = function(options) {
 	proto.set_timeout = function(milliseconds) {
 		if(milliseconds < 0) {
 			this.callback();
+			console.log("Added w/ no timeout");
 		} else {
 			this.timeout_id = window.setTimeout(this.callback, milliseconds);
+			console.log("Added", this.timeout_id, this.description);
 		}
 	};
 	proto.clear_timeout = function() {
@@ -109,6 +111,7 @@ var Game = function(options) {
 		'end_game': undefined
 		, 'next_interesting_round': undefined	
 	};
+	this.running = false;
 };
 (function(my) {
 	var proto = my.prototype;
@@ -205,6 +208,7 @@ var Game = function(options) {
 		this.add_projectile(projectile, round);
 	};
 	proto.start = function() {
+		this.running = true;
 		this.update_state(0, "Game Started");
 		if(this.round_limit !== undefined) {
 			var self = this;
@@ -212,17 +216,18 @@ var Game = function(options) {
 				self.stop(undefined);
 			}, this.round_limit, "End of game");
 		}
-		this.set_projectile_collision_interval();
+		//this.set_projectile_collision_interval();
 		this.emit({
 			type: "start"
 		});
 	};
 	proto.stop = function(winner) {
 		this.clear_round_listeners();
-		this.clear_projectile_collision_interval();
+		//this.clear_projectile_collision_interval();
 		this.replay.complete = true;
 		this.replay.set_num_rounds(this.get_round());
 		this.replay.set_winner(winner);
+		this.running = false;
 		this.emit({
 			type: "end"
 			, winner: winner
@@ -233,6 +238,9 @@ var Game = function(options) {
 	};
 	proto.on_round = function(callback, round, description) {
 		var round_diff = round - this.get_round();
+		if(!this.running) {
+			debugger;
+		}
 		if(round_diff <= 0) {
 			callback(round);
 			return undefined;
@@ -241,8 +249,9 @@ var Game = function(options) {
 			var round_listener = new RoundListener({
 				on_round: round
 				, callback: function() {
-					self.remove_round_listener(round_listener);
+					console.log("Called", round_listener.timeout_id, round_listener.description);
 					callback(round);
+					self.remove_round_listener(round_listener);
 				}
 				, description: description
 			});
@@ -252,11 +261,13 @@ var Game = function(options) {
 		}
 	};
 	proto.remove_round_listener = function(round_listener) {
+		console.log("Removed", round_listener.timeout_id);
 		round_listener.clear_timeout();
 		this.round_listeners = _.without(this.round_listeners, round_listener);
 	};
 	proto.clear_round_listeners = function() {
 		_.forEach(this.round_listeners, function(round_listener) {
+			console.log("Cleared", round_listener.timeout_id, round_listener.description);
 			round_listener.clear_timeout();
 		});
 		this.round_listeners = [];
@@ -267,6 +278,7 @@ var Game = function(options) {
 		_.forEach(this.round_listeners, function(round_listener) {
 			if(round_listener.for_state !== latest_state) {
 				round_listener.for_state = latest_state;
+				console.log("Clearing (resetting)", round_listener.timeout_id, round_listener.description);
 				round_listener.clear_timeout();
 				var round_diff = round_listener.get_round() - self.get_round();
 				var time_diff = round_diff * GameConstants.SIM_MS_PER_ROUND;
@@ -508,7 +520,7 @@ var Game = function(options) {
 			this.remove_projectile(projectile, round);
 		} else if(other_object.is("player")) {
 			this.remove_projectile(projectile, round);
-			other_object.remove_health(6);
+			other_object.remove_health(60);
 			this.check_game_over();
 		} else if(other_object.is("projectile")) {
 			this.remove_projectile(projectile, round);

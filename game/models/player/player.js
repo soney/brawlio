@@ -121,11 +121,11 @@ define(function(require) {
 
 			var self = this;
 			var game = this.get_game();
-			game.on_round(function() {
+			var x = game.on_round(function() {
 				if(self.is_auto_fire()) {
 					self.fire();
 				}
-			}, this.get_next_fireable_round());
+			}, this.get_next_fireable_round(), "Fire");
 		};
 		proto.can_collide_with = function(moving_object) {
 			if(moving_object.is("projectile")) {
