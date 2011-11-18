@@ -32,6 +32,9 @@ define(function(require) {
 			}
 			return my.fromMagnitudeAndTheta(magnitude, this.get_theta());
 		};
+		proto.neg = function() {
+			return my.fromComponents(-this.x, -this.y);
+		};
 		proto.get_magnitude = function() {
 			return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
 		};

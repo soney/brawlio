@@ -63,7 +63,7 @@ define(function(require) {
 					if(winner === undefined) {
 						$(replay_element).replay_viewer("set_result", "Time expired");
 					} else if(winner.get_name() === "Me") {
-						BrawlIO.claim_crown(code);
+						//BrawlIO.claim_crown(code);
 						$(replay_element).replay_viewer("set_result", "You win!");
 					} else {
 						$(replay_element).replay_viewer("set_result", "You lose");

@@ -73,10 +73,8 @@ var RoundListener = function(options) {
 	proto.set_timeout = function(milliseconds) {
 		if(milliseconds < 0) {
 			this.callback();
-			console.log("Added w/ no timeout");
 		} else {
 			this.timeout_id = window.setTimeout(this.callback, milliseconds);
-			console.log("Added", this.timeout_id, this.description);
 		}
 	};
 	proto.clear_timeout = function() {
@@ -149,12 +147,6 @@ var Game = function(options) {
 			return player.is_alive();
 		});
 	};
-	proto.clear_projectile_collision_interval = function() {
-		window.clearInterval(this.__projectile_collision_check_interval);
-	};
-	proto.set_projectile_collision_interval = function() {
-		this.__projectile_collision_check_interval = window.setInterval(_.bind(this.check_for_collision, this), GameConstants.SIM_MS_PER_ROUND/10);
-	};
 	proto.check_for_collision = function() {
 		var round = this.get_round();
 		if(this.has_projectile_collision(round)) {
@@ -216,14 +208,12 @@ var Game = function(options) {
 				self.stop(undefined);
 			}, this.round_limit, "End of game");
 		}
-		//this.set_projectile_collision_interval();
 		this.emit({
 			type: "start"
 		});
 	};
 	proto.stop = function(winner) {
 		this.clear_round_listeners();
-		//this.clear_projectile_collision_interval();
 		this.replay.complete = true;
 		this.replay.set_num_rounds(this.get_round());
 		this.replay.set_winner(winner);
@@ -238,9 +228,6 @@ var Game = function(options) {
 	};
 	proto.on_round = function(callback, round, description) {
 		var round_diff = round - this.get_round();
-		if(!this.running) {
-			debugger;
-		}
 		if(round_diff <= 0) {
 			callback(round);
 			return undefined;
@@ -249,9 +236,8 @@ var Game = function(options) {
 			var round_listener = new RoundListener({
 				on_round: round
 				, callback: function() {
-					console.log("Called", round_listener.timeout_id, round_listener.description);
-					callback(round);
 					self.remove_round_listener(round_listener);
+					callback(round);
 				}
 				, description: description
 			});
@@ -261,13 +247,11 @@ var Game = function(options) {
 		}
 	};
 	proto.remove_round_listener = function(round_listener) {
-		console.log("Removed", round_listener.timeout_id);
 		round_listener.clear_timeout();
 		this.round_listeners = _.without(this.round_listeners, round_listener);
 	};
 	proto.clear_round_listeners = function() {
 		_.forEach(this.round_listeners, function(round_listener) {
-			console.log("Cleared", round_listener.timeout_id, round_listener.description);
 			round_listener.clear_timeout();
 		});
 		this.round_listeners = [];
@@ -278,7 +262,6 @@ var Game = function(options) {
 		_.forEach(this.round_listeners, function(round_listener) {
 			if(round_listener.for_state !== latest_state) {
 				round_listener.for_state = latest_state;
-				console.log("Clearing (resetting)", round_listener.timeout_id, round_listener.description);
 				round_listener.clear_timeout();
 				var round_diff = round_listener.get_round() - self.get_round();
 				var time_diff = round_diff * GameConstants.SIM_MS_PER_ROUND;
@@ -362,9 +345,7 @@ var Game = function(options) {
 													var next_event = map.get_next_event(moving_object, moving_object_state);
 													return next_event;
 												})
-												.filter(function(map_event) {
-													return map_event !== false;
-												})
+												.without(false)
 												.value();
 		var next_touch_event = false;
 		touch_events.forEach(function(touch_event) {
@@ -377,17 +358,23 @@ var Game = function(options) {
 	};
 	proto.get_next_moving_object_event = function() {
 		var moving_objects = this.get_active_moving_objects();
+		var self = this;
+		var game_state = this.peek_state();
 		var i,j, len = moving_objects.length;
 		var events = [];
 
 		for(i = 0; i<len-1; i++) {
 			var mo_i = moving_objects[i];
+			var mo_i_state = game_state.get_state_for_moving_object(mo_i);
 			for(j = i+1; j<len; j++) {
 				var mo_j = moving_objects[j];
-				
-				var event = mo_i.get_next_event(mo_j);
-				if(event !== false) {
-					events.push(event);
+				if(mo_i.can_collide_with(mo_j)) {
+					var mo_j_state = game_state.get_state_for_moving_object(mo_j);
+					
+					var event = mo_i_state.get_next_event(mo_j_state);
+					if(event !== false) {
+						events.push(event);
+					}
 				}
 			}
 		}
@@ -521,7 +508,11 @@ var Game = function(options) {
 		} else if(other_object.is("player")) {
 			this.remove_projectile(projectile, round);
 			other_object.remove_health(60);
-			this.check_game_over();
+			var self = this;
+			//Defer the check game over call....we might be in the middle of an update timer
+			_.defer(function() {
+				self.check_game_over();
+			});
 		} else if(other_object.is("projectile")) {
 			this.remove_projectile(projectile, round);
 			this.remove_projectile(other_object, round);

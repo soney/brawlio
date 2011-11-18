@@ -83,6 +83,9 @@ define(function(require) {
 		proto.get_vector = function() {
 			return path_factory("vector_from_magnitude_and_angle", this.speed, this.angle);
 		};
+		proto.get_line = function() {
+			return path_factory("line_from_point_and_angle", this.x0, this.y0, this.angle);
+		};
 		proto.delta_t_until_x_is = function(x) {
 			var vx = this.speed * Math.cos(this.angle);
 			if(close_to(vx, 0)) {
@@ -218,6 +221,9 @@ define(function(require) {
 				, y: this.y0 + dy
 			};
 		};
+		proto.get_line = function() {
+			return path_factory("line_from_point_and_angle", this.x0, this.y0, this.movement_angle);
+		};
 		proto.get_line_segment_range = function() {
 			//Far minimum distance
 			var min_dist = - (this.speed / this.rotational_speed) - this.initial_distance;
@@ -288,6 +294,8 @@ define(function(require) {
 		};
 		proto.get_rotational_speed = function() {
 			return this.rotational_speed;
+		};
+		proto.get_line = function() {
 		};
 	})(SinusoidalVelocityLine);
 	//========================================

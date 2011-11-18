@@ -1,6 +1,7 @@
 define(function(require) {
 	require("vendor/underscore");
 	var create_path = require("game/geometry/movement_paths/movement_path");
+	var path_path_utils = require("game/geometry/movement_paths/path_path_utils");
 	var close_to = function(a,b) {
 		return Math.abs(a-b) < 0.00001;
 	};
@@ -63,6 +64,9 @@ define(function(require) {
 		};
 		proto.get_path = function() {
 			return this.path;
+		};
+		proto.get_next_event = function(other_state) {
+			return path_path_utils.get_next_event(this, other_state);
 		};
 	})(MovingObjectState);
 

@@ -2,7 +2,7 @@ define(function(require) {
 	require("vendor/underscore");
 	var StaticObstacle = require("game/models/obstacles/obstacle");
 	var shape_factory = require("game/geometry/shapes/shape_factory");
-	var path_utils = require("game/geometry/movement_paths/path_utils");
+	var path_utils = require("game/geometry/movement_paths/path_map_utils");
 	var create_movement_path = require("game/geometry/movement_paths/movement_path");
 	var oo_utils = require("game/util/object_oriented");
 
