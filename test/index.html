@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Brawl IO Tests</title>
+	<script type="text/javascript" src="../vendor/require.js"></script>
+	<script type="text/javascript" src="../client/require_paths.js"></script>
+	<script type="text/javascript" src="test_canvas.js"></script>
+	<script type="text/javascript">
+      require(["vendor/jquery", "game/geometry/paths/path_factory"], function(jQuery, path_factory) {
+        $(function() {
+			var test_canvas = create_test_canvas({
+				width: 300
+				, height: 300
+				, scale: 2
+			});
+			var line = path_factory("line_from_points", {x:0,y:0}, {x:10,y:10});
+			test_canvas.draw(line);
+
+			var canvas = test_canvas.get_element();
+			document.body.appendChild(canvas);
+        });
+      });
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>
