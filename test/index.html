@@ -13,7 +13,7 @@
 				, height: 300
 				, scale: 2
 			});
-			var line = path_factory("line_from_points", {x:0,y:0}, {x:10,y:10});
+			var line = path_factory("vector_from_magnitude_and_angle", 70, 0.2);
 			test_canvas.draw(line);
 
 			var canvas = test_canvas.get_element();
