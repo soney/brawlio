@@ -36,9 +36,6 @@ define(function(require) {
 		proto.is = function(type) {
 			return this.type === type;
 		};
-		proto.restrict_path = function(moving_object, path) {
-			return path;
-		};
 		proto.is_touching = function(moving_object) {
 			return false;
 		};

@@ -180,19 +180,18 @@
 			this.draw_path(state.path);
 			this.restore();
 
-			//Draw the player
-			this.ctx.beginPath();
+			this.ctx.lineWidth = 1/this.scale;
 			if(moving_object.is("player")) {
 				this.ctx.strokeStyle="blue";
 				this.ctx.beginPath();
 				this.ctx.moveTo(position.x, position.y);
 				this.ctx.lineTo(position.x + radius * Math.cos(position.theta), position.y + radius * Math.sin(position.theta));
+				this.ctx.stroke();
 			} else if(moving_object.is("projectile")) {
 				this.ctx.strokeStyle="red";
 			}
-			this.ctx.lineWidth = 1/this.scale;
+			this.ctx.beginPath();
 			this.circle(position.x, position.y, radius);
-			this.ctx.stroke();
 			this.ctx.stroke();
 		};
 

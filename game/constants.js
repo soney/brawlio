@@ -2,7 +2,7 @@ define(function(require, exports, module) {
 	var GameConstants = {
 		TEAM_SIZE: 1
 		, PIXEL_TILE_RATIO: 5
-		, SIM_MS_PER_ROUND: 1000
+		, SIM_MS_PER_ROUND: 800
 		, REPLAY_MS_PER_ROUND: 1000
 		, PROJECTILE_SPEED: 20 
 	};

@@ -68,6 +68,18 @@ define(function(require) {
 		proto.get_next_event = function(other_state) {
 			return path_path_utils.get_next_event(this, other_state);
 		};
+		proto.is_touching = function(other_moving_object_state, rounds) {
+			rounds = rounds || 0;
+			var my_position = this.get_position_after(rounds);
+			var other_position = other_Moving_object_state.get_position_after(rounds);
+			var x1 = my_position.x
+				, y1 = my_position.y
+				, x2 = other_position.x
+				, y2 = other_position.y;
+			return Math.sqrt( Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2) );
+		};
+		proto.restrict_path = function(other_moving_object_state) {
+		};
 	})(MovingObjectState);
 
 	return MovingObjectState;

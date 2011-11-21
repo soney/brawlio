@@ -299,7 +299,9 @@ var Game = function(options) {
 	};
 
 	proto.update_state = function(round, trigger, more_info) {
-		console.log("------", round, trigger, "------");
+		if(this.debug_mode) {
+			console.log("------", round, trigger, "------");
+		}
 		this.clear_interesting_round_timeout();
 		this.handle_projectile_collisions(round);
 		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
@@ -457,6 +459,7 @@ var Game = function(options) {
 				, game: self
 			}, player.get_state()));
 		});
+
 		var projectile_states = _.map(this.get_projectiles(), function(projectile, index) {
 			var start_position = self.get_moving_object_position_on_round(projectile, round);
 			if(start_position === undefined) {
@@ -487,12 +490,6 @@ var Game = function(options) {
 		var i, len = moving_objects.length;
 		var restricted_path = path;
 		restricted_path = map.restrict_path(moving_object, restricted_path);
-		for(i=0; i<len; i++) {
-			var mo = moving_objects[i];
-			if(moving_object !== mo) {
-				restricted_path = mo.restrict_path(moving_object, restricted_path);
-			}
-		}
 
 		return restricted_path;
 	};
@@ -512,7 +509,7 @@ var Game = function(options) {
 			this.remove_projectile(projectile, round);
 		} else if(other_object.is("player")) {
 			this.remove_projectile(projectile, round);
-			other_object.remove_health(60);
+			other_object.remove_health(6);
 			var self = this;
 			//Defer the check game over call....we might be in the middle of an update timer
 			_.defer(function() {

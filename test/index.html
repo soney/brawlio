@@ -17,15 +17,14 @@
 
 					var teams_spec = [ {
 							name: "Me"
-							, players: [{
-								code: ""
-							}]
+							, players: [{ }, { }]
 						}] ;
 					var maps_spec = {
 						width: 50
 						, height: 50
 						, start_positions: [
-							[{x: 20, y: 5, theta: 0}]
+							[{x: 20, y: 5, theta: 0}
+							,{x: 30, y: 10, theta: 0}]
 						]
 					};
 
@@ -46,16 +45,19 @@
 
 					var player = game.get_players()[0];
 					game.start();
+					/*
 					var projectile = create_projectile({
 						radius: 1
 						, x0: 45
-						, y0: 5
+						, y0: 10 
 						, theta0: Math.PI
 						, translational_velocity: {speed: 10}
 					});
 					game.add_projectile(projectile, 0);
+					*/
 
 					player.set_velocity(7, 0, 0);
+					player.set_rotation_speed(0.7, 0, 0);
 
 					test_canvas.render_game({
 						game: game

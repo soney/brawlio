@@ -1,4 +1,5 @@
 define(function(require) {
+	var movement_path_factory = require("game/geometry/movement_paths/movement_path");
 	var shape_factory = require("game/geometry/shapes/shape_factory");
 	var MovingObject = require("game/models/moving_object/moving_object");
 	var oo_utils = require("game/util/object_oriented");
@@ -130,8 +131,20 @@ define(function(require) {
 		proto.can_collide_with = function(moving_object) {
 			if(moving_object.is("projectile")) {
 				return moving_object.get_fired_by() !== this;
+			} else if(moving_object.is("player")) {
+				return false;
 			}
 			return true;
+		};
+
+		proto.restrict_path = function(moving_object, path) {
+			if(moving_object.is("player")) {
+				return movement_path_factory("stationary", {
+					x0: 0
+					, y0: 0
+				});
+			}
+			return path;
 		};
 	})(Player);
 
