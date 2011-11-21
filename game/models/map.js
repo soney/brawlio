@@ -6,14 +6,14 @@ define(function(require) {
 		if(options == null) {
 			options = {};
 		}
-		this.attributes = {
+		this.attributes = _.extend({
 			width: 50 //Width in tiles
 			, height: 50 //Height in tiles
 			, start_positions: [
 				[{x: 10, y: 10, theta: 0}]
 				, [{x: 40, y: 40, theta: 0}]
 			]
-		};
+		}, options);
 		this.obstacles = [
 			new MapBoundaryObstacle({
 				width: this.get_width()

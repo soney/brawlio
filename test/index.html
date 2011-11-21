@@ -6,20 +6,63 @@
 	<script type="text/javascript" src="../client/require_paths.js"></script>
 	<script type="text/javascript" src="test_canvas.js"></script>
 	<script type="text/javascript">
-      require(["vendor/jquery", "game/geometry/paths/path_factory"], function(jQuery, path_factory) {
-        $(function() {
-			var test_canvas = create_test_canvas({
-				width: 300
-				, height: 300
-				, scale: 2
-			});
-			var line = path_factory("vector_from_magnitude_and_angle", 70, 0.2);
-			test_canvas.draw(line);
+		require(["game/models/game", "game/models/team", "game/models/map", "game/geometry/paths/path_factory", "game/models/player/player", "game/models/projectile/projectile", "game/models/player/player_state", "game/models/projectile/projectile_state", "vendor/jquery", "vendor/underscore"],
+			function(create_game, create_team, create_map, path_factory, create_player, create_projectile, create_player_state, create_projectile_state) {
+				$(function() {
+					var test_canvas = create_test_canvas({
+						width: 50
+						, height: 50
+						, scale: 8
+					});
 
-			var canvas = test_canvas.get_element();
-			document.body.appendChild(canvas);
-        });
-      });
+					var teams_spec = [ {
+							name: "Me"
+							, players: [{
+								code: ""
+							}]
+						}] ;
+					var maps_spec = {
+						width: 50
+						, height: 50
+						, start_positions: [
+							[{x: 20, y: 5, theta: 0}]
+						]
+					};
+
+					var map = create_map(maps_spec);
+					var teams = _.map(teams_spec, function(team_options, index) {
+						return create_team(_.extend({id: index}, team_options));
+					});
+
+					var game = create_game({
+						map: map
+						, teams: teams
+						, debug_mode: true
+					});
+
+					var canvas = test_canvas.get_element();
+					$(canvas).css("border", "1px solid black");
+					document.body.appendChild(canvas);
+
+					var player = game.get_players()[0];
+					game.start();
+					var projectile = create_projectile({
+						radius: 1
+						, x0: 45
+						, y0: 5
+						, theta0: Math.PI
+						, translational_velocity: {speed: 10}
+					});
+					game.add_projectile(projectile, 0);
+
+					player.set_velocity(7, 0, 0);
+
+					test_canvas.render_game({
+						game: game
+						, until_round: 3
+					});
+				});
+			});
 	</script>
 </head>
 

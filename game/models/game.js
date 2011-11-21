@@ -48,14 +48,17 @@ var proto = my.prototype;
 		var round_delta = round - this.start_round;
 		return moving_object_state.get_position_after(round_delta);
 	};
-	proto.get_moving_object_states = function(round) {
+	proto.get_moving_object_states = function(round, include_paths) {
 		var round_diff = round - this.start_round;
 		return _.map(this.moving_object_states, function(moving_object_state) {
-			return {
+			var rv = {
 				position: moving_object_state.get_position_after(round_diff)
 				, moving_object: moving_object_state.get_moving_object()
 			};
-			return moving_object_state.get_position_after(round_diff);
+			if(include_paths) {
+				rv.state = moving_object_state;
+			}
+			return rv;
 		});
 		return this.moving_object_states;
 	};
@@ -110,6 +113,7 @@ var Game = function(options) {
 		, 'next_interesting_round': undefined	
 	};
 	this.running = false;
+	this.debug_mode = options.debug_mode === true;
 };
 (function(my) {
 	var proto = my.prototype;
@@ -426,7 +430,8 @@ var Game = function(options) {
 		if(relevant_state === undefined) {
 			return undefined;
 		}
-		return relevant_state.get_moving_object_states(round);
+		var include_paths = this.debug_mode;
+		return relevant_state.get_moving_object_states(round, include_paths);
 	};
 
 	proto.create_moving_object_states = function(round) {
@@ -584,32 +589,6 @@ var Game = function(options) {
 			}
 		}
 		return false;
-	};
-	proto.get_snapshot = function() {
-		var map = this.get_map();
-		var self = this;
-		var round = this.get_round();
-		var players = this.get_living_players().map(function(player) {
-				var position = self.get_moving_object_position_on_round(player, round);
-				return {
-					x: position.x
-					, y: position.y
-					, theta: position.theta
-					, player: player
-					, number: player.get_number()
-					, team_id: player.get_team().get_id()
-				};
-			});
-
-		var data = {
-			round: this.get_round()
-			, players: players
-			, map: {
-				width: map.get_width()
-				, height: map.get_height()
-			}
-		};
-			return data;
 	};
 	proto.check_game_over = function() {
 		var living_players = this.get_living_players();

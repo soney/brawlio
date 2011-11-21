@@ -111,6 +111,52 @@ define(function(require) {
 		};
 	};
 	var get_next_line_line_event = function(line_state1, line_state2) {
+		var line_path1 = line_state1.get_path();
+		var line_path2 = line_state2.get_path();
+		if(line_path1.is("constant_velocity_line") && line_path2.is("constant_velocity_line")) {
+			/*
+			d = sqrt( (x2' - x1')^2 + (y2' - y1') )
+			d = sqrt( (x2 + vx2*t - x1 - vx1*t)^2 + (y2 + vy2*t - y1 - vy1*t)^2 )
+			d = sqrt( (t*(vx2-vx1) + (x2-x1))^2 + (t*(vy2-vy1) + (y2-y1))^2 )
+			...let A = vx2-vx1, B = x2-x1, C = vy2-vy1, D = y2-y1
+			placing into Wolfram Alpha... http://goo.gl/bqmWp
+			*/
+			var x1 = line_state1.x0
+				, y1 = line_state1.y0
+				, angle1 = line_state1.translational_velocity.angle + line_state1.theta0
+				, vx1 = line_state1.translational_velocity.speed * Math.cos(angle1)
+				, vy1 = line_state1.translational_velocity.speed * Math.sin(angle1)
+				, x2 = line_state2.x0
+				, y2 = line_state2.y0
+				, angle2 = line_state2.translational_velocity.angle + line_state2.theta0
+				, vx2 = line_state2.translational_velocity.speed * Math.cos(angle2)
+				, vy2 = line_state2.translational_velocity.speed * Math.sin(angle2);
+
+			var line_object1 = line_state1.get_moving_object();
+			var line_object2 = line_state2.get_moving_object();
+			var line1_radius = line_object1.get_radius();
+			var line2_radius = line_object2.get_radius();
+			var r = line1_radius + line2_radius;
+
+			var A = vx2 - vx1
+				, B = x2 - x1
+				, C = vy2 - vy1
+				, D = y2 - y1;
+
+			var discriminant = Math.pow(2*A*B + 2*C*D, 2) - 4 * (A*A + C*C) * (B*B + D*D - r*r);
+			if(discriminant < 0) {
+				return false;
+			}
+			var t1 = (Math.sqrt(discriminant) - 2*A*B - 2*C*D)/(2*(A*A + C*C));
+			var t2 = (-1*Math.sqrt(discriminant) - 2*A*B - 2*C*D)/(2*(A*A + C*C));
+			var t= Math.min(t1,t2);
+			return {
+				time: t
+				, event_type: "Moving Object Hit B"
+			};
+		} else if(line_path1.is("constant_velocity_line") && line_path2.is("sinusoidal_velocity_lien")) {
+		}
+
 		return false;
 	};
 	var get_next_circle_stationary_event = function(circle_state, stationary_state) {

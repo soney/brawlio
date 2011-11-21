@@ -295,8 +295,6 @@ define(function(require) {
 		proto.get_rotational_speed = function() {
 			return this.rotational_speed;
 		};
-		proto.get_line = function() {
-		};
 	})(SinusoidalVelocityLine);
 	//========================================
 	var RotatingStationary = function(options) {
