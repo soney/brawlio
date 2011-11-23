@@ -1,6 +1,11 @@
-define(["ace/ace", "ace/mode/javascript", "ace/theme/idle_fingers", "vendor/jquery", "vendor/jquery-ui"], function(ace) {
-	//var JavaScriptMode = JSMode.Mode;
-    var JavaScriptMode = require("ace/mode/javascript").Mode;
+define(function(require) {
+	require("vendor/jquery");
+	require("vendor/jquery-ui");
+	require("ace/theme/idle_fingers");
+	var JSMode = require("ace/mode/javascript");
+	var ace = require("ace/ace");
+
+    var JavaScriptMode = JSMode.Mode;
 	var TeamEditor = {
 		options: {
 			team_id: null
