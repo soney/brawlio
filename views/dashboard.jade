@@ -5,15 +5,8 @@ html(lang="en")
     link(rel="shortcut icon", href="favicon.ico")
     link(type="text/css", rel="stylesheet", href="client/css/main.css")
     link(type="text/css", rel="stylesheet", href="client/css/dashboard.css")
-    link(type="text/css", rel="stylesheet", href="vendor/jquery-ui-1.8.14.custom/css/ui-lightness/jquery-ui-1.8.14.custom.css")
-    script(src="vendor/require.js")
-    script(src="client/require_paths.js")
-    script
-      require(["vendor/jquery", "vendor/underscore", "client/brawlio"], function() {
-        $(function() {
-          BrawlIO.initialize("#{session_key}", $(".content"));
-        });
-      });
+    script(src="vendor/jquery.min.js")
+    script(src="vendor/underscore.js")
   body
     .body
       .crown(style="display: none; text-align:center")

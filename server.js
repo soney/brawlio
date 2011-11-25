@@ -13,11 +13,13 @@ var options = {};
 if(dev) {
 	options.check_invite = false;
 	options.auto_login = true;
+	options.debug_pages = true;
 } else if(production) {
 	options.check_invite = true;
 	options.auto_login = false;
+	options.debug_pages = false;
 	port = 80;
 }
 
 var bio = new BrawlIOServer(options);
-bio.start(__dirname, port, "Good times to be had at localhost:"+port);
+bio.start(__dirname, port, "Good times to be had at http://localhost:"+port);

@@ -6,25 +6,50 @@ var express = require("express");
 var socket_io = require('socket.io');
 var database = require('./database').database;
 var constants = require('./constants');
+var bio_inc = require('../include_libs');
 
 var BrawlIOServer = function(options) {
 	options = options || {};
 	this.check_invite = options.check_invite || true;
 	this.auto_login = options.auto_login || false;
+	this.debug_pages = options.debug_pages || false;
 	this.session_to_user = {};
 };
 
 function bind(fn, scope) {
   return function () {
     return fn.apply(scope, arguments);
-  }
+  };
 }
+var callback_map = function(arr, func, callback) {
+	var rv = [];
+	var waiting_for = arr.length;
+	arr.forEach(function(item, index) {
+		func(item, function(mapped) {
+			rv[index] = mapped;
+			waiting_for--;
+			if(waiting_for <= 0) {
+				callback(rv);
+			}
+		});
+	});
+};
 
 (function(my) {
+	var jslint_options = {};
+
 	var proto = my.prototype;
 	//Private memebers
 	var server = undefined,
 		io = undefined;
+	var locals = {
+				include: function(files) {
+					return bio_inc.include_templates(files.map(function(file) {
+						return relative_path+file;
+					}));
+				}
+				, bio_inc: bio_inc
+			};
 
 	proto.start_server = function(path, port) {
 		server = express.createServer(
@@ -136,50 +161,6 @@ function bind(fn, scope) {
 				callback(king_id===user_id);
 			});
 		});
-		/*
-		socket.on('run_brawl', function(my_team_id, opponent_team_id, callback) {
-			database.get_teams([my_team_id, opponent_team_id], function(teams) {
-				var my_team = teams[0]
-					, opponent = teams[1];
-				var errors = [];
-				if(my_team == null) {
-					errors.push("Could not find team with id " + my_team_id);
-				}
-				if(opponent == null) {
-					errors.push("Could not find team with id " + opponent_team_id);
-				}
-				if(my_team != null && opponent != null) {
-					if(my_team.weight_class !== opponent.weight_class) {
-						errors.push("Teams have mismatched weight classes");
-					}
-					if(my_team_id !== user_id) {
-						errors.push("You may only challenge using your own teams");
-					}
-					//TODO: Other checks: code size, active, valid, not the same team, etc
-				}
-
-
-				if(errors.length === 0) {
-					console.log("Running brawl - " + my_team.id + " vs. " + opponent.id + "...");
-					bio_server.do_run_brawl(my_team, opponent, function(brawl_info) {
-						socket.emit("brawl_done", brawl_info.id);
-						if(brawl_info.winner === my_team.id) {
-							console.log("I won!");
-						} else if(brawl_info.winner === opponent.id) {
-							console.log("I lost.");
-						} else {
-							console.log("Draw.");
-						}
-						callback(brawl_info.id);
-					});
-				}
-				else {
-					callback({errors: errors});
-				}
-			});
-			
-		});
-		*/
 	};
 
 	var relyingParty;
@@ -286,33 +267,48 @@ function bind(fn, scope) {
             });
 		});
 
-		server.get("/replay/:filename", function(req, res, next) {
-			var filename = req.params.filename;
-			fs.readFile(filename, function (err, data) {
-				if (err) {
-					next(err);
-					return;
-				}
-				res.send(data);
-			});
-		});
-		
-
 		server.get("/logout", function(req, res, next) {
 			var session = req.session;
 			session.destroy();
 			res.render("logout.jade", {layout: false});
 		});
 
-		server.get("/manage_account", function(req, res, next) {
-			var session = req.session;
-			if(session.user_id) {
-				var user_id = session.user_id;
-				var user = database.get_user_with_id(user_id);
-				res.render("manage_account.jade", {layout: false, user: user});
-			}
-		});
+		if(this.debug_pages) {
+			var jslint = require("jslint/lib/jslint");
+			server.get("/jslint", function(req, res, next) {
+				var errors_only = true;
+				var lintFile = function(file, options, callback) {
+					fs.readFile(file, function (err, data) {
+						if (err) {
+							throw err;
+						}
+						data = data.toString("utf8");
 
+						jslint(data, options);
+						var report = jslint.report(errors_only);
+						if(callback) {
+							callback(report);
+						}
+					});
+				}
+				var files = req.query.filename ? [req.query.filename] : bio_inc.game_src;
+				callback_map(files, function(file_name, good_callback) {
+					lintFile(file_name, jslint_options, function(report) {
+						good_callback(report);
+					});
+				}, function(rv) {
+					locals.reports = rv.map(function(report, index) {
+						return {
+							file: files[index]
+							, lint: report
+						};
+					});
+
+					res.render("jslint.jade", {layout: false, locals: locals});
+				});
+				return;
+			});
+		}
 	};
 
 	//Public members

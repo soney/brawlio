@@ -1,9 +1,9 @@
 all:
-	./Makefile.dryice.js
-	node node_modules/requirejs/bin/r.js
+	mkdir -p build
+	./Makefile.dryice.js all
 
 clean:
-	rm build/euclase_core.js
+	rm -f build/euclase_core.js
 	@@echo ""
 	@@echo ""
 	@@echo "Clean!"

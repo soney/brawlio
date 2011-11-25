@@ -1,0 +1,35 @@
+!!! 5
+html(lang="en")
+  head
+    title Brawl IO JSLint
+    script(type="text/javascript", src="vendor/jquery.min.js")
+    script(type="text/javascript")
+      $(function() {
+        $("div#functions").hide();
+        $("div.filename a").each(function(a) {
+          $(this).attr("href", "?"+$.param({filename: $(this).text()}));
+        });
+        var report_regex = /^Error:Implied global: (BrawlIO|window)\\s\\d+$/gi; //Two slashes for Jade
+        $("div.file_report").each(function(index, file_report) {
+          var report = $(".report", file_report);
+          var report_text = report.text();
+          if(report_text.match(report_regex)) {
+            $(file_report).hide();
+          }
+        });
+      });
+  body
+    - var ignore_files = ["underscore.js"];
+    - locals.reports.forEach(function(report) {
+    - var file = report.file;
+    -	var lint = report.lint;
+    -	for(var i = 0, len = ignore_files.length; i<len; i++) {
+    -		if(file.indexOf(ignore_files[i])>=0) {
+    -			return;
+    -		}
+    -	}
+    div.file_report
+      div.filename
+        a(href="javascript:void(0)")=file
+      div.report!=lint
+    - });
