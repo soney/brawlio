@@ -3,11 +3,10 @@ html(lang="en")
   head
     title Brawl IO
     link(rel="shortcut icon", href="favicon.ico")
-    link(type="text/css", rel="stylesheet", href="client/css/main.css")
-    link(type="text/css", rel="stylesheet", href="client/css/api.css")
+    != include(bio_inc.api_css)
     script(src="vendor/jquery.min.js")
-    script(src="vendor/jquery.snippet/jquery.snippet.js")
-    link(type="text/css", rel="stylesheet", href="vendor/jquery.snippet/jquery.snippet.css")
+    script(src="vendor/jquery.snippet/jquery.snippet.min.js")
+    link(type="text/css", rel="stylesheet", href="vendor/jquery.snippet/jquery.snippet.min.css")
     script
       $(function() {
         $("pre.code").snippet("javascript", {

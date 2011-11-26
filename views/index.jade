@@ -1,12 +1,10 @@
 !!! 5
 html(lang="en")
   head
+    != include(bio_inc.home_css)
     title Brawl.IO
     link(rel="shortcut icon", href="favicon.ico")
-    link(type="text/css", rel="stylesheet", href="client/css/main.css")
-    link(type="text/css", rel="stylesheet", href="client/css/index.css")
     script(src="vendor/jquery.min.js")
-    script(src="vendor/underscore.js")
     script
       var google_identifier = "https://www.google.com/accounts/o8/id";
       $(function() {

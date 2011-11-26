@@ -3,10 +3,8 @@ html(lang="en")
   head
     title Brawl IO
     link(rel="shortcut icon", href="favicon.ico")
-    link(type="text/css", rel="stylesheet", href="client/css/main.css")
-    link(type="text/css", rel="stylesheet", href="client/css/dashboard.css")
-    script(src="vendor/jquery.min.js")
-    script(src="vendor/underscore.js")
+    != include(bio_inc.dashboard_css)
+    != include(bio_inc.dashboard)
   body
     .body
       .crown(style="display: none; text-align:center")

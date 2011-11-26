@@ -18,7 +18,7 @@
 	}(CircleShape));
 
 	BrawlIO.define_type("CircleShape", CircleShape);
-	BrawlIO.define_constructor("circle_shape", function(options) {
+	BrawlIO.define_factory("circle_shape", function(options) {
 		return new CircleShape(options);
 	});
 }(BrawlIO));

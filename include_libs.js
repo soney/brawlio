@@ -23,8 +23,7 @@ var src_path = cp(path, "src");
 var vendor_path = cp(path, "vendor");
 var build_path = cp(path, "build");
 var game_path = cp(src_path, "game");
-
-exports.game_build = cp(build_path, ["euclase_core.js"]);
+var client_path = cp(src_path, "client");
 
 exports.game_src = c(
 	cp(src_path, ["core.js"])
@@ -69,13 +68,40 @@ exports.game_src = c(
 					, "models/map.js"
 					, "models/game.js"
 
+					, "constants.js"
 					, "brawl.js"
 					])
 	);
+exports.game_build = cp(build_path, "game.js");
 
-exports.client_src = c(
+exports.home_css_src = c(
+		cp(client_path, [
+			"css/main.css"
+			, "css/index.css"
+		])
+	);
+exports.home_css_build = cp(build_path, "home.css");
+
+exports.api_css_src = c(
+		cp(client_path, [
+			"css/main.css"
+			, "css/api.css"
+		])
+	);
+exports.api_css_build = cp(build_path, "api.css");
+
+exports.dashboard_css_src = c(
+		cp(client_path, [
+			"css/dashboard.css"
+			, "css/index.css"
+		])
+	);
+exports.dashboard_css_build = cp(build_path, "dashboard.css");
+
+exports.dashboard_src = c(
 		exports.game_src
 	);
+exports.dashboard_build = cp(build_path, "dashboard.js");
 
 var ends_with = function(str1, str2) {
 	return str1.slice(str1.length-str2.length) == str2;

@@ -13,7 +13,30 @@ var BrawlIOServer = function(options) {
 	this.check_invite = options.check_invite || true;
 	this.auto_login = options.auto_login || false;
 	this.debug_pages = options.debug_pages || false;
+	this.use_build = options.use_build || false;
 	this.session_to_user = {};
+
+	this.locals = {
+		include: function(files) {
+			return bio_inc.include_templates(files.map(function(file) {
+				return file;
+			}));
+		}
+		, bio_inc: bio_inc
+	};
+	if(this.use_build) {
+		bio_inc.game = [bio_inc.game_build];
+		bio_inc.home_css = [bio_inc.home_css_build];
+		bio_inc.api_css = [bio_inc.api_css_build];
+		bio_inc.dashboard = [bio_inc.dashboard_build];
+		bio_inc.dashboard_css = [bio_inc.dashboard_build];
+	} else {
+		bio_inc.game = bio_inc.game_src;
+		bio_inc.home_css = bio_inc.home_css_src;
+		bio_inc.api_css = bio_inc.api_css_src;
+		bio_inc.dashboard = bio_inc.dashboard_src;
+		bio_inc.dashboard_css = bio_inc.dashboard_css_src;
+	}
 };
 
 function bind(fn, scope) {
@@ -42,14 +65,6 @@ var callback_map = function(arr, func, callback) {
 	//Private memebers
 	var server = undefined,
 		io = undefined;
-	var locals = {
-				include: function(files) {
-					return bio_inc.include_templates(files.map(function(file) {
-						return relative_path+file;
-					}));
-				}
-				, bio_inc: bio_inc
-			};
 
 	proto.start_server = function(path, port) {
 		server = express.createServer(
@@ -173,10 +188,10 @@ var callback_map = function(arr, func, callback) {
 
 		if(session.user_id) {
 			this.session_to_user[req.sessionID] = session.user_id;
-			res.render("dashboard.jade", {layout: false, session_key: req.sessionID});
+			res.render("dashboard.jade", {layout: false, session_key: req.sessionID, locals: this.locals});
 		}
 		else {
-			res.render("index.jade", {layout: false});
+			res.render("index.jade", {layout: false, locals: this.locals});
 		}
 	}
 
@@ -218,7 +233,7 @@ var callback_map = function(arr, func, callback) {
 			});
 		});
 		server.get("/api", function(req, res, next) {
-			res.render("api.jade", {layout: false});
+			res.render("api.jade", {layout: false, locals: self.locals});
 		});
 
 		server.get("/verify", function(req, res, next) {
