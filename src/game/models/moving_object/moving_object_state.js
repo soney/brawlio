@@ -79,5 +79,5 @@
 		};
 	}(MovingObjectState));
 
-	return MovingObjectState;
+	BrawlIO.define_type("MovingObjectState", MovingObjectState);
 }(BrawlIO));

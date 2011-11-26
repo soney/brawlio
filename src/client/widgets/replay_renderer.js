@@ -1,7 +1,6 @@
-define(function(require) {
-	require("vendor/underscore");
-	var constants = require("game/constants")
-		, GameConstants = constants.game_constants;
+(function(BrawlIO) {
+	var _ = BrawlIO._;
+	var game_constants = BrawlIO.game_constants;
 	var PIXELS_PER_TILE = 8;
 
 	var FPS = 30;
@@ -73,7 +72,7 @@ define(function(require) {
 		this.stop = function() { };
 		this.get_round = function() {
 			var time_diff = get_time() - this.start_time;
-			var round = time_diff/GameConstants.REPLAY_MS_PER_ROUND;
+			var round = time_diff/game_constants.REPLAY_MS_PER_ROUND;
 			return round;
 		};
 		this.render = function(ctx) {
@@ -114,5 +113,7 @@ define(function(require) {
 		};
 	}).call(ReplayRenderer.prototype);
 
-	return ReplayRenderer;
-});
+	BrawlIO.define_factory("replay_renderer", function(replay, my_team) {
+		return new ReplayRenderer(replay, my_team);
+	});
+}(BrawlIO));

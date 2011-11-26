@@ -1,9 +1,4 @@
-define(function(require) {
-	require("vendor/jquery");
-	require("vendor/jquery-ui");
-	require(["client/widgets/team/team_editor"]);
-	require(["client/widgets/team/team_tester"]);
-
+(function(BrawlIO) {
 	var Dashboard = {
 		options: {
 		}
@@ -72,4 +67,4 @@ define(function(require) {
 	};
 
 	$.widget("brawlio.dashboard", Dashboard);
-});
+}(BrawlIO));

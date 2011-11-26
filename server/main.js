@@ -389,6 +389,6 @@ var callback_map = function(arr, func, callback) {
 		});
 	};
 
-})(BrawlIOServer);
+}(BrawlIOServer));
 
 module.exports = BrawlIOServer;

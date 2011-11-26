@@ -1,8 +1,4 @@
-define(function(require) {
-	require("vendor/jquery");
-	require("vendor/jquery-ui");
-	var ReplayRenderer = require("client/widgets/replay_renderer");
-
+(function(BrawlIO) {
 	var ReplayViewer = {
 		options: {
 			replay: undefined
@@ -17,7 +13,7 @@ define(function(require) {
 				, canvas = $("canvas", element);
 
 			var ctx = canvas[0].getContext("2d");
-			this.renderer = new ReplayRenderer(replay);
+			this.renderer = BrawlIO.create("replay_renderer", replay);
 			this.renderer.play(ctx);
 		}
 
@@ -37,4 +33,4 @@ define(function(require) {
 	};
 
 	$.widget("brawlio.replay_viewer", ReplayViewer);
-});
+}(BrawlIO));

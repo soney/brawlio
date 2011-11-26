@@ -1,5 +1,4 @@
-define(function(require, exports, module) {
-	require(["vendor/handlebars"]);
+(function(BrawlIO) {
 	require(["client/widgets/dashboard"]);
 	require(["client/widgets/replay_viewer"]);
 

@@ -92,14 +92,22 @@ exports.api_css_build = cp(build_path, "api.css");
 
 exports.dashboard_css_src = c(
 		cp(client_path, [
-			"css/dashboard.css"
-			, "css/index.css"
+			"css/main.css"
+			, "css/dashboard.css"
 		])
 	);
 exports.dashboard_css_build = cp(build_path, "dashboard.css");
 
 exports.dashboard_src = c(
 		exports.game_src
+		, cp(vendor_path, [
+			"ace/src/ace-uncompressed.js"
+			, "ace/src/mode-javascript.js"
+			, "ace/src/theme-idle_fingers.js"
+
+			, "jquery.js"
+			, "jquery-ui-1.8.14.custom/development-bundle/ui/jquery-ui-1.8.14.custom.js"
+		])
 	);
 exports.dashboard_build = cp(build_path, "dashboard.js");
 

@@ -9244,6 +9244,7 @@ jQuery.each([ "Height", "Width" ], function( i, name ) {
 
 // Expose jQuery to the global object
 window.jQuery = window.$ = jQuery;
+//BrawlIO.jQuery = jQuery;
 
 // Expose jQuery as an AMD module, but only for AMD loaders that
 // understand the issues with loading multiple versions of jQuery
