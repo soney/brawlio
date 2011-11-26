@@ -29,7 +29,7 @@ var BrawlIOServer = function(options) {
 		bio_inc.home_css = [bio_inc.home_css_build];
 		bio_inc.api_css = [bio_inc.api_css_build];
 		bio_inc.dashboard = [bio_inc.dashboard_build];
-		bio_inc.dashboard_css = [bio_inc.dashboard_build];
+		bio_inc.dashboard_css = [bio_inc.dashboard_css_build];
 	} else {
 		bio_inc.game = bio_inc.game_src;
 		bio_inc.home_css = bio_inc.home_css_src;
@@ -312,14 +312,14 @@ var callback_map = function(arr, func, callback) {
 						good_callback(report);
 					});
 				}, function(rv) {
-					locals.reports = rv.map(function(report, index) {
+					self.locals.reports = rv.map(function(report, index) {
 						return {
 							file: files[index]
 							, lint: report
 						};
 					});
 
-					res.render("jslint.jade", {layout: false, locals: locals});
+					res.render("jslint.jade", {layout: false, locals: self.locals});
 				});
 				return;
 			});

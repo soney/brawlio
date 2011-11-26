@@ -1,11 +1,6 @@
-define(function(require) {
-	require("vendor/jquery");
-	require("vendor/jquery-ui");
-	require("ace/theme/idle_fingers");
-	var JSMode = require("ace/mode/javascript");
-	var ace = require("ace/ace");
+(function(BrawlIO) {
+    var JavaScriptMode = require("ace/mode/javascript").Mode;
 
-    var JavaScriptMode = JSMode.Mode;
 	var TeamEditor = {
 		options: {
 			team_id: null
@@ -71,4 +66,4 @@ define(function(require) {
 	};
 
 	$.widget("brawlio.team_editor", TeamEditor);
-});
+}(BrawlIO));

@@ -7,6 +7,7 @@ function isRoot() { return process.getuid() == 0; }
 var port = 8000;
 var dev = process.argv[2] === "dev";
 var production = process.argv[2] === "production";
+var test = process.argv[2] === "test";
 
 var options = {};
 
@@ -21,6 +22,16 @@ if(dev) {
 	options.debug_pages = false;
 	options.use_build = true;
 	port = 80;
+} else if(test) {
+	options.check_invite = false;
+	options.auto_login = false;
+	options.debug_pages = true;
+	options.use_build = true;
+} else {
+	options.check_invite = false;
+	options.auto_login = false;
+	options.debug_pages = true;
+	options.use_build = false;
 }
 
 var bio = new BrawlIOServer(options);

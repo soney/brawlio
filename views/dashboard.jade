@@ -3,8 +3,16 @@ html(lang="en")
   head
     title Brawl IO
     link(rel="shortcut icon", href="favicon.ico")
+    script(type="text/javascript", src="/socket.io/socket.io.js")
+    script(type="text/javascript", src="vendor/ace/src/ace.js")
+    script(type="text/javascript", src="vendor/ace/src/mode-javascript.js")
+    script(type="text/javascript", src="vendor/ace/src/theme-idle_fingers.js")
     != include(bio_inc.dashboard_css)
     != include(bio_inc.dashboard)
+    script
+      $(function() {
+        BrawlIO.initialize("#{session_key}", $(".content"));
+      });
   body
     .body
       .crown(style="display: none; text-align:center")

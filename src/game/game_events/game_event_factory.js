@@ -8,8 +8,9 @@
 		proto.get_round = function() { return this.round; };
 	}(GameEvent));
 	//========================================
-	var PlayerFired = function(options) {
-		this.super_constructor.call(this, options);
+	var PlayerFired;
+	PlayerFired = function(options) {
+		PlayerFired.superclass.call(this, options);
 		this.player = options.player;
 		this.projectile = options.projectile;
 	};
@@ -24,8 +25,9 @@
 		};
 	}(PlayerFired));
 	//========================================
-	var PlayerHit = function(options) {
-		this.super_constructor.call(this, options);
+	var PlayerHit;
+	PlayerHit = function(options) {
+		PlayerHit.superclass.call(this, options);
 		this.projectile = options.projectile;
 		this.hit_player = options.hit_player;
 	};

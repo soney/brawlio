@@ -2,8 +2,9 @@
 	var Shape = BrawlIO.get_type("Shape");
 	var _ = BrawlIO._;
 
-	var Polygon = function(options) {
-		this.super_constructor.call(this, options);
+	var Polygon;
+	Polygon = function(options) {
+		Polygon.superclass.call(this, options);
 		this.inverted = options.inverted;
 		var points = options.points;
 

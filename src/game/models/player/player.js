@@ -3,11 +3,12 @@
 
 	var error_tolerance = 0.0001;
 
-	var Player = function(options) {
+	var Player;
+	Player = function(options) {
 		var radius = 2; //Radius in tiles
 		this.code = options.code;
 
-		this.super_constructor.call(this, {
+		Player.superclass.call(this, {
 			shape: BrawlIO.create("circle_shape", {radius: radius})
 			, type: "player"
 		});

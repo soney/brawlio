@@ -3,8 +3,9 @@
 	var Line = BrawlIO.get_type("Line");
 	var _ = BrawlIO._;
 
-	var Ray = function(options) {
-		this.super_constructor.call(this, _.extend({type: "ray"}, options));
+	var Ray;
+	Ray = function(options) {
+		Ray.superclass.call(this, _.extend({type: "ray"}, options));
 		this.p0 = options.p0;
 		this.theta = options.theta;
 		this.along_line = Line.fromPointAndAngle(this.p0.x, this.p0.y, this.theta);

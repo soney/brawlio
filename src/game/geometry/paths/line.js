@@ -3,8 +3,9 @@
 	var Path = BrawlIO.get_type("Path");
 	var Vector = BrawlIO.get_type("Vector");
 
-	var Line = function(options) {
-		this.super_constructor.call(this, _.extend({type: "line"}, options));
+	var Line;
+	Line = function(options) {
+		Line.superclass.call(this, _.extend({type: "line"}, options));
 		this.a = options.a;
 		this.b = options.b;
 		this.c = options.c;
@@ -119,5 +120,8 @@
 	BrawlIO.define_type("Line", Line);
 	BrawlIO.define_factory("line_from_points", function() {
 		return Line.fromPoints.apply(Line, arguments);
+	});
+	BrawlIO.define_factory("line_from_point_and_angle", function() {
+		return Line.fromPointAndAngle.apply(Line, arguments);
 	});
 }(BrawlIO));

@@ -10,8 +10,9 @@
 	BrawlIO.get_time = function() {
 		return (new Date()).getTime();
 	};
-	BrawlIO.close_to = function(a, b, tol) {
-		return Math.abs(a-b) < tol;
+	var tolerance = 0.00000001;
+	BrawlIO.close_to = function(a, b) {
+		return Math.abs(a-b) < tolerance;
 	};
 
 	BrawlIO.Types = {};

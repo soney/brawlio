@@ -1,8 +1,4 @@
-define(function(require) {
-	require("vendor/jquery");
-	require("vendor/jquery-ui");
-	var create_brawl = require("game/brawl");
-
+(function(BrawlIO) {
 	var TeamTester = {
 		options: {
 			team_id: null
@@ -36,7 +32,7 @@ define(function(require) {
 				, team = BrawlIO.get_team_by_id(options.team_id);
 			var code = team.code;
 			BrawlIO.get_king_code(function(king_code) {
-				var brawl = create_brawl({
+				var brawl = BrawlIO.create("brawl", {
 					teams: [ {
 							name: "Me"
 							, players: [{
@@ -88,4 +84,4 @@ define(function(require) {
 	};
 
 	$.widget("brawlio.team_tester", TeamTester);
-});
+}(BrawlIO));

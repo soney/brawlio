@@ -1,11 +1,4 @@
 (function(BrawlIO) {
-	require(["client/widgets/dashboard"]);
-	require(["client/widgets/replay_viewer"]);
-
-	var BrawlIO = window.BrawlIO = {
-		_debug: true
-	};
-
 	BrawlIO.assert = function(test, message) {
 		if(BrawlIO._debug) {
 			console.assert(test, message);
@@ -76,4 +69,4 @@
 			}
 		};
 	}).call(BrawlIO);
-});
+}(BrawlIO));

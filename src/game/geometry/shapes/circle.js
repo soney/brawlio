@@ -1,8 +1,9 @@
 (function(BrawlIO) {
 	var Shape = BrawlIO.get_type("Shape");
 
-	var CircleShape = function(options) {
-		this.super_constructor.call(this, options);
+	var CircleShape;
+	CircleShape = function(options) {
+		CircleShape.superclass.call(this, options);
 		this.radius = options.radius;
 		this.cx = options.x;
 		this.cy = options.y;

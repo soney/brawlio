@@ -101,12 +101,20 @@ exports.dashboard_css_build = cp(build_path, "dashboard.css");
 exports.dashboard_src = c(
 		exports.game_src
 		, cp(vendor_path, [
-			"ace/src/ace-uncompressed.js"
-			, "ace/src/mode-javascript.js"
-			, "ace/src/theme-idle_fingers.js"
-
-			, "jquery.js"
+			"jquery.js"
 			, "jquery-ui-1.8.14.custom/development-bundle/ui/jquery-ui-1.8.14.custom.js"
+		])
+		, cp(client_path, [
+			"brawlio/main.js"
+			, "brawlio/socket.js"
+
+			, "widgets/replay_renderer.js"
+			, "widgets/replay_viewer.js"
+
+			, "widgets/team/team_editor.js"
+			, "widgets/team/team_tester.js"
+
+			, "widgets/dashboard.js"
 		])
 	);
 exports.dashboard_build = cp(build_path, "dashboard.js");

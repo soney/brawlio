@@ -1,8 +1,9 @@
 (function(BrawlIO) {
 	var MovingObjectState = BrawlIO.get_type("MovingObjectState");
 
-	var ProjectileState = function(options) {
-		this.super_constructor.call(this, options);
+	var ProjectileState;
+	ProjectileState = function(options) {
+		ProjectileState.superclass.call(this, options);
 		this.path = this.specified_path;
 	};
 	BrawlIO.oo_extend(ProjectileState, MovingObjectState);

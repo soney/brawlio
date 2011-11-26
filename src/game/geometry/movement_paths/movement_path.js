@@ -34,8 +34,9 @@
 		proto.is = function(type) { return this.type === type; };
 	}(MovementPath));
 	//========================================
-	var Stationary = function(options) {
-		this.super_constructor.call(this, options);
+	var Stationary;
+	Stationary = function(options) {
+		Stationary.superclass.call(this, options);
 		this.type = "stationary";
 	};
 	BrawlIO.oo_extend(Stationary, MovementPath);
@@ -49,8 +50,9 @@
 		};
 	}(Stationary));
 	//========================================
-	var ConstantVelocityLine = function(options) {
-		this.super_constructor.call(this, options);
+	var ConstantVelocityLine;
+	ConstantVelocityLine = function(options) {
+		ConstantVelocityLine.superclass.call(this, options);
 		this.angle = options.angle;
 		this.speed = options.speed;
 		this.init();
@@ -120,8 +122,9 @@
 		};
 	}(ConstantVelocityLine));
 	//========================================
-	var ConstantVelocityCircle = function(options) {
-		this.super_constructor.call(this, options);
+	var ConstantVelocityCircle;
+	ConstantVelocityCircle = function(options) {
+		ConstantVelocityCircle.superclass.call(this, options);
 		this.movement_angle = options.movement_angle;
 		this.speed = options.speed;
 		this.rotational_speed = options.rotational_speed;
@@ -183,8 +186,9 @@
 		};
 	}(ConstantVelocityCircle));
 	//========================================
-	var SinusoidalVelocityLine = function(options) {
-		this.super_constructor.call(this, options);
+	var SinusoidalVelocityLine;
+	SinusoidalVelocityLine = function(options) {
+		SinusoidalVelocityLine.superclass.call(this, options);
 		this.type = "sinusoidal_velocity_line";
 		this.x0 = options.x0;
 		this.y0 = options.y0;
@@ -292,8 +296,9 @@
 		};
 	}(SinusoidalVelocityLine));
 	//========================================
-	var RotatingStationary = function(options) {
-		this.super_constructor.call(this, options);
+	var RotatingStationary;
+	RotatingStationary = function(options) {
+		RotatingStationary.superclass.call(this, options);
 		this.type = "rotating_stationary";
 		this.theta0 = options.theta0;
 		this.rotational_speed = options.rotational_speed;

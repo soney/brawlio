@@ -32,7 +32,7 @@ var Brawl = function(options) {
 		var players = this.game.get_players();
 		this._waiting_for_workers = players.length;
 		this.player_workers = _.map(players, function(player) {
-			var player_worker = new Worker("game/player_worker.js");
+			var player_worker = new Worker("src/game/player_worker.js");
 			player_worker.onmessage = function(event) {
 				var data = event.data;
 				self.on_player_message(player, player_worker, data, event);

@@ -1,4 +1,4 @@
-importScripts("../vendor/require.js");
+importScripts("constants.js");
 var is_node = typeof importScripts === "undefined";
 
 var post = function() {
@@ -20,15 +20,7 @@ var console = {
 	}
 };
 var controller = {}
-	, game = {}
-	, GameConstants
-	, Actions;
-
-require(["constants"], function(constants) {
-	GameConstants = constants.game_constants;
-	Actions = constants.actions;
-});
-
+	, game = {};
 var is_node = typeof importScripts === "undefined";
 
 var post = function() {
@@ -48,15 +40,15 @@ var get_time = function() {
 	controller.move = function(direction, user_options) {
 		var action = undefined;
 		if(direction.match(/back(ward(s)?)?/i)) {
-			action = Actions.move.backward;
+			action = game_constants.actions.move.backward;
 		} else if(direction.match(/left/i)) {
-			action = Actions.move.left;
+			action = game_constants.actions.move.left;
 		} else if(direction.match(/right/i)) {
-			action = Actions.move.right;
+			action = game_constants.actions.move.right;
 		} else if(direction.match(/stop/i)) {
-			action = Actions.move.stop;
+			action = game_constants.actions.move.stop;
 		} else {
-			action = Actions.move.forward;
+			action = game_constants.actions.move.forward;
 		}
 		user_options = user_options || {};
 
@@ -89,11 +81,11 @@ var get_time = function() {
 	controller.turn = function(direction, user_options) {
 		var action = undefined;
 		if(direction.match(/(right)|(clockwise)/i)) {
-			action = Actions.rotate.clockwise;
+			action = game_constants.actions.rotate.clockwise;
 		} else if(direction.match(/stop/i)) {
-			action = Actions.rotate.stop;
+			action = game_constants.actions.rotate.stop;
 		} else {
-			action = Actions.rotate.counter_clockwise;
+			action = game_constants.actions.rotate.counter_clockwise;
 		}
 
 		user_options = user_options || {};
@@ -129,13 +121,13 @@ var get_time = function() {
 		var automatic = false;
 
 		if(param === "stop") {
-			action = Actions.stop_firing;
+			action = game_constants.actions.stop_firing;
 		}
 		else if(param === "automatic") {
-			action = Actions.fire;
+			action = game_constants.actions.fire;
 			automatic = true;
 		} else {
-			action = Actions.fire;
+			action = game_constants.actions.fire;
 		}
 
 		user_options = user_options || {};
@@ -165,7 +157,7 @@ var get_time = function() {
 		});
 	};
 	controller.sense = function(callback) {
-		var action = Actions.sense;
+		var action = game_constants.actions.sense;
 		var options = {
 			callback: true
 			, callback_id: game.addCallback({
@@ -243,7 +235,7 @@ var get_time = function() {
 
 	game.onRound = function(listener, round) {
 		var round_diff = (round - game.sync_round);
-		var run_time = game.sync_time + round_diff*GameConstants.SIM_MS_PER_ROUND;
+		var run_time = game.sync_time + round_diff*game_constants.SIM_MS_PER_ROUND;
 		var time_diff = run_time - get_time();
 		if(time_diff <= 0) {
 			listener();
@@ -253,14 +245,14 @@ var get_time = function() {
 	};
 
 	game.setInterval = function(callback, rounds) {
-		return setInterval(callback, rounds * GameConstants.SIM_MS_PER_ROUND);
+		return setInterval(callback, rounds * game_constants.SIM_MS_PER_ROUND);
 	};
 	game.clearInterval = function(id) {
 		return clearInterval(id);
 	};
 
 	game.setTimeout = function(callback, rounds) {
-		return setTimeout(callback, rounds * GameConstants.SIM_MS_PER_ROUND);
+		return setTimeout(callback, rounds * game_constants.SIM_MS_PER_ROUND);
 	};
 	game.clearTimeout = function(id) {
 		return clearTimeout(id);
@@ -274,7 +266,7 @@ var get_time = function() {
 		time = time || get_time();
 		var sync_round = this.sync_round;
 		var sync_time = this.sync_time;
-		return sync_round + (time - sync_time) / GameConstants.SIM_MS_PER_ROUND;
+		return sync_round + (time - sync_time) / game_constants.SIM_MS_PER_ROUND;
 	};
 })(game);
 

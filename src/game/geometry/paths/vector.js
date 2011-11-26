@@ -2,8 +2,9 @@
 	var _ = BrawlIO._;
 	var Path = BrawlIO.get_type("Path");
 
-	var Vector = function(options) {
-		this.super_constructor.call(this, _.extend({type: "vector"}, options));
+	var Vector;
+	Vector = function(options) {
+		Vector.superclass.call(this, _.extend({type: "vector"}, options));
 		this.x = options.x;
 		this.y = options.y;
 	};

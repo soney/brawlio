@@ -2,9 +2,10 @@
 	var _ = BrawlIO._;
 	var MovingObject = BrawlIO.get_type("MovingObject");
 
-	var Projectile = function(options) {
+	var Projectile;
+	Projectile = function(options) {
 		var radius = options.radius; //Radius in tiles
-		this.super_constructor.call(this, _.extend({
+		Projectile.superclass.call(this, _.extend({
 			shape: BrawlIO.create("circle_shape", {radius: radius})
 			, translational_velocity: {speed: 0}
 			, type: "projectile"

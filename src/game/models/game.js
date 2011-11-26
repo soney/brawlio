@@ -162,7 +162,7 @@ var Game = function(options) {
 		if(index >= 0) {
 			this.active_projectiles.splice(index, 1);
 		}
-		var projectile_hit_event = BrawlIO.create("projectile_removed_event", {
+		var projectile_hit_event = BrawlIO.create("player_hit_event", {
 			projectile: projectile
 		});
 		this.replay.push_game_event(projectile_hit_event);

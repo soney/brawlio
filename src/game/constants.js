@@ -1,4 +1,4 @@
-(function(BrawlIO) {
+(function() {
 	var game_constants = {
 		TEAM_SIZE: 1
 		, PIXEL_TILE_RATIO: 5
@@ -34,6 +34,9 @@
 		else if(action<20) { return game_constants.actions.rotate_type; }
 		else if(action<30) { return game_constants.actions.instantaneous_type; }
 	};
-
-	BrawlIO.game_constants = game_constants;
-}(BrawlIO));
+	if(this.hasOwnProperty("BrawlIO")) {
+		this.BrawlIO.game_constants = game_constants;
+	} else {
+		this.game_constants = game_constants;
+	}
+}());

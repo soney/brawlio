@@ -4,9 +4,10 @@
 
 	var error_tolerance = 0.00001;
 
-	var PolygonObstacle = function(options) {
+	var PolygonObstacle;
+	PolygonObstacle = function(options) {
 		var shape = BrawlIO.create("polygon", {points: options.points, inverted: options.inverted});
-		this.super_constructor.call(this, {shape: shape});
+		PolygonObstacle.superclass.call(this, {shape: shape});
 	};
 	BrawlIO.oo_extend(PolygonObstacle, StaticObstacle);
 

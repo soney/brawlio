@@ -1,10 +1,11 @@
 (function(BrawlIO) {
 	var PolygonObstacle = BrawlIO.get_type("PolygonObstacle");
-	var MapBoundaryObstacle = function(options) {
+	var MapBoundaryObjstacle;
+	MapBoundaryObstacle = function(options) {
 		var width = options.width || 50;
 		var height = options.height || 50;
 
-		this.super_constructor.call(this, {
+		MapBoundaryObstacle.superclass.call(this, {
 			points: [
 				{x: 0, y: 0}
 				, {x: width, y: 0}

@@ -8,8 +8,9 @@
 		return (x >= start-et && x<=end+et) || (x >= end-et && x<=start+et);
 	};
 
-	var LineSegment = function(options) {
-		this.super_constructor.call(this, _.extend({type: "line_segment"}, options));
+	var LineSegment;
+	LineSegment = function(options) {
+		LineSegment.superclass.call(this, _.extend({type: "line_segment"}, options));
 		this.p0 = options.p0;
 		this.p1 = options.p1;
 		this.along_line = Line.fromPoints(this.p0, this.p1);

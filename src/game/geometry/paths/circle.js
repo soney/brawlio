@@ -2,8 +2,9 @@
 	var _ = BrawlIO._;
 	var Path = BrawlIO.get_type("Path");
 
-	var Circle = function(options) {
-		this.super_constructor.call(this, _.extend({type: "circle"}, options));
+	var Circle;
+	Circle = function(options) {
+		Circle.superclass.call(this, _.extend({type: "circle"}, options));
 		this.cx = options.center_x;
 		this.cy = options.center_y;
 		this.r = options.radius;

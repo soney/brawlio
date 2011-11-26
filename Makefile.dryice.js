@@ -22,6 +22,17 @@ var do_build_api = function() {
 		, dest: bio_inc.api_css_build
 	});
 };
+var do_build_dashboard = function() {
+	copy({
+		source: bio_inc.dashboard_css_src
+		, dest: bio_inc.dashboard_css_build
+	});
+	copy({
+		source: bio_inc.dashboard_src
+		, dest: bio_inc.dashboard_build
+		, filter: copy.filter.uglifyjs
+	});
+};
 
 
 if(require.main === module) { //Called directly
@@ -29,11 +40,13 @@ if(require.main === module) { //Called directly
 	var build_game = false;
 	var build_home = false;
 	var build_api = false;
+	var build_dashboard = false;
 
 	if(target === "all") {
 		build_game = true;
 		build_home = true;
 		build_api = true;
+		build_dashboard = true;
 	} else if(target === "game") {
 		build_game = true;
 	} else {
@@ -57,6 +70,10 @@ if(require.main === module) { //Called directly
 		console.log("Building API CSS files...");
 		do_build_api();
 	}
+	if(build_dashboard) {
+		console.log("Building Dashboard files...");
+		do_build_dashboard();
+	};
 	console.log("Done!");
 } else { //required
 	exports.build = function(callback) {
