@@ -2,7 +2,6 @@
 	var _ = BrawlIO._;
 	var game_constants = BrawlIO.game_constants;
 	var PIXELS_PER_TILE = 8;
-
 	var FPS = 30;
 
 	var get_time = function() {
@@ -54,29 +53,43 @@
 		ctx.restore();
 	};
 
-	var ReplayRenderer = function(replay, my_team) {
+	var ReplayRenderer = function(replay, element) {
 		this.replay = replay;
-		this.my_team = my_team;
+		this.element = element;
 		this._destroy = false;
+		this.initialize();
 	};
-	(function() {
-		this.play = function(ctx) {
+	(function(my) {
+		var proto = my.prototype;
+
+		proto.initialize = function() {
+			var map = this.replay.get_map();
+			this.paper = Raphael(this.element, map.get_width() * PIXELS_PER_TILE, map.get_height() * PIXELS_PER_TILE);
+			this.draw_map();
+		};
+		proto.play = function() {
 			var self = this;
 			window.setTimeout(function() {
 				self.start_time = get_time();
 				self.snapshot_index = 0;
 				
-				self.render(ctx);
+				self.render();
 			}, 0);
 		};
-		this.stop = function() { };
-		this.get_round = function() {
+		proto.stop = function() { };
+		proto.draw_map = function() {
+			var map = this.replay.get_map();
+			this.paper.rect(0, 0, map.get_width(), map.get_height(), 1).attr({
+				fill: "#337"
+			}).scale(PIXELS_PER_TILE, PIXELS_PER_TILE, 0, 0);
+		};
+		proto.get_round = function() {
 			var time_diff = get_time() - this.start_time;
 			var round = time_diff/game_constants.REPLAY_MS_PER_ROUND;
 			return round;
 		};
-		this.render = function(ctx) {
-			this.do_render(ctx);
+		proto.render = function() {
+			//this.do_render();
 			if(this.replay.is_complete() && this.get_round() >= this.replay.get_num_rounds()) {
 				this.stop();
 				return;
@@ -84,15 +97,15 @@
 			if(this._destroy === true) { return; }
 			var self = this;
 			window.setTimeout(function() {
-				self.render(ctx);
+				self.render();
 			}, 1000/FPS);
 		};
-		this.do_render = function(ctx) {
+		proto.do_render = function(ctx) {
 			var round = this.get_round();
 			var snapshot = this.replay.get_snapshot_at(round);
 			this.render_snapshot(snapshot, ctx);
 		};
-		this.render_snapshot = function(snapshot, ctx) {
+		proto.render_snapshot = function(snapshot, ctx) {
 			ctx.save();
 			ctx.scale(PIXELS_PER_TILE, PIXELS_PER_TILE);
 			var map = this.replay.get_map();
@@ -108,12 +121,12 @@
 			});
 			ctx.restore();
 		};
-		this.destroy = function() {
+		proto.destroy = function() {
 			this._destroy = true;
 		};
-	}).call(ReplayRenderer.prototype);
+	}(ReplayRenderer));
 
-	BrawlIO.define_factory("replay_renderer", function(replay, my_team) {
-		return new ReplayRenderer(replay, my_team);
+	BrawlIO.define_factory("replay_renderer", function(replay, element) {
+		return new ReplayRenderer(replay, element);
 	});
 }(BrawlIO));

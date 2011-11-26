@@ -10,11 +10,10 @@
 				replay = options.replay;
 
 			var controls = $(".controls", element)
-				, canvas = $("canvas", element);
+				, canvas = $("#canvas", element);
 
-			var ctx = canvas[0].getContext("2d");
-			this.renderer = BrawlIO.create("replay_renderer", replay);
-			this.renderer.play(ctx);
+			this.renderer = BrawlIO.create("replay_renderer", replay, canvas[0]);
+			this.renderer.play();
 		}
 
 		, destroy: function() {
