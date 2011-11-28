@@ -1,9 +1,14 @@
 (function(BrawlIO) {
+	var _ = BrawlIO._;
 	var make_listenable = function(obj) {
 		var id = 0;
 		var listeners = [];
 
-		obj.on = obj.add_event_listener = function(type, callback) {
+		obj.on = obj.add_event_listener = function(type, callback, context) {
+			if(context !== undefined) {
+				callback = _.bind(callback, context);
+			}
+
 			var listener = {
 				type: type
 				, callback: callback

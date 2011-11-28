@@ -9,6 +9,7 @@
 		};
 		var on_mouse_out = function() {
 			count--;
+			if(count<0) { count = 0; } //for situations where the mouse started hovered over the element
 			defer_update();
 		};
 		set.mouseover(on_mouse_over);
@@ -66,7 +67,7 @@
 				];
 		return rv.join(" ");
 	};
-	var get_reset_path = function(width, height) {
+	var get_rewind_path = function(width, height) {
 		var rv = ["M", 0, height/2
 				, "L", width/2, 0
 				, "V", height
@@ -86,13 +87,14 @@
 		this.icon_width = options.icon_width;
 		this.icon_height = options.icon_height;
 
+		BrawlIO.make_listenable(this);
 		this.initialize();
 		this.set_path(options.get_path);
 	};
 	(function(my) {
 		var proto = my.prototype;
 		var idle_color = "#777";
-		var hover_color = "#999";
+		var hover_color = "#CCC";
 		proto.initialize = function() {
 			this.paper.setStart();
 			this.background_rect = this.paper.rect(0, 0, this.width, this.height).attr({
@@ -118,10 +120,15 @@
 				self.set_fill_color(idle_color);
 			});
 
-			var mousedown_fn = function() {
-				console.log("mousedown");
+			var mousedown_fn = function(event) {
+				this.emit({
+					type: "click"
+					, target: this
+				});
+				event.preventDefault();
+				event.stopPropagation();
 			};
-			this.set.mousedown(mousedown_fn);
+			this.set.mousedown(mousedown_fn, this);
 			this.__remove_mousedown = function() {
 				this.set.unmousedown(mousedown_fn);
 			};
@@ -133,6 +140,7 @@
 				this.path.remove();
 			}
 			this.path = this.paper.path(get_path_fn(this.icon_width, this.icon_height));
+			this.path.attr("transform", this.background_rect.attr("transform"));
 			this.path.translate((this.width-this.icon_width)/2, (this.height-this.icon_height)/2);
 			this.set.push(this.path);
 
@@ -169,8 +177,9 @@
 		this.bottom = options.bottom;
 		this.element = options.element;
 
-		this.loaded_percentage = 1.0;
+		this.loaded_percentage = 0.0;
 		this.played_percentage = 0.0;
+		BrawlIO.make_listenable(this);
 		this.initialize();
 	};
 	(function(my) {
@@ -203,8 +212,24 @@
 				, icon_height: 3*this.control_height/5
 				, get_path: get_play_path
 			});
-			this.play_button.set_path(get_pause_path);
 			this.play_button.get_set().translate(0, this.bottom);
+
+			this.play_button.on("click", function() {
+				this.emit({
+					type: "play_button_click"
+					, target: this
+					, original_target: this.play_button
+				});
+			}, this);
+		};
+		proto.show_play_button = function() {
+			this.play_button.set_path(get_play_path);
+		};
+		proto.show_pause_button = function() {
+			this.play_button.set_path(get_pause_path);
+		};
+		proto.show_rewind_button = function() {
+			this.play_button.set_path(get_rewind_path);
 		};
 		proto.create_text = function() {
 			var attr = {font: "12px Helvetica", opacity: 1.0, "text-anchor": "start"};
@@ -288,7 +313,27 @@
 				else if(percentage > self.loaded_percentage) { percentage = self.loaded_percentage; }
 				else if(percentage > 1.0) { percentage = 1.0; }
 
-				self.set_played_percentage(percentage);
+				self.set_own_played_percentage(percentage);
+			};
+
+			var on_scrub_start = function() {
+				self.inner_scrub_circle.attr({fill: "#F00"});
+				self.scrubbing = true;
+				self.emit({
+					type: "scrub_start"
+				});
+			};
+			var on_scrub_end = function() {
+				self.scrubbing = false;
+				if(!self.hover_paper) {
+					self.on_hover_out();
+				}
+				if(!self.hover_scrub_handle) {
+					self.on_leave_scrub_handle();
+				}
+				self.emit({
+					type: "scrub_stop"
+				});
 			};
 
 			this.scrub_handle.drag(function(dx, dy, x, y, event) {
@@ -297,17 +342,10 @@
 			}, function(x, y, event) {
 				var offset_x = event.offsetX;
 				drag_start_x = offset_x;
-				self.inner_scrub_circle.attr({fill: "#F00"});
-				self.scrubbing = true;
 				scrub_to(drag_start_x);
+				on_scrub_start();
 			}, function(event) {
-				self.scrubbing = false;
-				if(!self.hover_paper) {
-					self.on_hover_out();
-				}
-				if(!self.hover_scrub_handle) {
-					self.on_leave_scrub_handle();
-				}
+				on_scrub_end();
 			});
 
 			this.scrub_rects.drag(function(dx, dy, x, y, event) {
@@ -316,17 +354,10 @@
 			}, function(x, y, event) {
 				var offset_x = event.offsetX;
 				drag_start_x = offset_x;
-				self.inner_scrub_circle.attr({fill: "#F00"});
-				self.scrubbing = true;
 				scrub_to(drag_start_x);
+				on_scrub_start();
 			}, function(event) {
-				self.scrubbing = false;
-				if(!self.hover_paper) {
-					self.on_hover_out();
-				}
-				if(!self.hover_scrub_handle) {
-					self.on_leave_scrub_handle();
-				}
+				on_scrub_end();
 			});
 
 		};
@@ -345,9 +376,7 @@
 			}, 100, "ease-in-out");
 
 			this.scrub_handle.show();
-			this.scrub_handle.attr({
-				cy: this.bottom - this.minimized_scrub_height/2
-			}).animate({
+			this.scrub_handle.animate({
 				cy: this.bottom - this.control_height - (this.maximized_scrub_height/2)
 			}, 100, "ease-in-out");
 			this.play_button.animate_translate_to(0, this.bottom-this.control_height, 100, "ease-in-out")
@@ -355,7 +384,6 @@
 			this.text.animate({
 				y: this.bottom - this.control_height/2
 			}, 100, "ease-in-out");
-			/**/
 		};
 		proto.on_hover_out = function() {
 			this.hover_paper = false;
@@ -368,6 +396,9 @@
 			}, 100, "ease-in-out");
 			this.scrub_rects.animate(anim);
 			this.scrub_handle.hide();
+			this.scrub_handle.animate({
+				cy: this.bottom - this.minimized_scrub_height/2
+			}, 100, "ease-in-out");
 			this.control_bar.animate({
 				y: this.bottom
 			}, 100, "ease-in-out");
@@ -381,6 +412,13 @@
 				width: this.width * percentage
 			});
 			this.loaded_percentage = percentage;
+		};
+		proto.set_own_played_percentage = function(percentage) {
+			this.set_played_percentage(percentage);
+			this.emit({
+				type: "played_percentage_set"
+				, percentage: percentage
+			});
 		};
 		proto.set_played_percentage = function(percentage) {
 			var slider_radius = this.slider_radius;

@@ -4,6 +4,7 @@
 		this.game = options.game;
 		this.complete = options.complete || false;
 		this.game_events = [];
+		BrawlIO.make_listenable(this);
 	};
 
 	(function(my) {
@@ -43,8 +44,9 @@
 		proto.push_game_event = function(game_event) {
 			this.game_events.push(game_event);
 		};
-		proto.get_num_rounds = function() {
-			return this.last_round;
+		proto.get_last_round = function() {
+			return 10;
+//			return this.last_round;
 		};
 		proto.set_num_rounds = function(rounds) {
 			this.last_round = rounds;
@@ -54,6 +56,17 @@
 		};
 		proto.get_winner = function() {
 			return this.winner;
+		};
+		proto.get_round_limit = function() {
+			return 10;
+			//return this.game.get_round_limit();
+		};
+		proto.get_max_rounds = function() {
+			if(this.is_complete()) {
+				return this.get_last_round();
+			} else {
+				return this.get_round_limit();
+			}
 		};
 	}(Replay));
 

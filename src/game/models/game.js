@@ -214,6 +214,9 @@ var Game = function(options) {
 			, winner: winner
 		});
 	};
+	proto.get_round_limit = function() {
+		return this.round_limit;
+	};
 	proto.get_map = function() {
 		return this.map;
 	};
