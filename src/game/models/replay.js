@@ -4,6 +4,7 @@
 		this.game = options.game;
 		this.complete = options.complete || false;
 		this.game_events = [];
+		this.last_round = 0;
 		BrawlIO.make_listenable(this);
 	};
 
@@ -18,7 +19,7 @@
 			};
 			this.objects.push(meta_obj);
 		};
-		proto.is_complete = function() {return this.complete;};
+		proto.is_complete = function() { return this.complete;};
 		proto.get_snapshot_at = function(round) {
 			var game = this.game;
 			var moving_object_states = game.get_moving_object_states(round);
@@ -45,8 +46,7 @@
 			this.game_events.push(game_event);
 		};
 		proto.get_last_round = function() {
-			return 10;
-//			return this.last_round;
+			return this.last_round;
 		};
 		proto.set_num_rounds = function(rounds) {
 			this.last_round = rounds;
@@ -58,7 +58,7 @@
 			return this.winner;
 		};
 		proto.get_round_limit = function() {
-			return 10;
+			return 50;
 			//return this.game.get_round_limit();
 		};
 		proto.get_max_rounds = function() {
@@ -68,7 +68,21 @@
 				return this.get_round_limit();
 			}
 		};
+		proto.mark_complete = function() {
+			this.complete = true;
+			this.emit({
+				type: "complete"
+			});
+		};
+		proto.set_last_round = function(round) {
+			this.last_round = round;
+			this.emit({
+				type: "last_round_changed"
+				, last_round: this.last_round
+			});
+		};
 	}(Replay));
+
 
 	BrawlIO.define_factory("replay", function(options) {
 		return new Replay(options);

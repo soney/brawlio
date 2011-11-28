@@ -205,9 +205,9 @@ var Game = function(options) {
 	};
 	proto.stop = function(winner) {
 		this.clear_round_listeners();
-		this.replay.complete = true;
-		this.replay.set_num_rounds(this.get_round());
-		this.replay.set_winner(winner);
+		//this.replay.complete = true;
+		//this.replay.set_num_rounds(this.get_round());
+		//this.replay.set_winner(winner);
 		this.running = false;
 		this.emit({
 			type: "end"
