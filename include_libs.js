@@ -108,6 +108,7 @@ exports.dashboard_src = c(
 			"brawlio/main.js"
 			, "brawlio/socket.js"
 
+			, "widgets/replay/control_bar.js"
 			, "widgets/replay/replay_viewer.js"
 
 			, "widgets/team/team_editor.js"
