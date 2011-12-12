@@ -13,6 +13,7 @@ var Brawl = function(options) {
 		map: map
 		, teams: teams
 		, round_limit: options.round_limit
+		, debug_mode: options.debug_mode
 	});
 	this.initialize();
 	this.asked_to_run = false;

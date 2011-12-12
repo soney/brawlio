@@ -24,6 +24,7 @@
 			var element = this.element;
 
 			this.paper = Raphael(element[0], 1, 1);
+			this.sprites = [];
 
 			this.mode = mode.paused;
 
@@ -124,6 +125,7 @@
 			} else if(this.mode === mode.stalled) {
 				this.on_stall();
 			} else if(this.mode === mode.scrubbing_playing) {
+				this.progress_bar.show_pause_button();
 				this.clear_update_interval();
 			} else if(this.mode === mode.scrubbing_paused) {
 				this.progress_bar.show_play_button();
@@ -192,6 +194,9 @@
 			var replay = this.option("replay");
 			var last_round = replay.get_last_round();
 			var max_round = replay.get_max_rounds();
+
+			round = Math.min(round, last_round);
+
 			var percentage = round / max_round;
 
 			this.progress_bar.set_round_text("Round " + round.toFixed(1));
@@ -202,24 +207,142 @@
 				this.progress_bar.set_played_percentage(played_percentage);
 			}
 
-			if(!replay.is_complete() && round >= last_round) {
+			if(!replay.is_complete() && round >= last_round && this.mode === mode.playing) {
 				_.defer(_.bind(this.set_mode, this, mode.stalled));
-			} else if(round >= max_round) {
+			} else if(round >= max_round && this.mode === mode.playing) {
 				_.defer(_.bind(this.set_mode, this, mode.at_end));
 			}
+			this.render_round(round);
 		}
 		, update: function() {
 			var round = this.get_round();
 			this.set_round(round, true);
-			this.render_round();
 		}
 		, play: function() {
 			this.set_mode(mode.playing);
 		}
 		, render_round: function(round) {
+			var replay = this.option("replay");
 			round = round || this.round;
+
+			var snapshot = replay.get_snapshot_at(round);
+
+			var moving_objects = _.pluck(snapshot.moving_object_states, "moving_object");
+			var positions = _.pluck(snapshot.moving_object_states, "position");
+
+			var visible_sprites = _.map(moving_objects, function(moving_object, index) {
+				var sprite = this.get_sprite_for(moving_object);
+				var position = positions[index];
+				sprite.show();
+				sprite.set_position(position);
+				return sprite;
+			}, this);
+			var hidden_sprites = _.difference(this.sprites, visible_sprites);
+
+			_.forEach(hidden_sprites, function(sprite) {
+				sprite.hide();
+			});
+		}
+
+		, get_sprite_for: function(moving_object) {
+			var i, len = this.sprites.length;
+			var rv, sprite;
+			for(i = 0; i<len; i++) {
+				sprite = this.sprites[i];
+				if(sprite.describes(moving_object)) {
+					rv = sprite;
+					break;
+				}
+			}
+			if(rv === undefined) {
+				if(moving_object.is("player")) {
+					rv = create_player_widget({
+						moving_object: moving_object
+						, paper: this.paper
+						, pixels_per_tile: this.option("pixels_per_tile")
+					});
+				} else if(moving_object.is("projectile")) {
+					rv = create_projectile_widget({
+						moving_object: moving_object
+						, paper: this.paper
+						, pixels_per_tile: this.option("pixels_per_tile")
+					});
+				}
+				this.progress_bar.toFront();
+				this.sprites.push(rv);
+			}
+
+			return rv;
 		}
 	};
+
+	var PlayerWidget = function(options) {
+		this.moving_object = options.moving_object;
+		this.paper = options.paper;
+		this.pixels_per_tile = options.pixels_per_tile;
+		this.create();
+	};
+	(function(my) {
+		var proto = my.prototype;
+		proto.create = function() {
+			var radius = this.moving_object.get_radius();
+			
+			this.paper.setStart();
+			this.circle = this.paper.circle(0, 0, radius).attr({
+				fill: "yellow"
+				, stroke: "black"
+			});
+			this.line = this.paper.path("M0,0L"+radius+",0").attr({
+				stroke: "black"
+			});
+			this.set = this.paper.setFinish();
+
+			var ppt = this.pixels_per_tile;
+			this.set.attr("transform", "S"+ppt+","+ppt+",0,0");
+		};
+	}(PlayerWidget));
+
+	var ProjectileWidget = function(options) {
+		this.moving_object = options.moving_object;
+		this.paper = options.paper;
+		this.pixels_per_tile = options.pixels_per_tile;
+		this.create();
+	};
+	(function(my) {
+		var proto = my.prototype;
+		proto.create = function() {
+			var radius = this.moving_object.get_radius();
+			
+			this.paper.setStart();
+			this.circle = this.paper.circle(0, 0, radius).attr({
+				fill: "red"
+			});
+			this.set = this.paper.setFinish();
+		};
+	}(ProjectileWidget));
+
+	_.forEach([PlayerWidget, ProjectileWidget], function(my) {
+		var proto = my.prototype;
+		proto.hide = function() {
+			this.set.hide();
+		};
+		proto.show = function() {
+			this.set.show();
+		};
+		proto.describes = function(mo) {
+			return this.moving_object === mo;
+		};
+		proto.set_position = function(position) {
+			var ppt = this.pixels_per_tile;
+			var x = position.x * this.pixels_per_tile;
+			var y = position.y * this.pixels_per_tile;
+			var deg = Raphael.deg(position.theta);
+			this.set.attr("transform", "S"+ppt+","+ppt+",0,0R"+deg+",0,0T"+x+","+y);
+		};
+	});
+
+	var create_player_widget = function(options) { return new PlayerWidget(options); };
+	var create_projectile_widget = function(options) { return new ProjectileWidget(options); };
 
 	$.widget("brawlio.replay_viewer", ReplayViewer);
 }(BrawlIO));

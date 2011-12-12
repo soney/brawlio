@@ -98,7 +98,7 @@
 		proto.initialize = function() {
 			this.paper.setStart();
 			this.background_rect = this.paper.rect(0, 0, this.width, this.height).attr({
-				stroke: "none", fill: "#444"
+				stroke: "none", fill: "#444", "fill-opacity": 0.6
 			});
 			this.set = this.paper.setFinish();
 		};
@@ -144,7 +144,7 @@
 			this.path.translate((this.width-this.icon_width)/2, (this.height-this.icon_height)/2);
 			this.set.push(this.path);
 
-			this.path.attr({ stroke: "none" , fill: idle_color});
+			this.path.attr({ stroke: "none" , fill: idle_color, "fill-opacity": 0.9});
 			this.add_handlers();
 		};
 		proto.set_fill_color = function(color) {
@@ -162,6 +162,9 @@
 			this.path.animate({
 				transform: "t"+(x+offset_x)+","+(y+offset_y)
 			}, duration, easing);
+		};
+		proto.toFront = function() {
+			this.set.toFront();
 		};
 	}(ControlBarButton));
 	var create_control_bar_button = function(options) {
@@ -200,12 +203,12 @@
 		proto.create_control_bar = function() {
 			//Will be hidden by virtue of setting the top property to bottom
 			this.control_bar = this.paper.rect(0, this.bottom, this.width, this.control_height).attr({
-				fill: "#333" , stroke: "none"
+				fill: "#333" , stroke: "none", "fill-opacity": 0.6
 			});
 			this.play_button = create_control_bar_button({
 				paper: this.paper
 				, left: 0
-				, top: this.bottom - this.control_height
+				, top: this.bottom - this.control_height - this.minimized_scrub_height
 				, width: 2*this.control_height
 				, height: this.control_height
 				, icon_width: 3*this.control_height/5
@@ -235,7 +238,7 @@
 			var attr = {font: "12px Helvetica", opacity: 1.0, "text-anchor": "start"};
 			this.paper.setStart();
 			this.on_round = this.paper.text(2 * this.control_height + 10, 0, "").attr(attr).attr({"font-weight": "strong", fill: "white"});
-			this.round_count = this.paper.text(2 * this.control_height + 10, 0, "").attr(attr).attr({fill: "#888"});
+			this.round_count = this.paper.text(2 * this.control_height + 10, 0, "").attr(attr).attr({fill: "#888", "fill-opacity": 0.8});
 			this.text = this.paper.setFinish();
 			this.text.attr("y", this.bottom + this.control_height/2);
 		};
@@ -256,13 +259,13 @@
 		proto.create_scrub_rects = function() {
 			this.paper.setStart();
 			this.background_rect = this.paper.rect(0, this.bottom  - this.minimized_scrub_height, this.width, this.minimized_scrub_height).attr({
-										fill: "#444" , stroke: "none"
+										fill: "#444" , stroke: "none", "fill-opacity": 0.6
 									});
 			this.loaded_rect = this.paper.rect(0, this.bottom  - this.minimized_scrub_height, 0, this.minimized_scrub_height).attr({
-										fill: "#777" , stroke: "none"
+										fill: "#777" , stroke: "none", "fill-opacity": 0.6
 									});
 			this.played_rect = this.paper.rect(0, this.bottom  - this.minimized_scrub_height, 0, this.minimized_scrub_height).attr({
-										fill: "#F00" , stroke: "none"
+										fill: "#F00" , stroke: "none", "fill-opacity": 0.6
 									});
 			this.scrub_rects = this.paper.setFinish();
 			this.element.hover(_.bind(this.on_hover_in, this), _.bind(this.on_hover_out, this));
@@ -272,14 +275,12 @@
 			this.slider_radius = this.maximized_scrub_height / 2 + 3;
 			this.outer_scrub_radius = this.slider_radius;
 			this.outer_scrub_circle = this.paper.circle(0, this.bottom - this.control_height - (this.maximized_scrub_height/2), this.outer_scrub_radius).attr({
-				fill: "#AAA"
-				, stroke: "none"
+				fill: "#AAA", stroke: "none", "fill-opacity": 0.9
 			});
 
 			this.inner_scrub_radius = this.outer_scrub_radius / 2.5;
 			this.inner_scrub_circle = this.paper.circle(0, this.bottom - this.control_height - (this.maximized_scrub_height/2), this.inner_scrub_radius).attr({
-				fill: "#777"
-				, stroke: "none"
+				fill: "#777", stroke: "none", "fill-opacity": 0.9
 			});
 
 			this.scrub_handle = this.paper.setFinish();
@@ -367,22 +368,23 @@
 				return;
 			}
 			var anim = Raphael.animation({
-				y: this.bottom - this.maximized_scrub_height - this.control_height
+				y: this.bottom - this.maximized_scrub_height - this.control_height - this.minimized_scrub_height
 				, height: this.maximized_scrub_height
+				, "fill-opacity": 0.6
 			}, 100, "ease-in-out");
 			this.scrub_rects.animate(anim);
 			this.control_bar.animate({
-				y: this.bottom - this.control_height
+				y: this.bottom - this.control_height - this.minimized_scrub_height
 			}, 100, "ease-in-out");
 
 			this.scrub_handle.show();
 			this.scrub_handle.animate({
-				cy: this.bottom - this.control_height - (this.maximized_scrub_height/2)
+				cy: this.bottom - this.control_height - (this.maximized_scrub_height/2) - this.minimized_scrub_height
 			}, 100, "ease-in-out");
-			this.play_button.animate_translate_to(0, this.bottom-this.control_height, 100, "ease-in-out")
+			this.play_button.animate_translate_to(0, this.bottom-this.control_height - this.minimized_scrub_height, 100, "ease-in-out")
 
 			this.text.animate({
-				y: this.bottom - this.control_height/2
+				y: this.bottom - this.control_height/2 - this.minimized_scrub_height
 			}, 100, "ease-in-out");
 		};
 		proto.on_hover_out = function() {
@@ -393,6 +395,7 @@
 			var anim = Raphael.animation({
 				y: this.bottom - this.minimized_scrub_height
 				, height: this.minimized_scrub_height
+				, "fill-opacity": 1.0
 			}, 100, "ease-in-out");
 			this.scrub_rects.animate(anim);
 			this.scrub_handle.hide();
@@ -408,10 +411,8 @@
 			}, 100, "ease-in-out");
 		};
 		proto.set_loaded_percentage = function(percentage) {
-			this.loaded_rect.animate({
-				width: this.width * percentage
-			});
 			this.loaded_percentage = percentage;
+			this.update_scrub_rects();
 		};
 		proto.set_own_played_percentage = function(percentage) {
 			this.set_played_percentage(percentage);
@@ -422,14 +423,45 @@
 		};
 		proto.set_played_percentage = function(percentage) {
 			var slider_radius = this.slider_radius;
-			var width = this.width * percentage;
-			this.played_rect.animate({
-				width: width
-			});
 
 			var slider_position = slider_radius + (this.width - 2*slider_radius) * percentage;
-			this.scrub_handle.attr("transform", "t"+slider_position+",0");
+			this.scrub_handle.attr("transform", "T"+slider_position+",0");
 			this.played_percentage = percentage;
+			this.update_scrub_rects();
+		};
+		proto.update_scrub_rects = function() {
+			var loaded_percentage = this.loaded_percentage;
+			var played_percentage = this.played_percentage;
+			var total_width = this.width;
+
+			var played_left = 0;
+			var played_right = played_percentage * total_width;
+			var played_width = Math.max(played_right - played_left, 0);
+
+			var loaded_left = played_right;
+			var loaded_right = loaded_percentage * total_width;
+			var loaded_width = Math.max(loaded_right - loaded_left, 0);
+
+			var background_left = loaded_right;
+			var background_right = total_width;
+			var background_width = Math.max(background_right - background_left, 0);
+
+			this.played_rect.attr({
+				x: played_left, width: played_width
+			});
+			this.loaded_rect.attr({
+				x: loaded_left, width: loaded_width
+			});
+			this.background_rect.attr({
+				x: background_left, width: background_width
+			});
+		};
+		proto.toFront = function() {
+			this.scrub_rects.toFront();
+			this.control_bar.toFront();
+			this.text.toFront();
+			this.play_button.toFront();
+			this.scrub_handle.toFront();
 		};
 	}(ControlBar));
 

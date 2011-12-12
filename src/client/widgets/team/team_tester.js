@@ -50,6 +50,7 @@
 						, height: 50
 					}
 					, round_limit: 40
+					, debug_mode: false
 				});
 				self.current_brawl = brawl;
 

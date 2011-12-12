@@ -206,10 +206,13 @@ var Game = function(options) {
 	proto.stop = function(winner, round) {
 		this.clear_round_listeners();
 		var last_round = Math.min(this.get_round(), this.get_round_limit());
-		this.replay.set_num_rounds(last_round);
-		console.log("OK");
+		this.replay.set_last_round(last_round);
 		this.replay.mark_complete(winner);
 		this.running = false;
+		var last_state = this.peek_state();
+		if(last_state !== undefined) {
+			last_state.set_end_round(round);
+		}
 		this.emit({
 			type: "end"
 			, winner: winner
@@ -297,6 +300,9 @@ var Game = function(options) {
 			console.log("------", round, trigger, "------");
 		}
 		this.clear_interesting_round_timeout();
+		if(!this.running) {
+			return;
+		}
 		this.handle_projectile_collisions(round);
 		new_state = this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
 		next_event = this.get_next_touch_event();
@@ -304,8 +310,8 @@ var Game = function(options) {
 			next_event_round = round + next_event.time;
 			this.set_interesting_round_timeout(next_event_round, next_event);
 		}
-		var last_valid_round = next_event_round || round;
-		this.replay.set_num_rounds(last_valid_round);
+		var last_valid_round = round;
+		this.replay.set_last_round(last_valid_round);
 	};
 	proto.set_interesting_round_timeout = function(round, event) {
 		var self = this;

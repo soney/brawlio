@@ -54,9 +54,6 @@
 		proto.get_last_round = function() {
 			return this.last_round;
 		};
-		proto.set_num_rounds = function(rounds) {
-			this.last_round = rounds;
-		};
 		proto.set_winner = function(winner) {
 			this.winner = winner;
 		};
