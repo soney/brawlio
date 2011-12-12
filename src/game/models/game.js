@@ -196,18 +196,19 @@ var Game = function(options) {
 		if(this.round_limit !== undefined) {
 			var self = this;
 			this.special_timeouts.end_game = this.on_round(function() {
-				self.stop(undefined);
+				self.stop(undefined, this.round_limit);
 			}, this.round_limit, "End of game");
 		}
 		this.emit({
 			type: "start"
 		});
 	};
-	proto.stop = function(winner) {
+	proto.stop = function(winner, round) {
 		this.clear_round_listeners();
-		//this.replay.complete = true;
-		//this.replay.set_num_rounds(this.get_round());
-		//this.replay.set_winner(winner);
+		var last_round = Math.min(this.get_round(), this.get_round_limit());
+		this.replay.set_num_rounds(last_round);
+		console.log("OK");
+		this.replay.mark_complete(winner);
 		this.running = false;
 		this.emit({
 			type: "end"
@@ -284,23 +285,27 @@ var Game = function(options) {
 		var new_state = new GameState(options);
 		this.states.push(new_state);
 		this.update_round_listeners();
+		return new_state;
 	};
 	proto.peek_state = function() {
 		return _.last(this.states);
 	};
 
 	proto.update_state = function(round, trigger, more_info) {
+		var new_state, next_event, next_event_round;
 		if(this.debug_mode) {
 			console.log("------", round, trigger, "------");
 		}
 		this.clear_interesting_round_timeout();
 		this.handle_projectile_collisions(round);
-		this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
-		var next_event = this.get_next_touch_event();
+		new_state = this.push_state({round: round, trigger: trigger, more_info: more_info, moving_object_states: this.create_moving_object_states(round)});
+		next_event = this.get_next_touch_event();
 		if(next_event !== false) {
-			var next_event_round = round + next_event.time;
+			next_event_round = round + next_event.time;
 			this.set_interesting_round_timeout(next_event_round, next_event);
 		}
+		var last_valid_round = next_event_round || round;
+		this.replay.set_num_rounds(last_valid_round);
 	};
 	proto.set_interesting_round_timeout = function(round, event) {
 		var self = this;
@@ -501,7 +506,7 @@ var Game = function(options) {
 			var self = this;
 			//Defer the check game over call....we might be in the middle of an update timer
 			_.defer(function() {
-				self.check_game_over();
+				self.check_game_over(round);
 			});
 		} else if(other_object.is("projectile")) {
 			this.remove_projectile(projectile, round);
@@ -577,7 +582,7 @@ var Game = function(options) {
 		}
 		return false;
 	};
-	proto.check_game_over = function() {
+	proto.check_game_over = function(round) {
 		var living_players = this.get_living_players();
 		var living_team, i, len = living_players.length;
 
@@ -591,7 +596,7 @@ var Game = function(options) {
 			}
 		}
 		//Only one team left
-		this.stop(living_team);
+		this.stop(living_team, round);
 	};
 }(Game));
 
