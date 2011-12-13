@@ -38,11 +38,15 @@
 							, players: [{
 								code: code
 							}]
+							, colors: ["yellow"]
+							, win_text: "You win!"
 						} , {
 							name: "Opponent"
 							, players: [{
 								code: king_code
 							}]
+							, colors: ["#777"]
+							, win_text: "You lose"
 						}
 					]
 					, map: {

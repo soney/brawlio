@@ -36,7 +36,7 @@
 
 		, destroy: function() {
 			$.Widget.prototype.destroy.apply(this, arguments);
-			this.paper.clear();
+			this.paper.remove();
 		}
 
 		, initialize: function() {
@@ -115,7 +115,14 @@
 			}
 		}
 		, set_mode: function(to_mode) {
+			var from_mode = this.mode;
+
+			if(from_mode === mode.at_end) {
+				this.remove_result();
+			}
+
 			this.mode = to_mode;
+
 			if(this.mode === mode.playing) {
 				this.on_play();
 			} else if(this.mode === mode.paused) {
@@ -144,7 +151,14 @@
 		}
 
 		, on_scrub_stop: function() {
-			if(this.mode === mode.scrubbing_playing) {
+			var replay = this.option("replay");
+			var max_round = replay.get_max_rounds();
+			var round = this.round;
+			if(replay.is_complete() && round >= max_round) {
+				this.set_mode(mode.at_end);
+				var winner = replay.get_winner();
+				this.render_result(winner);
+			} else if(this.mode === mode.scrubbing_playing) {
 				this.set_mode(mode.playing);
 			} else if(this.mode === mode.scrubbing_paused) {
 				this.set_mode(mode.paused);
@@ -207,12 +221,19 @@
 				this.progress_bar.set_played_percentage(played_percentage);
 			}
 
+
+			if(round >= max_round && this.mode === mode.playing) {
+				var winner = replay.get_winner();
+				this.render_result(winner);
+			} else {
+				this.render_round(round);
+			}
+
 			if(!replay.is_complete() && round >= last_round && this.mode === mode.playing) {
 				_.defer(_.bind(this.set_mode, this, mode.stalled));
 			} else if(round >= max_round && this.mode === mode.playing) {
 				_.defer(_.bind(this.set_mode, this, mode.at_end));
 			}
-			this.render_round(round);
 		}
 		, update: function() {
 			var round = this.get_round();
@@ -233,8 +254,12 @@
 			var visible_sprites = _.map(moving_objects, function(moving_object, index) {
 				var sprite = this.get_sprite_for(moving_object);
 				var position = positions[index];
+				var health = snapshot.moving_object_states[index].health;
 				sprite.show();
 				sprite.set_position(position);
+				if(moving_object.is("player")) {
+					sprite.set_health(health)
+				}
 				return sprite;
 			}, this);
 			var hidden_sprites = _.difference(this.sprites, visible_sprites);
@@ -242,6 +267,40 @@
 			_.forEach(hidden_sprites, function(sprite) {
 				sprite.hide();
 			});
+		}
+
+		, render_result: function(winner) {
+			var replay = this.option("replay")
+			var map = replay.get_map()
+				, map_width = map.get_width()
+				, map_height = map.get_height()
+				, pixels_per_tile = this.option("pixels_per_tile");
+			var result_text;
+			if(winner === undefined) {
+				result_text = "Draw";
+			} else {
+				result_text = winner.get_win_text();
+			}
+
+			this.remove_result();
+
+			this.paper.setStart();
+			var height = map_height * pixels_per_tile;
+			this.paper.rect(0, (map_height * pixels_per_tile - height)/2, map_width * pixels_per_tile, height).attr({
+				"fill": "black", "fill-opacity": 0.4, "stroke": "none"
+			});
+			this.paper.text((map_width * pixels_per_tile)/2, (map_height * pixels_per_tile)/2, result_text).attr({
+				"font-size": "32pt", fill: "white"
+			});
+			this.result_display = this.paper.setFinish();
+			this.progress_bar.toFront();
+		}
+
+		, remove_result: function() {
+			if(this.hasOwnProperty("result_display")) {
+				this.result_display.remove();
+				delete this.result_display;
+			}
 		}
 
 		, get_sprite_for: function(moving_object) {
@@ -256,10 +315,12 @@
 			}
 			if(rv === undefined) {
 				if(moving_object.is("player")) {
+					var team = moving_object.get_team();
 					rv = create_player_widget({
 						moving_object: moving_object
 						, paper: this.paper
 						, pixels_per_tile: this.option("pixels_per_tile")
+						, color: team.get_color_for_player(moving_object)
 					});
 				} else if(moving_object.is("projectile")) {
 					rv = create_projectile_widget({
@@ -280,16 +341,18 @@
 		this.moving_object = options.moving_object;
 		this.paper = options.paper;
 		this.pixels_per_tile = options.pixels_per_tile;
+		this.color = options.color;
 		this.create();
 	};
 	(function(my) {
 		var proto = my.prototype;
 		proto.create = function() {
 			var radius = this.moving_object.get_radius();
+			var ppt = this.pixels_per_tile;
 			
 			this.paper.setStart();
 			this.circle = this.paper.circle(0, 0, radius).attr({
-				fill: "yellow"
+				fill: this.color
 				, stroke: "black"
 			});
 			this.line = this.paper.path("M0,0L"+radius+",0").attr({
@@ -299,6 +362,40 @@
 
 			var ppt = this.pixels_per_tile;
 			this.set.attr("transform", "S"+ppt+","+ppt+",0,0");
+
+			this.paper.setStart();
+			this.health_outline = this.paper.rect(-radius, radius+4/ppt, 2*radius, 4/ppt).attr({
+				fill: "none", stroke: "white", "stroke-opacity": 0.4
+			});
+			this.health_fill = this.paper.rect(-radius, radius+4/ppt, 2*radius, 4/ppt).attr({
+				fill: "red", stroke: "none", "fill-opacity": 0.3
+			});
+			this.health = this.paper.setFinish();
+		};
+		proto.set_position = function(position) {
+			var ppt = this.pixels_per_tile;
+			var x = position.x * this.pixels_per_tile;
+			var y = position.y * this.pixels_per_tile;
+			var deg = Raphael.deg(position.theta);
+			this.set.attr("transform", "S"+ppt+","+ppt+",0,0R"+deg+",0,0T"+x+","+y);
+			this.health.attr("transform", "S"+ppt+","+ppt+",0,0T"+x+","+y);
+		};
+		proto.set_health = function(health) {
+			var player = this.moving_object;
+			var health_percentage = Math.max(health / player.get_max_health(), 0);
+			var radius = this.moving_object.get_radius();
+			var width = 2*radius*health_percentage;
+			this.health_fill.animate({
+				width: width
+			}, 90, "ease-out");
+		};
+		proto.hide = function() {
+			this.set.hide();
+			this.health.hide();
+		};
+		proto.show = function() {
+			this.set.show();
+			this.health.show();
 		};
 	}(PlayerWidget));
 
@@ -319,25 +416,25 @@
 			});
 			this.set = this.paper.setFinish();
 		};
-	}(ProjectileWidget));
-
-	_.forEach([PlayerWidget, ProjectileWidget], function(my) {
-		var proto = my.prototype;
-		proto.hide = function() {
-			this.set.hide();
-		};
-		proto.show = function() {
-			this.set.show();
-		};
-		proto.describes = function(mo) {
-			return this.moving_object === mo;
-		};
 		proto.set_position = function(position) {
 			var ppt = this.pixels_per_tile;
 			var x = position.x * this.pixels_per_tile;
 			var y = position.y * this.pixels_per_tile;
 			var deg = Raphael.deg(position.theta);
 			this.set.attr("transform", "S"+ppt+","+ppt+",0,0R"+deg+",0,0T"+x+","+y);
+		};
+		proto.hide = function() {
+			this.set.hide();
+		};
+		proto.show = function() {
+			this.set.show();
+		};
+	}(ProjectileWidget));
+
+	_.forEach([PlayerWidget, ProjectileWidget], function(my) {
+		var proto = my.prototype;
+		proto.describes = function(mo) {
+			return this.moving_object === mo;
 		};
 	});
 

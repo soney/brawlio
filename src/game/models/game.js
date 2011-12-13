@@ -39,10 +39,14 @@ var proto = my.prototype;
 	proto.get_moving_object_states = function(round, include_paths) {
 		var round_diff = round - this.start_round;
 		return _.map(this.moving_object_states, function(moving_object_state) {
+			var moving_object = moving_object_state.get_moving_object();
 			var rv = {
 				position: moving_object_state.get_position_after(round_diff)
-				, moving_object: moving_object_state.get_moving_object()
+				, moving_object: moving_object
 			};
+			if(moving_object.is("player")) {
+				rv.health = moving_object_state.get_health();
+			}
 			if(include_paths) {
 				rv.state = moving_object_state;
 			}
@@ -210,9 +214,11 @@ var Game = function(options) {
 		this.replay.mark_complete(winner);
 		this.running = false;
 		var last_state = this.peek_state();
+		var end_state = this.push_state({round: round, trigger: "Game end", moving_object_states: this.create_moving_object_states(round)});
 		if(last_state !== undefined) {
 			last_state.set_end_round(round);
 		}
+
 		this.emit({
 			type: "end"
 			, winner: winner
@@ -444,12 +450,12 @@ var Game = function(options) {
 			var map = this.get_map();
 			start_positions = _.flatten(map.get_start_positions());
 		} else {
-			start_positions = _.map(this.get_players(), function(player) {
+			start_positions = _.map(this.get_living_players(), function(player) {
 				return self.get_moving_object_position_on_round(player, round);
 			});
 		}
 
-		var player_states = _.map(this.get_players(), function(player, index) {
+		var player_states = _.map(this.get_living_players(), function(player, index) {
 			var start_position = start_positions[index];
 			return BrawlIO.create("player_state", _.extend({
 				moving_object: player
@@ -508,7 +514,7 @@ var Game = function(options) {
 			this.remove_projectile(projectile, round);
 		} else if(other_object.is("player")) {
 			this.remove_projectile(projectile, round);
-			other_object.remove_health(6);
+			other_object.remove_health(BrawlIO.game_constants.PROJECTILE_DAMAGE);
 			var self = this;
 			//Defer the check game over call....we might be in the middle of an update timer
 			_.defer(function() {

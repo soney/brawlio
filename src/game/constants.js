@@ -5,6 +5,7 @@
 		, SIM_MS_PER_ROUND: 800
 		, REPLAY_MS_PER_ROUND: 1000
 		, PROJECTILE_SPEED: 20 
+		, PROJECTILE_DAMAGE: 2
 		, actions: {
 			move_type: 0
 			, move: {

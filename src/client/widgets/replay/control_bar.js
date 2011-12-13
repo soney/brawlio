@@ -100,7 +100,11 @@
 			this.background_rect = this.paper.rect(0, 0, this.width, this.height).attr({
 				stroke: "none", fill: "#444", "fill-opacity": 0.6
 			});
+			this.path = this.paper.path("").attr({
+				stroke: "none", fill: idle_color, "fill-opacity": 0.9
+			});
 			this.set = this.paper.setFinish();
+			this.add_handlers();
 		};
 		proto.remove_handlers = function() {
 			if(this.hasOwnProperty("__remove_hover")) {
@@ -134,18 +138,11 @@
 			};
 		};
 		proto.set_path = function(get_path_fn) {
-			this.remove_handlers();
-			if(this.hasOwnProperty("path")) {
-				this.set.exclude(this.path);
-				this.path.remove();
-			}
-			this.path = this.paper.path(get_path_fn(this.icon_width, this.icon_height));
+			this.path.attr("path", get_path_fn(this.icon_width, this.icon_height));
 			this.path.attr("transform", this.background_rect.attr("transform"));
 			this.path.translate((this.width-this.icon_width)/2, (this.height-this.icon_height)/2);
 			this.set.push(this.path);
 
-			this.path.attr({ stroke: "none" , fill: idle_color, "fill-opacity": 0.9});
-			this.add_handlers();
 		};
 		proto.set_fill_color = function(color) {
 			this.path.animate({fill: color}, 100, "ease-in-out");
