@@ -83,6 +83,7 @@
 			}
 			replay_element.replay_viewer({
 				replay: replay
+				, debug: true
 			});
 			return replay_element;
 		}

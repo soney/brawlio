@@ -248,20 +248,21 @@
 
 			var snapshot = replay.get_snapshot_at(round);
 
-			var moving_objects = _.pluck(snapshot.moving_object_states, "moving_object");
-			var positions = _.pluck(snapshot.moving_object_states, "position");
-
-			var visible_sprites = _.map(moving_objects, function(moving_object, index) {
+			var visible_sprites = _.map(snapshot.moving_object_states, function(moving_object_state) {
+				var moving_object = moving_object_state.moving_object;
 				var sprite = this.get_sprite_for(moving_object);
-				var position = positions[index];
-				var health = snapshot.moving_object_states[index].health;
+				var position = moving_object_state.position;
+				var health = moving_object_state.health;
+				var path = moving_object_state.path;
 				sprite.show();
 				sprite.set_position(position);
+				sprite.set_path(path);
 				if(moving_object.is("player")) {
 					sprite.set_health(health)
 				}
 				return sprite;
 			}, this);
+
 			var hidden_sprites = _.difference(this.sprites, visible_sprites);
 
 			_.forEach(hidden_sprites, function(sprite) {
@@ -321,12 +322,14 @@
 						, paper: this.paper
 						, pixels_per_tile: this.option("pixels_per_tile")
 						, color: team.get_color_for_player(moving_object)
+						, debug: this.option("debug")
 					});
 				} else if(moving_object.is("projectile")) {
 					rv = create_projectile_widget({
 						moving_object: moving_object
 						, paper: this.paper
 						, pixels_per_tile: this.option("pixels_per_tile")
+						, debug: this.option("debug")
 					});
 				}
 				this.progress_bar.toFront();
@@ -342,6 +345,7 @@
 		this.paper = options.paper;
 		this.pixels_per_tile = options.pixels_per_tile;
 		this.color = options.color;
+		this.debug = options.debug;
 		this.create();
 	};
 	(function(my) {
@@ -371,6 +375,12 @@
 				fill: "red", stroke: "none", "fill-opacity": 0.3
 			});
 			this.health = this.paper.setFinish();
+
+			if(this.is_debug()) {
+				this.movement_path = this.paper.path("").attr({
+					fill: "none", stroke: this.color, "stroke-dasharray": "- "
+				});
+			}
 		};
 		proto.set_position = function(position) {
 			var ppt = this.pixels_per_tile;
@@ -392,10 +402,16 @@
 		proto.hide = function() {
 			this.set.hide();
 			this.health.hide();
+			if(this.is_debug()) {
+				this.movement_path.hide();
+			}
 		};
 		proto.show = function() {
 			this.set.show();
 			this.health.show();
+			if(this.is_debug()) {
+				this.movement_path.show();
+			}
 		};
 	}(PlayerWidget));
 
@@ -403,6 +419,7 @@
 		this.moving_object = options.moving_object;
 		this.paper = options.paper;
 		this.pixels_per_tile = options.pixels_per_tile;
+		this.debug = options.debug;
 		this.create();
 	};
 	(function(my) {
@@ -415,6 +432,12 @@
 				fill: "red"
 			});
 			this.set = this.paper.setFinish();
+
+			if(this.is_debug()) {
+				this.movement_path = this.paper.path("").attr({
+					fill: "none", stroke: "red", "stroke-dasharray": ". "
+				});
+			}
 		};
 		proto.set_position = function(position) {
 			var ppt = this.pixels_per_tile;
@@ -425,9 +448,15 @@
 		};
 		proto.hide = function() {
 			this.set.hide();
+			if(this.is_debug()) {
+				this.movement_path.hide();
+			}
 		};
 		proto.show = function() {
 			this.set.show();
+			if(this.is_debug()) {
+				this.movement_path.show();
+			}
 		};
 	}(ProjectileWidget));
 
@@ -435,6 +464,48 @@
 		var proto = my.prototype;
 		proto.describes = function(mo) {
 			return this.moving_object === mo;
+		};
+		proto.is_debug = function() {
+			return this.debug === true;
+		};
+		proto.set_path = function(path) {
+			if(this.is_debug()) {
+				if(this.for_path === path) {
+					return;
+				} else {
+					this.for_path = path;
+				}
+				var line_path = "";
+				if(path.is("constant_velocity_line")) {
+					var angle = path.angle;
+					var distance = Math.max(this.paper.width, this.paper.height);
+					var ppt = this.pixels_per_tile;
+					var x0 = path.x0 * ppt, y0 = path.y0 * ppt
+						, x1 = x0 + distance * Math.cos(angle) * ppt
+						, y1 = y0 + distance * Math.sin(angle) * ppt;
+					line_path = "M"+x0+","+y0+"L"+x1+","+y1;
+				} else if(path.is("constant_velocity_circle")) {
+					var ppt = this.pixels_per_tile;
+					var x0 = path.x0*ppt, y0 = path.y0*ppt
+							 , movement_angle = path.movement_angle, r = path.r*ppt, clockwise = path.clockwise;
+					var sweep_flag = clockwise ? 1 : 0;
+					var opposing_angle = movement_angle + (clockwise ? Math.PI/2 : -Math.PI/2);
+					var x1 = x0 + 2*r*Math.cos(opposing_angle)
+						, y1 = y0 + 2*r*Math.sin(opposing_angle)
+
+					line_path = "M"+x0+","+y0+
+								"A"+r+","+r+" 0 0,"+sweep_flag+" "+x1+","+y1+
+								"A"+r+","+r+" 0 1,"+sweep_flag+" "+x0+","+y0;
+				} else if(path.is("sinusoidal_velocity_line")) {
+					var line_segment = path.get_line_segment_range();
+					var ppt = this.pixels_per_tile;
+					var x0 = ppt*line_segment.p0.x, y0 = ppt*line_segment.p0.y
+						, x1 = ppt*line_segment.p1.x, y1 = ppt*line_segment.p1.y;
+					line_path = "M"+x0+","+y0+"L"+x1+","+y1;
+				}
+
+				this.movement_path.attr("path", line_path);
+			}
 		};
 	});
 

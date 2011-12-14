@@ -48,7 +48,7 @@ var proto = my.prototype;
 				rv.health = moving_object_state.get_health();
 			}
 			if(include_paths) {
-				rv.state = moving_object_state;
+				rv.path = moving_object_state.path;
 			}
 			return rv;
 		});
@@ -199,9 +199,10 @@ var Game = function(options) {
 		this.update_state(0, "Game Started");
 		if(this.round_limit !== undefined) {
 			var self = this;
+			var round_limit = this.round_limit;
 			this.special_timeouts.end_game = this.on_round(function() {
-				self.stop(undefined, this.round_limit);
-			}, this.round_limit, "End of game");
+				self.stop(undefined, round_limit);
+			}, round_limit, "End of game");
 		}
 		this.emit({
 			type: "start"
@@ -439,7 +440,7 @@ var Game = function(options) {
 		if(relevant_state === undefined) {
 			return undefined;
 		}
-		var include_paths = this.debug_mode;
+		var include_paths = true;
 		return relevant_state.get_moving_object_states(round, include_paths);
 	};
 

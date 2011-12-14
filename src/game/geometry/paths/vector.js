@@ -62,10 +62,10 @@
 
 
 	BrawlIO.define_type("Vector", Vector);
-	BrawlIO.define_factory("line_segment_from_points", function() {
+	BrawlIO.define_factory("vector_from_magnitude_and_angle", function() {
 		return Vector.fromMagnitudeAndTheta.apply(Vector, arguments);
 	});
-	BrawlIO.define_factory("line_segment_from_points", function() {
+	BrawlIO.define_factory("vector_from_points", function() {
 		return Vector.fromPoints.apply(Vector, arguments);
 	});
 }(BrawlIO));
