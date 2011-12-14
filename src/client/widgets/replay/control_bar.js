@@ -106,6 +106,9 @@
 			this.set = this.paper.setFinish();
 			this.add_handlers();
 		};
+		proto.destroy = function() {
+			this.remove_handlers();
+		};
 		proto.remove_handlers = function() {
 			if(this.hasOwnProperty("__remove_hover")) {
 				this.__remove_hover();
@@ -134,15 +137,13 @@
 			};
 			this.set.mousedown(mousedown_fn, this);
 			this.__remove_mousedown = function() {
-				this.set.unmousedown(mousedown_fn);
+				self.set.unmousedown(mousedown_fn);
 			};
 		};
 		proto.set_path = function(get_path_fn) {
 			this.path.attr("path", get_path_fn(this.icon_width, this.icon_height));
 			this.path.attr("transform", this.background_rect.attr("transform"));
 			this.path.translate((this.width-this.icon_width)/2, (this.height-this.icon_height)/2);
-			this.set.push(this.path);
-
 		};
 		proto.set_fill_color = function(color) {
 			this.path.animate({fill: color}, 100, "ease-in-out");
@@ -196,6 +197,11 @@
 			this.make_draggable();
 			this.set_loaded_percentage(this.loaded_percentage);
 			this.set_played_percentage(this.played_percentage);
+		};
+		proto.destroy = function() {
+			this.play_button.destroy();
+			this.element.unbind("mouseenter.control_bar");
+			this.element.unbind("mouseleave.control_bar");
 		};
 		proto.create_control_bar = function() {
 			//Will be hidden by virtue of setting the top property to bottom
@@ -265,7 +271,8 @@
 										fill: "#F00" , stroke: "none", "fill-opacity": 0.6
 									});
 			this.scrub_rects = this.paper.setFinish();
-			this.element.hover(_.bind(this.on_hover_in, this), _.bind(this.on_hover_out, this));
+			this.element.bind("mouseenter.control_bar", _.bind(this.on_hover_in, this));
+			this.element.bind("mouseleave.control_bar", _.bind(this.on_hover_out, this));
 		};
 		proto.create_scrub_handle = function() {
 			this.paper.setStart();

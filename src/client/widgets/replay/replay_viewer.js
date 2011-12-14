@@ -36,6 +36,8 @@
 
 		, destroy: function() {
 			$.Widget.prototype.destroy.apply(this, arguments);
+			this.clear_update_interval();
+			this.progress_bar.destroy();
 			this.paper.remove();
 		}
 
@@ -50,9 +52,10 @@
 			this.paper.setSize(map_width * pixels_per_tile, map_height * pixels_per_tile + minimized_scrub_height);
 
 			this.paper.rect(0, 0, map_width * pixels_per_tile, map_height * pixels_per_tile, 0).attr({
-				fill: "#337"
+				fill: this.option("debug") ? "#222" : "#337"
 				, stroke: "none"
 			});
+
 			this.progress_bar = BrawlIO.create_replay_control_bar({
 				paper: this.paper
 				, minimized_scrub_height: this.option("minimized_scrub_height")
@@ -305,6 +308,7 @@
 		}
 
 		, get_sprite_for: function(moving_object) {
+			var replay = this.option("replay");
 			var i, len = this.sprites.length;
 			var rv, sprite;
 			for(i = 0; i<len; i++) {
@@ -317,11 +321,13 @@
 			if(rv === undefined) {
 				if(moving_object.is("player")) {
 					var team = moving_object.get_team();
+					var map = replay.get_map();
 					rv = create_player_widget({
 						moving_object: moving_object
 						, paper: this.paper
 						, pixels_per_tile: this.option("pixels_per_tile")
 						, color: team.get_color_for_player(moving_object)
+						, map_height: map.get_height()
 						, debug: this.option("debug")
 					});
 				} else if(moving_object.is("projectile")) {
@@ -346,21 +352,22 @@
 		this.pixels_per_tile = options.pixels_per_tile;
 		this.color = options.color;
 		this.debug = options.debug;
+		this.map_height = options.map_height;
 		this.create();
 	};
 	(function(my) {
 		var proto = my.prototype;
+		var health_height = 4;
 		proto.create = function() {
 			var radius = this.moving_object.get_radius();
 			var ppt = this.pixels_per_tile;
 			
 			this.paper.setStart();
 			this.circle = this.paper.circle(0, 0, radius).attr({
-				fill: this.color
-				, stroke: "black"
+				fill: this.debug ? "none" : this.color, stroke: this.debug ? this.color : "black"
 			});
 			this.line = this.paper.path("M0,0L"+radius+",0").attr({
-				stroke: "black"
+				stroke: this.debug ? this.color : "black"
 			});
 			this.set = this.paper.setFinish();
 
@@ -368,24 +375,24 @@
 			this.set.attr("transform", "S"+ppt+","+ppt+",0,0");
 
 			this.paper.setStart();
-			this.health_outline = this.paper.rect(-radius, radius+4/ppt, 2*radius, 4/ppt).attr({
+			this.health_outline = this.paper.rect(-radius, radius+health_height/ppt, 2*radius, health_height/ppt).attr({
 				fill: "none", stroke: "white", "stroke-opacity": 0.4
 			});
-			this.health_fill = this.paper.rect(-radius, radius+4/ppt, 2*radius, 4/ppt).attr({
+			this.health_fill = this.paper.rect(-radius, radius+health_height/ppt, 2*radius, health_height/ppt).attr({
 				fill: "red", stroke: "none", "fill-opacity": 0.3
 			});
 			this.health = this.paper.setFinish();
 
 			if(this.is_debug()) {
 				this.movement_path = this.paper.path("").attr({
-					fill: "none", stroke: this.color, "stroke-dasharray": "- "
+					fill: "none", stroke: this.color, "stroke-dasharray": "- ", "stroke-opacity": 0.2
 				});
 			}
 		};
 		proto.set_position = function(position) {
 			var ppt = this.pixels_per_tile;
-			var x = position.x * this.pixels_per_tile;
-			var y = position.y * this.pixels_per_tile;
+			var x = position.x * ppt;
+			var y = position.y * ppt;
 			var deg = Raphael.deg(position.theta);
 			this.set.attr("transform", "S"+ppt+","+ppt+",0,0R"+deg+",0,0T"+x+","+y);
 			this.health.attr("transform", "S"+ppt+","+ppt+",0,0T"+x+","+y);
@@ -429,13 +436,13 @@
 			
 			this.paper.setStart();
 			this.circle = this.paper.circle(0, 0, radius).attr({
-				fill: "red"
+				fill: this.debug ? "none" : "red", stroke: this.debug ? "red" : "none"
 			});
 			this.set = this.paper.setFinish();
 
 			if(this.is_debug()) {
 				this.movement_path = this.paper.path("").attr({
-					fill: "none", stroke: "red", "stroke-dasharray": ". "
+					fill: "none", stroke: "red", "stroke-dasharray": ". ", "stroke-opacity": 0.2
 				});
 			}
 		};

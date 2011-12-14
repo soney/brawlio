@@ -2,6 +2,7 @@
 	var TeamTester = {
 		options: {
 			team_id: null
+			, debug: true
 		}
 
 		, _create: function() {
@@ -54,22 +55,12 @@
 						, height: 50
 					}
 					, round_limit: 40
-					, debug_mode: false
+					, debug_mode: self.option("debug")
 				});
 				self.current_brawl = brawl;
 
 				var replay = brawl.get_replay();
-				brawl.run(function(winner) {
-					var replay_element = $(".replay", self.element);
-					if(winner === undefined) {
-						$(replay_element).replay_viewer("set_result", "Time expired");
-					} else if(winner.get_name() === "Me") {
-						//BrawlIO.claim_crown(code);
-						$(replay_element).replay_viewer("set_result", "You win!");
-					} else {
-						$(replay_element).replay_viewer("set_result", "You lose");
-					}
-				});
+				brawl.run();
 				var replay_element = self.show_replay(replay);
 			});
 		}
@@ -83,7 +74,7 @@
 			}
 			replay_element.replay_viewer({
 				replay: replay
-				, debug: true
+				, debug: this.option("debug")
 			});
 			return replay_element;
 		}

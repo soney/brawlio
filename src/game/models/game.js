@@ -209,6 +209,10 @@ var Game = function(options) {
 		});
 	};
 	proto.stop = function(winner, round) {
+		if(round === undefined) {
+			round = this.get_round();
+		}
+
 		this.clear_round_listeners();
 		var last_round = Math.min(this.get_round(), this.get_round_limit());
 		this.replay.set_last_round(last_round);
@@ -304,7 +308,7 @@ var Game = function(options) {
 	proto.update_state = function(round, trigger, more_info) {
 		var new_state, next_event, next_event_round;
 		if(this.debug_mode) {
-			console.log("------", round, trigger, "------");
+			//console.log("------", round, trigger, "------");
 		}
 		this.clear_interesting_round_timeout();
 		if(!this.running) {
@@ -318,6 +322,9 @@ var Game = function(options) {
 			this.set_interesting_round_timeout(next_event_round, next_event);
 		}
 		var last_valid_round = round;
+		if(this.debug_mode) {
+			last_valid_round = next_event_round || round; //This way, the replay can peek ahead
+		}
 		this.replay.set_last_round(last_valid_round);
 	};
 	proto.set_interesting_round_timeout = function(round, event) {
