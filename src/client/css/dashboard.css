@@ -22,4 +22,13 @@
 }
 .replay {
 	float: left;
+	display: block;
+	text-align: center;
+}
+div#challenge_tab {
+	overflow: hidden; /*show the floated replay*/
+}
+a#king_challenge {
+	display: block;
+	text-align: center;
 }
