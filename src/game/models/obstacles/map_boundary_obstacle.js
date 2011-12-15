@@ -1,6 +1,6 @@
 (function(BrawlIO) {
 	var PolygonObstacle = BrawlIO.get_type("PolygonObstacle");
-	var MapBoundaryObjstacle;
+	var MapBoundaryObstacle;
 	MapBoundaryObstacle = function(options) {
 		var width = options.width || 50;
 		var height = options.height || 50;

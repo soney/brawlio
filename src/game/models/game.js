@@ -219,7 +219,7 @@ var Game = function(options) {
 		this.replay.mark_complete(winner);
 		this.running = false;
 		var last_state = this.peek_state();
-		var end_state = this.push_state({round: round, trigger: "Game end", moving_object_states: this.create_moving_object_states(round)});
+		this.push_state({round: round, trigger: "Game end", moving_object_states: this.create_moving_object_states(round)});
 		if(last_state !== undefined) {
 			last_state.set_end_round(round);
 		}
@@ -307,9 +307,11 @@ var Game = function(options) {
 
 	proto.update_state = function(round, trigger, more_info) {
 		var new_state, next_event, next_event_round;
+		/*
 		if(this.debug_mode) {
-			//console.log("------", round, trigger, "------");
+			console.log("------", round, trigger, "------");
 		}
+		*/
 		this.clear_interesting_round_timeout();
 		if(!this.running) {
 			return;
