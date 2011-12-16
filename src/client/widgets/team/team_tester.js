@@ -2,7 +2,7 @@
 	var TeamTester = {
 		options: {
 			team_id: null
-			, debug: false
+			, debug: true
 		}
 
 		, _create: function() {
