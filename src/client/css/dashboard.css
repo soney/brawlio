@@ -1,34 +1,49 @@
-.body h1 {
-	margin-top: 30px;
-	font-size: 60px;
-	margin-bottom: 30px;
+.header {
+	color: white;
+	background-color: black;
 }
 
-.logout {
+
+.header .header_contents, .body, .footer {
+	min-width: 500px;
+	max-width: 800px;
+	margin: auto;
+}
+
+.header .header_contents {
+	overflow: hidden;
+	background-color: black;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+
+.header_contents span#title {
+	overflow: hidden;
+}
+
+.header_contents a {
+	color: white;
+}
+.header_contents a:hover {
+	color: #E0E0E0;
+}
+
+.header_contents span#title a {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 1.5em;
+	float: left;
+}
+
+.header_contents span#items {
 	float: right;
-	margin-right: 15px;
-	margin-top: 5px;
-	font-size: 16px;
-}
-
-#code {
-	width: 100%;
-	height: 100px;
-}
-#ace_editor {
-	width: 100%;
-	height: 100%;
+	top: 4px;
 	position: relative;
 }
-.replay {
-	float: left;
-	display: block;
-	text-align: center;
+
+.header_contents span#items a {
+	margin-left: 20px;
 }
-div#challenge_tab {
-	overflow: hidden; /*show the floated replay*/
-}
-a#king_challenge {
-	display: block;
-	text-align: center;
+
+.body {
+	padding: 10px;
 }

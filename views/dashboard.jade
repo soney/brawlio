@@ -15,29 +15,14 @@ html(lang="en")
         BrawlIO.initialize("#{session_key}", $(".content"));
       });
   body
+    .header
+      .header_contents
+        span#title
+          a(href="javascript:void(0)") Brawl.IO
+        span#items
+          a#home(href="javascript:void(0)") Home
+          a#api(href="api") API
+          a#logout(href="logout") Logout
     .body
-      .crown(style="display: none; text-align:center")
-        //
-          img(src='client/images/crown.png', height='90px')
-      h1(style="margin-top: 5px") Brawl.IO
-      .tabs
-        .tab.selected#home
-          a(href="/") Home
-          .subtab#edit
-            a(href="#edit_tab") Edit
-          .subtab#test
-            a(href="#challenge_tab") Challenge
-        .tab#reference
-          a(href="api") Reference
-      .content
-        #brawls_tab
-          a.logout(href="logout") Log out
-        #edit_tab
-          #editor
-            #toolbar
-              a.save(href="javascript:void(0)") Save
-            #code
-              #ace_editor
-        #challenge_tab(style="margin-top: 20px")
-          a#king_challenge(href="javascript:void(0)", style="margin-top: 10px; font-size: 32px;") Submit
-          .replay
+    .footer
+      span.copyright &copy; 2012 Brawl.IO
