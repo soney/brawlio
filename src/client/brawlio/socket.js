@@ -22,13 +22,13 @@
 			});
 		};
 
-		this.get_teams = function(username, callback) {
+		this.get_bots = function(uid, callback) {
 			if(arguments.length === 1) {
-				callback = username;
-				username = null;
+				callback = uid;
+				uid = null;
 			}
-			socket.emit('get_user_teams', username, function(teams) {
-				callback(teams);
+			socket.emit('get_user_bots', uid, function(bots) {
+				callback(bots);
 			});
 		};
 
@@ -110,8 +110,8 @@
 			has_user = true;
 			on_got();
 		});
-		BrawlIO.get_teams(function(teams) {
-			BrawlIO.set_teams(teams);
+		BrawlIO.get_bots(function(bots) {
+			BrawlIO.set_bots(bots);
 			has_teams = true;
 			on_got();
 		});

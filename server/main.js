@@ -1,12 +1,11 @@
 var openid = require('openid');
 var querystring = require('querystring');
 var url = require('url');
-var fs = require('fs');
 var express = require("express");
 var socket_io = require('socket.io');
-var database = require('./database').database;
 var constants = require('./constants');
 var bio_inc = require('../include_libs');
+var create_bio_controller = require('./controller');
 
 var BrawlIOServer = function(options) {
 	options = options || {};
@@ -15,6 +14,7 @@ var BrawlIOServer = function(options) {
 	this.debug_pages = options.debug_pages || false;
 	this.use_build = options.use_build || false;
 	this.session_to_user = {};
+	this.controller = create_bio_controller();
 
 	this.locals = {
 		include: function(files) {
@@ -30,12 +30,14 @@ var BrawlIOServer = function(options) {
 		bio_inc.api_css = [bio_inc.api_css_build];
 		bio_inc.dashboard = [bio_inc.dashboard_build];
 		bio_inc.dashboard_css = [bio_inc.dashboard_css_build];
+		bio_inc.set_username_css = [bio_inc.set_username_css_build];
 	} else {
 		bio_inc.game = bio_inc.game_src;
 		bio_inc.home_css = bio_inc.home_css_src;
 		bio_inc.api_css = bio_inc.api_css_src;
 		bio_inc.dashboard = bio_inc.dashboard_src;
 		bio_inc.dashboard_css = bio_inc.dashboard_css_src;
+		bio_inc.set_username_css = bio_inc.set_username_css_src;
 	}
 };
 
@@ -96,91 +98,33 @@ var callback_map = function(arr, func, callback) {
 	};
 
 	proto.initialize_socket = function(socket, user_id) {
-		socket.on('get_user', function(username, callback) {
-			if(username!=null) {
-				database.get_user_with_username(username, callback);
-			} else {
-				database.get_user_with_id(user_id, callback);
-			}
+		var self = this;
+		socket.on('username_free', function(username, callback) {
+			self.controller.user_exists_with_username(username, function(user_exists) {
+				callback(!user_exists);
+			});
 		});
-		socket.on('get_users', function(user_ids, callback) {
-			if(user_ids.length === 0) {
-				callback([]);
-			} else {
-				database.get_users_with_ids(user_ids, callback);
-			}
-		});
-		socket.on('get_user_teams', function(username, callback) {
-			var teams_for_user_id = user_id;
-			if(username!=null) {
-				teams_for_user_id = username;
-			}
 
-			//This function automatically determines if the id is a string or number
-			database.get_user_teams(teams_for_user_id, callback);
+		socket.on('set_username', function(username, callback) {
+			self.controller.set_username(user_id, username, callback);
 		});
-		socket.on('set_team_code', function(team_id, code, callback) {
-			database.get_user_teams(user_id, function(teams) {
-				var setting_team = null;
-				for(var i = 0, len = teams.length; i<len; i++) {
-					var team = teams[i];
-					if(team.id === team_id) {
-						setting_team = team;
-						break;
-					}
-				}
-				if(setting_team !== null) {
-					var char_limit = team.char_limit;
-					var issues_bit = 0;
-					if(code.length > char_limit) {
-						issues_bit = 1;
-					}
-					database.set_team_code(team_id, code, issues_bit, callback);
-				}
-			});
+
+		socket.on('get_user', function(uid, callback) {
+			if(uid === null) { uid = user_id; }
+			self.controller.user_with_id(uid, callback);
 		});
-		socket.on('choose_opponents_for_team', function(team_id, callback) {
-			var possible_opponents = database.get_teams_with_same_weight_class_as(team_id, function(teams) {
-				var rv = teams.filter(function(team) {
-					return team.id !== team_id;
-				});
-				callback(rv);
-			});
-		});
-		socket.on('get_brawls', function(for_user_id, callback) {
-			if(arguments.length === 1) {
-				callback = for_user_id;
-				for_user_id = user_id;
-			} else if(for_user_id == null) {
-				for_user_id = user_id;
-			}
-			database.get_user_brawls(for_user_id, callback);
-		});
-		socket.on('get_brawl', function(brawl_id, callback) {
-			database.get_brawl(brawl_id, callback);
-		});
-		socket.on('get_king_code', function(callback) {
-			database.get_king_code(function(king_code) {
-				callback(king_code);
-			});
-		});
-		socket.on('claim_crown', function(code, callback) {
-			database.set_king(user_id, function() {
-				database.set_king_code(code, function() {
-					callback();
-				});
-			});
-		});
-		socket.on('is_king', function(callback) {
-			database.get_king(function(king_id) {
-				callback(king_id===user_id);
-			});
+
+		socket.on('get_user_bots', function(uid, callback) {
+			if(uid === null) { uid = user_id; }
+
+			self.controller.get_user_bots(uid, callback);
 		});
 	};
 
 	var relyingParty;
 
 	proto.render_home = function(req, res, next) {
+		var self = this;
 		var session = req.session;
 		if(this.auto_login) {
 			session.user_id = 1;
@@ -188,7 +132,13 @@ var callback_map = function(arr, func, callback) {
 
 		if(session.user_id) {
 			this.session_to_user[req.sessionID] = session.user_id;
-			res.render("dashboard.jade", {layout: false, session_key: req.sessionID, locals: this.locals});
+			this.controller.user_with_id(session.user_id, function(user) {
+				if(user.username === null) {
+					res.render("set_username.jade", {layout: false, session_key: req.sessionID, locals: self.locals});
+				} else {
+					res.render("dashboard.jade", {layout: false, session_key: req.sessionID, locals: self.locals});
+				}
+			});
 		}
 		else {
 			res.render("index.jade", {layout: false, locals: this.locals});
@@ -246,20 +196,17 @@ var callback_map = function(arr, func, callback) {
 						var claimed_identifier = result.claimedIdentifier;
 						var email = result.email;
 
-						database.user_key_with_openid(claimed_identifier, function(user_id) {
-							if(user_id === null) {
+						self.controller.user_with_openid(claimed_identifier, function(user) {
+							if(user === null) {
 								var add_user = function() {
-									database.add_user_with_openid(claimed_identifier, function(user_id) {
+									self.controller.add_openid_user(claimed_identifier, {email: email}, function(user_id) {
 										session.user_id = user_id;
-										database.set_user_details(user_id, {username: '"'+email+'"', email: '"'+email+'"'}, function() {
-											res.render("verify/user_init.jade", {layout: false});
-										});
+										res.render("verify/user_init.jade", {layout: false});
 									});
 								};
 								if(server.check_invite) {
-									fs.readFile("invited_emails.txt", "ascii", function (err, data) {
-										if (err) throw err;
-										if(data.match(email) === null) {
+									self.controller.email_has_invite(email, function(has_invite) {
+										if(has_invite) {
 											res.render("verify/not_invited.jade", {layout: false});
 										} else {
 											add_user();
@@ -269,7 +216,7 @@ var callback_map = function(arr, func, callback) {
 									add_user();
 								}
 							} else {
-								session.user_id = user_id;
+								session.user_id = user.id;
 								res.render("verify/old_user_success.jade", {layout: false});
 							}
 						})
@@ -334,61 +281,6 @@ var callback_map = function(arr, func, callback) {
 			console.log(message);
 		}
 	};
-
-	proto.do_run_brawl = function(my_team, opponent, callback) {
-		var map = new Map();
-		var team_me = new Team({
-			code: my_team.code 
-			, id: my_team.id
-		});
-		var team_other = new Team({
-			code: opponent.code
-			, id: opponent.id
-		});
-
-		var brawl = new Brawl({
-			teams: [team_me, team_other]
-			, map: map
-			, round_limit: 100
-		});
-
-		brawl.run(function(winner) {
-			var db_winner;
-			
-			if(winner === my_team.id) {
-				db_winner = 1;
-			} else if(winner === opponent.id) {
-				db_winner = 2;
-			} else {
-				db_winner = 0;
-			}
-
-			database.log_brawl({
-				team_1: my_team.id
-				, team_2: opponent.id
-				, result: db_winner 
-			}, function(log_info) {
-				var replay_filename = log_info.replay_filename;
-				var replay = brawl.replay;
-				var replay_string = JSON.stringify(replay);
-
-				fs.writeFile(replay_filename, replay_string, function(err) {
-					if(err) {
-						console.error(err);
-					} else {
-						if(callback) {
-							callback({
-								winner: winner
-								, id: log_info.id
-								, replay_filename: replay_filename
-							});
-						}
-					}
-				}); 
-			});
-		});
-	};
-
 }(BrawlIOServer));
 
 module.exports = BrawlIOServer;

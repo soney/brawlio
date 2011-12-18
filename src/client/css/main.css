@@ -3,6 +3,8 @@ body {
 	font-size: 100%;
 	padding: 0px;
 	margin: 0px;
+	background-color: white;
+	color: black;
 }
 
 a {
@@ -20,4 +22,15 @@ a {
 .copyright {
 	float: right;
 	color: #AAA;
+}
+
+a.button {
+	background-color: #DF591E;
+	color: white;
+	padding: 8px;
+	border-radius: 3px;
+	border: 1px solid #DDD;
+}
+a.button:hover {
+	background-color: #FF7033;
 }

@@ -14,24 +14,21 @@
 			});
 		};
 
-		this.db_do = function() {
-			return this.dashboard_tag.dashboard.apply(this.dashboard_tag, arguments);
-		};
-
 		this.set_user = function(user) {
 			this.user = user;
-			this.db_do("set_username", user.username);
 		};
-		this.set_teams = function(teams) {
-			this.teams = teams;
-			this.db_do("set_teams", teams);
+
+		this.set_bots = function(bots) {
+			this.bots = bots;
 		};
+
 		this.get_user_by_id = function(id) {
 			if(id != null) {
 			} else {
 				return this.user;
 			}
 		};
+
 		this.get_team_by_id = function(id) {
 			for(var i = 0, len = this.teams.length; i < len; i++) {
 				if(this.teams[i].id === id) return this.teams[i];

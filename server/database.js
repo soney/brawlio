@@ -74,22 +74,24 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		});
 		return user;
 	};
-	var teams_from_rows = function(rows) {
-		var teams = new Array(rows.length);
+	var bots_from_rows = function(rows) {
+		var bots = new Array(rows.length);
 		for(var i = 0, len = rows.length; i<len; i++) {
-			teams[i] = team_from_row(rows[i]);
+			bots[i] = bot_from_row(rows[i]);
 		}
 
-		return teams;
+		return bots;
 	};
-	var team_from_row = function(row) {
+	var bot_from_row = function(row) {
 		var options = {
 			id: row.pk
-			, active: row.active !== 0
-			, weight_class: row.weight_class
-			, weight_class_name: WeightClasses.get_name(row.weight_class)
-			, code: row.code || ""
-			, char_limit: WeightClasses.get_char_limit(row.weight_class)
+			, name: row.name
+			, rated: row.rated !== 0
+			, rating: row.rating
+			, wins: row.wins
+			, losses: row.losses
+			, draws: row.draws
+			, code: row.code
 			, user_fk: row.user_fk
 		};
 			
@@ -132,7 +134,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 	// Public members
 //User functions
 	proto.create_tables = function(callback) {
-		var commands = ["create_user_table", "create_openid_table", "create_teams_table", "create_brawls_table"];
+		var commands = ["create_user_table", "create_openid_table", "create_bots_table", "create_brawls_table"];
 		var command_index = 0;
 		
 		var self = this;
@@ -157,6 +159,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			+ ", user_fk INTEGER REFERENCES users(pk)"
 			+ ")", callback);
 	};
+
 	proto.create_user_table = function(callback) {
 		_database.run("CREATE TABLE users ("
 			+ "pk INTEGER PRIMARY KEY UNIQUE"
@@ -164,6 +167,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			+ ", email TEXT"
 			+ ")", callback);
 	};
+
 	proto.create_bots_table = function(callback) {
 		_database.run("CREATE TABLE bots ("
 			+ "pk INTEGER PRIMARY KEY UNIQUE"
@@ -177,7 +181,6 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			+ ", code TEXT"
 			+ ")", callback);
 	};
-
 
 	proto.create_brawls_table = function(callback) {
 		_database.run("CREATE TABLE brawls ("
@@ -203,8 +206,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 				table_index++;
 
 				_database.run("DROP TABLE IF EXISTS " + table_name, arguments.callee);
-			}
-			else {
+			} else {
 				if(callback) {
 					callback();
 				}
@@ -223,35 +225,61 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		});
 	};
 
-	proto.add_user = function(options, callback) {
-		_database.run("INSERT INTO users DEFAULT VALUES", function(error) {
-			var id = this.lastID;
-			callback(id);
-		});
-	};
+	proto.insert = function(table, options, callback) {
+		if(callback === undefined) {
+			callback = options;
+			options = undefined;
+		}
 
-	proto.add_user_with_openid = function(openid_url, callback) {
-		//Add the user
-		_database.run("INSERT INTO users DEFAULT VALUES", function(error) {
-			var id = this.lastID;
+		if(options === undefined) {
+			query = "INSERT INTO " + table + " DEFAULT VALUES";
+			_database.run(query, function(error) {
+				var id = this.lastID;
+				callback(id);
+			});
+		} else {
+			var columns = [];
+			var values = [];
+			var q_marks = [];
 
-			var callback_times = 0;
-			var expected_callback_times = 1 + WeightClasses.num_types();
-			var meta_callback = function() {
-				callback_times++;
-				if(callback_times === expected_callback_times) {
-					callback(id);
+			for(var column_name in options) {
+				if(options.hasOwnProperty(column_name)) {
+					var column_value = options[column_name];
+					columns.push(column_name);
+					values.push(column_value);
+					q_marks.push("?");
 				}
-			};
+			}
+			var columns_str = columns.join(",");
+			var q_marks_str = q_marks.join(",");
 
-			_database.run("INSERT INTO openid (openid_url, user_fk) VALUES (?, ?)"
-							, [openid_url, id]
-							, function() {
-								callback(id);
-							});
-		});
+			query = "INSERT INTO " + table + " (" + columns_str + ") VALUES (" + q_marks_str + ")";
+			_database.run(query, values, function(error) {
+				var id = this.lastID;
+				callback(id);
+			});
+		}
 	};
 
+	proto.add_user = function(options, callback) {
+		this.insert("users", options, callback);
+	};
+
+	proto.add_openid = function(options, callback) {
+		this.insert("openid", options, callback);
+	};
+
+	proto.add_bot = function(options, callback) {
+		this.insert("bots", options, callback);
+	};
+
+	proto.get_users = function(callback) {
+		_database.all("SELECT * FROM users", function(err, rows) {
+			if(err) { throw err; }
+			var users = users_from_rows(rows);
+			callback(users);
+		});
+	};
 	proto.get_user_with_id = function(id, callback) {
 		return this.get_users_with_ids([id], function(result) {
 			if(result.length === 1) { callback(result[0]); }
@@ -288,58 +316,52 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		var sb = [];
 		for(var option_name in options) {
 			var option_value = options[option_name];
-			sb.push(option_name + " = " + option_value);
+			sb.push(option_name + " = " + "'"+option_value+"'");
 		}
 		_database.run("UPDATE users SET " + sb.join() + " WHERE pk = "+id, callback);
 	};
 
-	proto.get_user_teams = function(user_id, callback) {
-		var do_query = function(user_id) {
-			_database.all("SELECT * FROM teams WHERE user_fk = " + user_id, function(err, rows) {
-				if(err) throw err;
-				var teams = teams_from_rows(rows);
-				callback(teams);
+	proto.add_bot = function(options, callback) {
+		var query;
+		if(arguments.length === 1) {
+			callback = options;
+			query = "INSERT INTO bots DEFAULT VALUES";
+			_database.run(query, function(error) {
+				var id = this.lastID;
+				callback(id);
 			});
-		};
-
-
-		if(typeof user_id == "string") {
-			_database.all("SELECT pk from users WHERE username == (?) LIMIT 1", [user_id], function(err, rows) {
-				if(err) throw err;
-
-				if(rows.length !== 1) {
-					callback([]);
-					return;
-				}
-				user_id = rows[0].pk;
-				do_query(user_id);
-			});
-
 		} else {
-			do_query(user_id);
+			var columns = [];
+			var values = [];
+			var q_marks = [];
+
+			for(var column_name in options) {
+				var column_value = options[column_name];
+				columns.push(column_name);
+				values.push(column_value);
+				q_marks.push("?");
+			}
+			var columns_str = columns.join(",");
+			var q_marks_str = q_marks.join(",");
+
+			query = "INSERT INTO bots ("+columns_str+") VALUES ("+q_marks_str+")";
+			_database.run(query, values, function(error) {
+				var id = this.lastID;
+				callback(id);
+			});
 		}
+	};
+
+	proto.get_user_bots = function(user_id, callback) {
+		_database.all("SELECT * FROM bots WHERE user_fk = " + user_id, function(err, rows) {
+			if(err) { throw err; }
+			var bots = bots_from_rows(rows);
+			callback(bots);
+		});
 	};
 
 	proto.set_bot_code = function(bot_pk, code, callback) {
 		_database.run("UPDATE bot SET code = (?), WHERE pk = " + bot_pk, [code], callback);
-	};
-
-	proto.get_bots_with_same_weight_class_as = function(team_id, callback) {
-		_database.all("SELECT weight_class from teams where pk==(?) LIMIT 1", [team_id], function(err, rows) {
-			if(err) throw err;
-
-			if(rows.length !== 1) {
-				callback([]);
-				return;
-			}
-			var weight_class = rows[0].weight_class;
-			_database.all("SELECT * from teams where weight_class = (?)", [weight_class], function(err, rows) {
-				if(err) throw err;
-				var teams = teams_from_rows(rows);
-
-				callback(teams);
-			});
-		});
 	};
 
 	proto.get_teams = function(ids, callback) {

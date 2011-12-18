@@ -1,0 +1,75 @@
+body {
+	background-color: white;
+	color: black;
+}
+
+.intro, .footer {
+	min-width: 500px;
+	max-width: 680px;
+	margin: auto;
+}
+
+.intro {
+	text-align: center;
+}
+
+.intro #title {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 3.5em;
+	text-align: center;
+	margin-top: 40px;
+	margin-bottom: 20px;
+}
+
+.intro .choose {
+	font-size: 1.3em;
+	color: #999;
+	margin-bottom: 10px;
+}
+
+.intro .choose .star {
+	font-size: 0.9em;
+}
+
+.star {
+	color: #DF591E;
+}
+
+input[type=text] {
+	font-size: 1.4em;
+	border: 1px solid #999;
+	background-color: #F6F6F6;
+	border-radius: 3px;
+	position: relative;
+	top: 3px;
+	padding: 5px;
+	margin-right: 5px;
+}
+
+input[type=text].failed {
+	background-color: #FFE6E6;
+	color: red;
+}
+input[type=text].succeeded {
+	background-color: #E6FFE6;
+	color: green;
+}
+
+.validation.failed {
+	color: red;
+}
+.validation.succeeded {
+	color: green;
+}
+
+.intro .footnote {
+	font-size: 0.8em;
+	color: #999;
+	text-align: left;
+	margin-bottom: 15px;
+	margin-top: 20px;
+}
+
+.intro .validation {
+	margin-top: 15px;
+}

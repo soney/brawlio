@@ -82,6 +82,14 @@ exports.home_css_src = c(
 	);
 exports.home_css_build = cp(build_path, "home.css");
 
+exports.set_username_css_src = c(
+		cp(client_path, [
+			"css/main.css"
+			, "css/set_username.css"
+		])
+	);
+exports.set_username_css_build = cp(build_path, "set_username.css");
+
 exports.api_css_src = c(
 		cp(client_path, [
 			"css/main.css"
@@ -114,7 +122,8 @@ exports.dashboard_src = c(
 			, "widgets/team/team_editor.js"
 			, "widgets/team/team_tester.js"
 
-			, "widgets/dashboard.js"
+			, "widgets/dashboard/dashboard.js"
+			, "widgets/dashboard/home.js"
 		])
 	);
 exports.dashboard_build = cp(build_path, "dashboard.js");
