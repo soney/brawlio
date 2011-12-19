@@ -68,3 +68,23 @@ input[type=text].validated_input.succeeded {
 .validation_result.succeeded {
 	color: green;
 }
+
+.tab_pane {
+	border-bottom: 1px solid #999;
+	padding-bottom: 5px;
+}
+
+.tab_pane .tab:first-child {
+}
+.tab_pane .tab a {
+	padding: 5px;
+}
+
+
+.tab_pane .tab.selected a {
+	font-weight: bold;
+	border: 1px solid #999;
+	border-bottom: 1px solid white;
+	border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+}

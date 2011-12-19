@@ -139,6 +139,7 @@ exports.dashboard_src = c(
 			, "widgets/dashboard/bot.js"
 
 			, "widgets/shared/input_validation.js"
+			, "widgets/shared/tabs.js"
 		])
 	);
 exports.dashboard_build = cp(build_path, "dashboard.js");

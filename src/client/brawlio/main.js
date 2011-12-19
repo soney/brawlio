@@ -65,5 +65,32 @@
 				}
 			}
 		};
+
+		this.classes = [
+			{name: "Grandmaster", min: 2400}
+			, {name: "Master", min: 2200, max: 2399}
+			, {name: "Candidate Master", min: 2000, max: 2199}
+			, {name: "Class A", min: 1800, max: 1999}
+			, {name: "Class B", min: 1600, max: 1799}
+			, {name: "Class C", min: 1400, max: 1599}
+			, {name: "Class D", min: 1200, max: 1399}
+			, {name: "Class E", min: 1000, max: 1199}
+			, {name: "Class F", min: 800,  max: 999}
+			, {name: "Class G", min: 600,  max: 799}
+			, {name: "Class H", min: 400,  max: 599}
+			, {name: "Class I", min: 200,  max: 399}
+			, {name: "Class J", max: 199}
+		];
+		this.get_class_name = functiong(rating) {
+			for(var i = 0; i<this.classes.length; i++) {
+				var class_info = this.classes[i];
+				if((class_info.min !== undefined || rating >= class_info.min) &&
+					(class_info.max === undefined || rating <= class_info.max)) {
+					return class_info.name;
+				}
+			}
+
+			return undefined;
+		};
 	}).call(BrawlIO);
 }(BrawlIO));
