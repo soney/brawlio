@@ -46,6 +46,18 @@
 				team.code = code;
 			});
 		};
+
+		this.get_all_bots = function(callback) {
+			socket.emit('get_all_bots', function(bots) {
+				callback(bots);
+			});
+		};
+
+		this.get_all_users = function(callback) {
+			socket.emit('get_all_users', function(users) {
+				callback(users);
+			});
+		};
 	};
 	
 	var on_socket_ready = function(callback) {

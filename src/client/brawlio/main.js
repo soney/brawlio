@@ -80,6 +80,7 @@
 			, {name: "Class H", min: 400,  max: 599}
 			, {name: "Class I", min: 200,  max: 399}
 			, {name: "Class J", max: 199}
+			, {name: "Unranked"}
 		];
 
 		this.get_class_name = function(rating) {
@@ -94,7 +95,7 @@
 			return undefined;
 		};
 
-		this.get_get_class_names = function() {
+		this.get_class_names = function() {
 			var rv = new Array(this.classes.length);
 			for(var i = 0; i<this.classes.length; i++) {
 				rv[i] = this.classes[i].name;

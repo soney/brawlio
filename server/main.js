@@ -126,6 +126,10 @@ var callback_map = function(arr, func, callback) {
 		socket.on('add_bot', function(name, callback) {
 			self.controller.add_bot(user_id, name, "", callback);
 		});
+
+		socket.on('get_all_bots', function(callback) {
+			self.controller.get_all_bots(callback);
+		});
 	};
 
 	proto.on_bot_added = function(user_id, bot_id) {

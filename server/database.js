@@ -364,6 +364,14 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		_database.run("UPDATE bot SET code = (?), WHERE pk = " + bot_pk, [code], callback);
 	};
 
+	proto.get_all_bots = function(callback) {
+		_database.all("SELECT * FROM bots", function(err, rows) {
+			if(err) { throw err; }
+			var bots = bots_from_rows(rows);
+			callback(bots);
+		});
+	};
+
 	proto.get_teams = function(ids, callback) {
 		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
 			return "pk == " + id;

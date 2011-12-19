@@ -164,3 +164,59 @@ input[type=text].validated_input {
 	float: right;
 	color: #AAA;
 }
+
+.challenge {
+	border: 1px solid #AAA;
+	border-radius: 3px;
+	overflow: hidden;
+	font-size: 0.9em;
+}
+
+.challenge .column {
+	float: left;
+	border-right: 1px solid #DDD;
+	max-height: 250px;
+	overflow: auto;
+	width: 32%;
+}
+
+.challenge .column.final {
+	border-right: none;
+	text-align: center;
+}
+
+.challenge .row.all {
+	font-weight: bold;
+}
+
+.challenge .row a {
+	display: block;
+	padding: 2px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.challenge .row.selected a {
+	color: white;
+	background-color: #DF591E;
+}
+
+.challenge .row .count {
+	float: right;
+	color: #AAA;
+	padding-right: 10px;
+}
+
+.challenge .row.selected .count {
+	color: white;
+}
+.challenge .row.selected .rating {
+	color: white;
+}
+
+.challenge .bot_title {
+	font-size: 1.3em;
+	color: #333;
+	margin-bottom: 10px;
+	margin-top: 8px;
+}

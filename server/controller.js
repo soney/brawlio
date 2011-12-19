@@ -116,6 +116,9 @@ var BrawlIOController = function(options) {
 	};
 
 	proto.get_all_bots = function(callback) {
+		database.get_all_bots(function(bots) {
+			callback(bots);
+		});
 	};
 	
 	proto.get_bots_with_ranking_between = function(above, below, callback) {

@@ -88,3 +88,9 @@ input[type=text].validated_input.succeeded {
 	border-top-right-radius: 3px;
 	border-top-left-radius: 3px;
 }
+.section_header {
+	font-size: 1.3em;
+	color: #999;
+	padding-top: 7px;
+	padding-bottom: 7px;
+}
