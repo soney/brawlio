@@ -34,9 +34,11 @@
 											.appendTo(this.sidebar);
 											*/
 
+			/*
 			this.news_feed = $("<div />")	.addClass("news_feed")
 											.text("(news)")
 											.appendTo(this.content);
+											*/
 		}
 
 		, destroy: function() {
@@ -45,9 +47,6 @@
 
 			this.bot_list.bot_list("destroy");
 			this.bot_list.remove();
-
-			this.team_list.remove();
-			this.news_feed.remove();
 
 			$.Widget.prototype.destroy.apply(this, arguments);
 		}

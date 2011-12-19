@@ -6,13 +6,13 @@
 		, _create: function() {
 			var element = this.element;
 			this.render_home();
-			$("a#home", element).on("click.dashboard", $.proxy(this.render_home, this));
+			$("a#home").on("click.dashboard", $.proxy(this.render_home, this));
 		}
 
 		, destroy: function() {
 			var element = this.element;
 			$.Widget.prototype.destroy.apply(this, arguments);
-			$("a#home", element).off("click.dashboard");
+			$("a#home").off("click.dashboard");
 			destroy_body();
 		}
 
@@ -21,6 +21,9 @@
 			if(element.data("dashboard_home")) {
 				element.dashboard_home("destroy");
 			}
+			if(element.data("dashboard_bot")) {
+				element.dashboard_bot("destroy");
+			}
 		}
 
 		, render_home: function() {
@@ -28,6 +31,14 @@
 			this.destroy_body();
 			element.dashboard_home({
 				dashboard: this
+			});
+		}
+
+		, render_bot: function(bot) {
+			this.destroy_body();
+			this.element.dashboard_bot({
+				dashboard: this
+				, bot: bot
 			});
 		}
 	};

@@ -49,9 +49,9 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		var user = new DBUser(options.id, options.username, options.email);
 		return user;
 	};
-	var team_factory = function(options) {
-		var team = new DBTeam(options.id, options.active, options.weight_class, options.weight_class_name, options.code, options.char_limit, options.user_fk);
-		return team;
+	var bot_factory = function(options) {
+		var bot = new DBBot(options.id, options.name, options.rated, options.rating, options.wins, options.losses, options.draws, options.code, options.user_fk);
+		return bot;
 	};
 	var brawl_factory = function(options) {
 		var brawl = new DBBrawl(options.id, options.team_1_fk, options.bot_1_fk, options.bot_2_fk, options.user_2_fk, options.result, options.status, options.replay_filename)
@@ -95,8 +95,8 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			, user_fk: row.user_fk
 		};
 			
-		var team = team_factory(options);
-		return team;
+		var bot = bot_factory(options);
+		return bot;
 	};
 	var brawls_from_rows = function(rows) {
 		var brawls = new Array(rows.length);

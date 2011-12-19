@@ -90,6 +90,17 @@ exports.set_username_css_src = c(
 	);
 exports.set_username_css_build = cp(build_path, "set_username.css");
 
+exports.set_username_src = c(
+		cp(vendor_path, [
+			"jquery.js"
+			, "jquery-ui-1.8.14.custom/development-bundle/ui/jquery-ui-1.8.14.custom.js"
+		])
+		, cp(client_path, [
+			"widgets/shared/input_validation.js"
+		])
+	);
+exports.set_username_build = cp(build_path, "set_username.js");
+
 exports.api_css_src = c(
 		cp(client_path, [
 			"css/main.css"
@@ -125,6 +136,9 @@ exports.dashboard_src = c(
 			, "widgets/dashboard/dashboard.js"
 			, "widgets/dashboard/bot_list.js"
 			, "widgets/dashboard/home.js"
+			, "widgets/dashboard/bot.js"
+
+			, "widgets/shared/input_validation.js"
 		])
 	);
 exports.dashboard_build = cp(build_path, "dashboard.js");

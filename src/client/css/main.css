@@ -41,3 +41,30 @@ a.button:hover {
 .star {
 	color: #DF591E;
 }
+
+input[type=text].validated_input {
+	border: 1px solid #999;
+	background-color: #F6F6F6;
+	border-radius: 3px;
+	position: relative;
+	top: 1px;
+	padding: 5px;
+	margin-right: 5px;
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}
+
+input[type=text].validated_input.failed {
+	background-color: #FFE6E6;
+	color: red;
+}
+input[type=text].validated_input.succeeded {
+	background-color: #E6FFE6;
+	color: green;
+}
+
+.validation_result.failed {
+	color: red;
+}
+.validation_result.succeeded {
+	color: green;
+}

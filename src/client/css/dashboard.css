@@ -103,7 +103,6 @@ a.add_bot {
 }
 
 .sidebar_content {
-	padding: 5px;
 	min-height: 2px;
 }
 
@@ -136,30 +135,32 @@ span.bot_count {
 	margin-top: 10px;
 }
 
-input[type=text] {
+input[type=text].validated_input {
 	font-size: 1.1em;
-	border: 1px solid #999;
-	background-color: #F6F6F6;
-	border-radius: 3px;
-	position: relative;
-	top: 3px;
-	padding: 5px;
-	margin-right: 5px;
-	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
 }
 
-input[type=text].failed {
-	background-color: #FFE6E6;
-	color: red;
-}
-input[type=text].succeeded {
-	background-color: #E6FFE6;
-	color: green;
+.validation_result {
+	font-size: 0.8em;
+	margin-top: 5px;
 }
 
-.validation.failed {
-	color: red;
+.sidebar_content .row a {
+	display: block;
+	padding-right: 5px;
+	padding-left: 5px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	border-bottom: 1px solid #DDD;
 }
-.validation.succeeded {
-	color: green;
+.sidebar_content .row:last-child a {
+	border-bottom: none;
+}
+
+.sidebar_content .row a:hover {
+	background-color: #F7F7F7;
+}
+
+.bot.row .rating {
+	float: right;
+	color: #AAA;
 }

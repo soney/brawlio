@@ -4,6 +4,7 @@ var fs = require('fs');
 var INVITED_EMAILS_FILE = "invited_emails.txt";
 
 var BrawlIOController = function(options) {
+	this.server = options.server;
 };
 
 (function(my) {
@@ -82,12 +83,16 @@ var BrawlIOController = function(options) {
 	};
 
 	proto.add_bot = function(user_fk, name, code, callback) {
+		var server = this.server;
 		database.add_bot({
 			user_fk: user_fk
 			, name: name
 			, code: code
 		}, function(bot_id) {
 			callback(bot_id);
+			if(bot_id !== null) {
+				server.on_bot_added(user_fk, bot_id);
+			}
 		});
 	};
 

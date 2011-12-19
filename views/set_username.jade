@@ -2,9 +2,9 @@
 html(lang="en")
   head
     != include(bio_inc.set_username_css)
+    != include(bio_inc.set_username)
     title Brawl.IO
     link(rel="shortcut icon", href="favicon.ico")
-    script(type="text/javascript", src="vendor/jquery.min.js")
     script(type="text/javascript", src="/socket.io/socket.io.js")
     script(type="text/javascript")
       var socket = io.connect();
@@ -13,87 +13,19 @@ html(lang="en")
         });
       });
       $(function() {
-        var validate = function(username) {
-          if(username.length < 3) {
-            return { passed: false, reason: "Must be longer than 3 characters"};
-          } else if(username.length > 15) {
-            return { passed: false, reason: "Must be shorter than 15 characters"};
-          } else {
-            var starts_with_letter_regex = /^[a-zA-Z_$]/;
-            var regex = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
-            if(username.match(starts_with_letter_regex) === null) {
-              return { passed: false, reason: "Must start with a letter, $, or _"};
-            } else if(username.match(regex) === null) {
-              return { passed: false, reason: "Must contain letters, numbers, $, and _"};
-            } else {
-              return { passed: true };
-            }
-          }
-        };
-        var server_validation = function(username, callback) {
-          socket.emit('username_free', username, callback);
-        };
-
-        var last_check="";
-        var do_check = function(username) {
-          if(last_check === username) { return; }
-          else { last_check = username; }
-
-          var input_jq = $("input#alias");
-          var validation_jq = $(".validation");
-
-          var validation = validate(username);
-
-          if(validation.passed === false) {
-            validation_jq .text(validation.reason)
-                          .addClass("failed")
-                          .removeClass("succeeded");
-            input_jq.addClass("failed").removeClass("succeeded");
-          } else {
-            validation_jq .removeClass("failed")
-                          .addClass("succeeded");
-            input_jq.removeClass("failed").removeClass("succeeded");
-
-            server_validation(username, function(is_free) {
+        $(".alias_selection").validated_input({
+          server_validation: function(inp, callback) {
+            socket.emit('username_free', inp, function(is_free) {
               if(is_free) {
-                validation_jq .text("'"+username+"' is free!")
-                              .removeClass("failed")
-                              .addClass("succeeded");
-                input_jq.addClass("succeeded").removeClass("failed");
+                callback(true, "'"+inp+"' is free!")
               } else {
-                validation_jq .text("'"+username+"' is taken")
-                              .addClass("failed")
-                              .removeClass("succeeded");
-                input_jq.removeClass("succeeded").addClass("failed");
+                callback(false, "'"+inp+"' is taken")
               }
             });
           }
-        };
-        var timeout_id;
-        var check = function(username) {
-          if(timeout_id !== undefined) {
-            window.clearTimeout(timeout_id);
-          }
-
-          timeout_id = window.setTimeout(function() {
-            do_check(username);
-          }, 200);
-        };
-
-        $("input#alias").focus().change(function(event) {
-          var username = $(this).val();
-          check(username);
-        }).keyup(function() {
-          $(this).change();
-        }).keydown(function(event) {
-          if(event.keyCode === 13) {
-            $("a#submit").click();
-          }
-        });
-
-        $("a#submit").click(function() {
-          var username = $("input#alias").val();
-          socket.emit("set_username", username, function(is_ok) {
+        }).on("submit", function(event) {
+          var inp = event.value;
+          socket.emit("set_username", inp, function(is_ok) {
             if(is_ok) {
               window.location = "/";
             }
@@ -106,9 +38,7 @@ html(lang="en")
       .choose Choose an alias
         span.star *
         |:
-      input#alias(type="text",size=18,maxlength=15)
-      a#submit.button(href="javascript:void(0)") Go!
-      .validation
+      .alias_selection
       .footnote
         span.star *
         |  3 to 15 letters, numbers, $, and _. Cannot start with a number.
