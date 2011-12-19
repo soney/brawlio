@@ -81,7 +81,8 @@
 			, {name: "Class I", min: 200,  max: 399}
 			, {name: "Class J", max: 199}
 		];
-		this.get_class_name = functiong(rating) {
+
+		this.get_class_name = function(rating) {
 			for(var i = 0; i<this.classes.length; i++) {
 				var class_info = this.classes[i];
 				if((class_info.min !== undefined || rating >= class_info.min) &&
@@ -90,6 +91,23 @@
 				}
 			}
 
+			return undefined;
+		};
+
+		this.get_get_class_names = function() {
+			var rv = new Array(this.classes.length);
+			for(var i = 0; i<this.classes.length; i++) {
+				rv[i] = this.classes[i].name;
+			}
+			return rv;
+		};
+		this.get_range_for_class = function(class_name) {
+			for(var i = 0; i<this.classes.length; i++) {
+				var class_info = this.classes[i];
+				if(class_info.name === class_name) {
+					return {min: class_info.min, max: class_info.max};
+				}
+			}
 			return undefined;
 		};
 	}).call(BrawlIO);
