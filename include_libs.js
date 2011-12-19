@@ -123,6 +123,7 @@ exports.dashboard_src = c(
 			, "widgets/team/team_tester.js"
 
 			, "widgets/dashboard/dashboard.js"
+			, "widgets/dashboard/bot_list.js"
 			, "widgets/dashboard/home.js"
 		])
 	);

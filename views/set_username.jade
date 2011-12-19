@@ -19,8 +19,11 @@ html(lang="en")
           } else if(username.length > 15) {
             return { passed: false, reason: "Must be shorter than 15 characters"};
           } else {
+            var starts_with_letter_regex = /^[a-zA-Z_$]/;
             var regex = /^[a-zA-Z_$][0-9a-zA-Z_$]*$/;
-            if(username.match(regex) === null) {
+            if(username.match(starts_with_letter_regex) === null) {
+              return { passed: false, reason: "Must start with a letter, $, or _"};
+            } else if(username.match(regex) === null) {
               return { passed: false, reason: "Must contain letters, numbers, $, and _"};
             } else {
               return { passed: true };
@@ -108,6 +111,6 @@ html(lang="en")
       .validation
       .footnote
         span.star *
-        |  3 to 15 letters, numbers, $, and _
+        |  3 to 15 letters, numbers, $, and _. Cannot start with a number.
     .footer
       span.copyright &copy; 2012 Brawl.IO

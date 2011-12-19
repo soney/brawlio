@@ -16,11 +16,39 @@
 													)
 													.addClass("username")
 													.appendTo(element);
+			
+			this.sidebar = $("<div />")	.addClass("sidebar")
+										.appendTo(element);
+
+			this.content = $("<div />")	.addClass("content")
+										.appendTo(element);
+
+			this.bot_list = $("<div />")	.bot_list({
+												dashboard: dashboard
+											})
+											.appendTo(this.sidebar);
+
+			/*
+			this.team_list = $("<div />")	.addClass("team_list")
+											.text("(teams)")
+											.appendTo(this.sidebar);
+											*/
+
+			this.news_feed = $("<div />")	.addClass("news_feed")
+											.text("(news)")
+											.appendTo(this.content);
 		}
 
 		, destroy: function() {
 			var element = this.element;
 			this.username_display.remove();
+
+			this.bot_list.bot_list("destroy");
+			this.bot_list.remove();
+
+			this.team_list.remove();
+			this.news_feed.remove();
+
 			$.Widget.prototype.destroy.apply(this, arguments);
 		}
 

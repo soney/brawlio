@@ -44,6 +44,122 @@
 	margin-left: 20px;
 }
 
+.username {
+	font-size: 1.2em;
+	margin-bottom: 20px;
+}
+
 .body {
 	padding: 10px;
+}
+
+.sidebar {
+	float: left;
+	width: 30%;
+}
+
+.content {
+	float: right;
+	width: 70%;
+}
+
+.body {
+	overflow: hidden;
+}
+
+.news_feed, .team_list {
+	border: 2px dashed #AAA;
+	border-radius: 15px;
+	padding-top: 50px;
+	padding-bottom: 50px;
+	text-align: center;
+	color: #AAA;
+	font-size: 1.2em;
+}
+
+.sidebar_item {
+	border: 1px solid #999;
+	border-radius: 5px;
+}
+
+a.add_bot {
+	padding: 3px;
+	position: absolute;
+	right: 2px;
+	font-size: 0.7em;
+	font-weight: normal;
+}
+
+.sidebar_header {
+	padding: 5px;
+	background-color: #EEE;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	position: relative;
+	font-size: 1.1em;
+	color: #555;
+	border-bottom: 1px solid #BBB;
+	font-weight: bold;
+}
+
+.sidebar_content {
+	padding: 5px;
+	min-height: 2px;
+}
+
+.sidebar_footer {
+	padding: 2px;
+	min-height: 5px;
+	background-color: #EEE;
+	border-top: 1px solid #BBB;
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+}
+
+span.bot_count {
+	color: #888;
+}
+
+.new_bot {
+	text-align: center;
+}
+
+.choose_name {
+	color: #999;
+	margin-bottom: 7px;
+}
+
+.footnote {
+	font-size: 0.75em;
+	color: #999;
+	text-align: left;
+	margin-top: 10px;
+}
+
+input[type=text] {
+	font-size: 1.1em;
+	border: 1px solid #999;
+	background-color: #F6F6F6;
+	border-radius: 3px;
+	position: relative;
+	top: 3px;
+	padding: 5px;
+	margin-right: 5px;
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}
+
+input[type=text].failed {
+	background-color: #FFE6E6;
+	color: red;
+}
+input[type=text].succeeded {
+	background-color: #E6FFE6;
+	color: green;
+}
+
+.validation.failed {
+	color: red;
+}
+.validation.succeeded {
+	color: green;
 }

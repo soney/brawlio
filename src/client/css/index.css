@@ -27,11 +27,6 @@ body {
 	color: #555;
 }
 
-.intro a#google_login {
-	margin-top: 40px;
-	margin-bottom: 30px;
-}
-
 .intro p.invite_only {
 	color: #999;
 	text-align: left;
