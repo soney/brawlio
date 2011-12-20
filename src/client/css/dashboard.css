@@ -1,48 +1,3 @@
-.header {
-	color: white;
-	background-color: black;
-}
-
-
-.header .header_contents, .body, .footer {
-	min-width: 500px;
-	max-width: 800px;
-	margin: auto;
-}
-
-.header .header_contents {
-	overflow: hidden;
-	background-color: black;
-	padding-top: 3px;
-	padding-bottom: 3px;
-}
-
-.header_contents span#title {
-	overflow: hidden;
-}
-
-.header_contents a {
-	color: white;
-}
-.header_contents a:hover {
-	color: #E0E0E0;
-}
-
-.header_contents span#title a {
-	font-family: "Courier New", Courier, monospace;
-	font-size: 1.5em;
-	float: left;
-}
-
-.header_contents span#items {
-	float: right;
-	top: 4px;
-	position: relative;
-}
-
-.header_contents span#items a {
-	margin-left: 20px;
-}
 
 .username {
 	font-size: 1.2em;
@@ -218,8 +173,14 @@ input[type=text].validated_input {
 .challenge .bot_title {
 	font-size: 1.3em;
 	color: #333;
-	margin-bottom: 10px;
+	margin-bottom: 2px;
 	margin-top: 8px;
+}
+.challenge .bot_subtitle {
+	font-size: 0.9em;
+	color: #777;
+	margin-bottom: 10px;
+	margin-top: 0px;
 }
 
 .record {

@@ -195,10 +195,10 @@ var Game = function(options) {
 		this.add_projectile(projectile, round);
 	};
 	proto.start = function() {
+		var self = this;
 		this.running = true;
 		this.update_state(0, "Game Started");
 		if(this.round_limit !== undefined) {
-			var self = this;
 			var round_limit = this.round_limit;
 			this.special_timeouts.end_game = this.on_round(function() {
 				self.stop(undefined, round_limit);

@@ -17,27 +17,26 @@ html(lang="en")
         });
       });
   body
+    .header
+      .header_contents
+        span#title
+          a#home(href="/") Brawl.IO
+        span#items
+          a#home(href="/") Home
+          a#api(href="api") API
+          a#logout(href="logout") Logout
     .body
-      h1 Brawl.IO
-      h2 API
-        span.version (v0.1)
-      .tabs
-        .tab#home
-          a(href="/") Home
-        .tab.selected#reference
-          a(href="api") Reference
       .content
         .section
-          p As a competitor, your mission is to write the best code possible. These are your set of tools. Use them well.
           h3 Terminology
           span.term Round
-          | Universal unit of time (about one second in replays)
+          |  Universal unit of time (about one second in replays)
           br
           span.term Tile
-          | Universal unit of distance (about 5 pixels in replays)
+          |  Universal unit of distance (about 5 pixels in replays)
           br
           span.term Player
-          | The object you are controlling
+          |  The object you are controlling
         .section_header
           span.numeral 1
           | Moving
@@ -366,3 +365,5 @@ html(lang="en")
                       }
                     }
                   });
+    .footer
+      span.copyright &copy; 2012 Brawl.IO

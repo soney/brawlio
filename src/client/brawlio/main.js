@@ -86,7 +86,7 @@
 		this.get_class_name = function(rating) {
 			for(var i = 0; i<this.classes.length; i++) {
 				var class_info = this.classes[i];
-				if((class_info.min !== undefined || rating >= class_info.min) &&
+				if((class_info.min === undefined || rating >= class_info.min) &&
 					(class_info.max === undefined || rating <= class_info.max)) {
 					return class_info.name;
 				}

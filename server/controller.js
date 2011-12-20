@@ -121,11 +121,102 @@ var BrawlIOController = function(options) {
 			callback(bots);
 		});
 	};
+	proto.get_all_users = function(callback) {
+		database.get_users(function(users) {
+			callback(users);
+		});
+	};
 	
 	proto.get_bots_with_ranking_between = function(above, below, callback) {
 	};
 
 	proto.delete_user = function(user_k, callback) {
+	};
+	proto.brawl_result = function(bot1_id, bot2_id, winner_id, callback) {
+		database.get_bots([bot1_id, bot2_id], function(bots) {
+			var bot1 = bots[0];
+			var bot2 = bots[1];
+
+			var new_bot1_rating, new_bot2_rating;
+
+			if(winner_id === undefined) {
+				bot1.draws++;
+				bot2.draws++;
+				if(bot1.rated === false) {
+					new_bot1_rating = bot2.rating;
+				} if(bot2.rated === false) {
+					new_bot2_rating = bot1.rating;
+				}
+			} else if(winner_id === bot1_id) {
+				bot1.wins++;
+				bot2.losses++;
+				if(bot1.rated === false) {
+					new_bot1_rating = bot2.rating + 100;
+				} if(bot2.rated === false) {
+					new_bot2_rating = bot1.rating - 100;
+				}
+			} else if(winner_id === bot2_id) {
+				bot1.losses++;
+				bot2.wins++;
+				if(bot1.rated === false) {
+					new_bot1_rating = bot2.rating - 100;
+				} if(bot2.rated === false) {
+					new_bot2_rating = bot1.rating + 100;
+				}
+			}
+
+			if(bot1.rated === true) {
+				var rating_diff = bot2.rating - bot1.rating;
+				var ea = 1/(1+Math.pow(10, rating_diff/400));
+				var k = 32;
+				if(bot1.rating > 2100 && bot1.rating <= 2400) {
+					k = 24;
+				} else if(bot1.rating > 2400) {
+					k = 16;
+				}
+				var sa;
+				if(winner_id === undefined) {
+					sa = 0.0;
+				} else if(winner_id = bot1.id) {
+					sa = 1.0;
+				} else {
+					sa = 0.0;
+				}
+
+				new_bot1_rating = bot1.rating + k * (sa - ea);
+			}
+
+			if(bot2.rated === true) {
+				var rating_diff = bot1.rating - bot2.rating;
+				var ea = 1/(1+Math.pow(10, rating_diff/400));
+				var k = 32;
+				if(bot2.rating > 2100 && bot2.rating <= 2400) {
+					k = 24;
+				} else if(bot2.rating > 2400) {
+					k = 16;
+				}
+				var sa;
+				if(winner_id === undefined) {
+					sa = 0.0;
+				} else if(winner_id = bot2.id) {
+					sa = 1.0;
+				} else {
+					sa = 0.0;
+				}
+
+				new_bot2_rating = bot2.rating + k * (sa - ea);
+			}
+
+			bot1.rated = true;
+			bot2.rated = true;
+			bot1.rating = Math.round(new_bot1_rating);
+			bot2.rating = Math.round(new_bot2_rating);
+			database.set_bot_stats(bot1, function() {
+				database.set_bot_stats(bot2, function() {
+					callback(bot1, bot2);
+				});
+			});
+		});
 	};
 }(BrawlIOController));
 

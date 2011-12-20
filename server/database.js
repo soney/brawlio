@@ -375,71 +375,27 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		});
 	};
 
-	proto.get_teams = function(ids, callback) {
+	proto.get_bots = function(ids, callback) {
 		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
 			return "pk == " + id;
 		}).join(" OR ");
 
-		_database.all("SELECT * FROM teams " + condition + " LIMIT " + ids.length, function(err, rows) {
+		_database.all("SELECT * FROM bots " + condition + " LIMIT " + ids.length, function(err, rows) {
 			if(err) throw err;
-			var teams = teams_from_rows(rows);
-			callback(teams);
-		});
-	};
-	proto.log_brawl = function(options, callback) {
-		var team_1_id = options.team_1
-			, team_2_id = options.team_2
-			, result = options.result
-			, status = 0
-			;
-		this.get_teams([team_1_id, team_2_id], function(teams) {
-			var user_1_id = teams[0].user_fk;
-			var user_2_id = teams[1].user_fk;
-
-			_database.run("INSERT INTO brawls (team_1_fk, user_1_fk, team_2_fk, user_2_fk, result, status) VALUES (?, ?, ?, ?, ?, ?)"
-								, [team_1_id, user_1_id, team_2_id, user_2_id, result, status]
-								, function(err) {
-				if(err) throw err;
-				var id = this.lastID;
-				var replay_filename = "replays/replay-"+id+".json";
-
-				_database.run("UPDATE brawls SET replay_filename = ? WHERE pk = ?", replay_filename, id, function(err) {
-					if(err) throw err;
-					callback({
-						id: id
-						, replay_filename: replay_filename
-					});
-				});
-			});
+			var bots = bots_from_rows(rows);
+			callback(bots);
 		});
 	};
 
-	proto.get_brawl = function(id, callback) {
-		return this.get_brawls([id], function(result) {
-			if(result.length === 1) { callback(result[0]); }
-			else {callback(null);}
-		});
-	};
-
-	proto.get_brawls = function(ids, callback) {
-		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
-			return "pk == " + id;
-		}).join(" OR ");
-
-		_database.all("SELECT * FROM brawls " + condition + " LIMIT " + ids.length, function(err, rows) {
-			if(err) { throw err; }
-			var brawls = brawls_from_rows(rows);
-			callback(brawls);
-		});
-	};
-
-	proto.get_bot_brawls = function(bot_id, callback) {
-		var self = this;
-		_database.all("SELECT * FROM brawls WHERE bot_1_fk = ? OR bot_2_fk = ?", bot_id, bot_id, function(err, rows) {
-			if(err) { throw err; }
-			var brawls = brawls_from_rows(rows);
-			callback(brawls);
-		});
+	proto.set_bot_stats = function(bot, callback) {
+		_database.run("UPDATE bots SET wins = $wins, draws = $draws, losses = $losses, rated = $rated, rating = $rating WHERE pk = $pk", {
+			$wins: bot.wins
+			, $draws: bot.draws
+			, $losses: bot.losses
+			, $rated: bot.rated ? 1 : 0
+			, $rating: bot.rating
+			, $pk: bot.id
+		}, callback);
 	};
 })(Database);
 

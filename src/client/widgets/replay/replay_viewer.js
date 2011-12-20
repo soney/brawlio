@@ -40,6 +40,21 @@
 			this.progress_bar.destroy();
 			this.paper.remove();
 		}
+		, get_width: function() {
+			var replay = this.option("replay");
+			var map = replay.get_map()
+				, pixels_per_tile = this.option("pixels_per_tile")
+				, map_width = map.get_width();
+			return map_width * pixels_per_tile;
+		}
+
+		, get_height: function() {
+			var replay = this.option("replay");
+			var map = replay.get_map()
+				, pixels_per_tile = this.option("pixels_per_tile")
+				, map_height = map.get_height();
+			return map_height * pixels_per_tile;
+		}
 
 		, initialize: function() {
 			var replay = this.option("replay")

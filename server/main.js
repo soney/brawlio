@@ -134,6 +134,14 @@ var callback_map = function(arr, func, callback) {
 		socket.on('set_bot_code', function(bot_id, code, callback) {
 			self.controller.set_bot_code(bot_id, code, callback);
 		});
+		socket.on('get_all_users', function(callback) {
+			self.controller.get_all_users(callback);
+		});
+
+		socket.on('brawl_result', function(bot1_id, bot2_id, winner_id, callback) {
+			self.controller.brawl_result(bot1_id, bot2_id, winner_id, callback);
+		});
+
 	};
 
 	proto.on_bot_added = function(user_id, bot_id) {

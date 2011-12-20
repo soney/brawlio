@@ -58,6 +58,12 @@
 				callback(users);
 			});
 		};
+
+		this.on_brawl_run = function(team1_id, team2_id, winner_id, callback) {
+			socket.emit('brawl_result', team1_id, team2_id, winner_id, function() {
+				callback();
+			});
+		};
 	};
 	
 	var on_socket_ready = function(callback) {

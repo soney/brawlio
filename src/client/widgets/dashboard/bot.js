@@ -43,7 +43,6 @@
 
 				, default_tab: "brawls"
 			});
-
 		}
 
 		, destroy: function() {
@@ -54,6 +53,9 @@
 			this.tab_content.remove();
 
 			$.Widget.prototype.destroy.apply(this, arguments);
+		}
+
+		, refresh: function() {
 		}
 
 		, on_select_tab: function(tab_name) {
@@ -106,6 +108,41 @@
 
 			this.challenge_section = $("<div />")	.appendTo(this.element)
 													.challenge();
+			this.challenge_section.on("challenge", function(event) {
+				var opponent_id = event.opponent_id;
+				var my_id = bot.id;
+
+				BrawlIO.get_all_bots(function(bots) {
+					var my_bot, opponent_bot;
+					for(var i = 0; i<bots.length; i++) {
+						var bot = bots[i];
+						if(bot.id === my_id) { my_bot = bot; }
+						if(bot.id === opponent_id) { opponent_bot = bot; }
+						if(my_bot !== undefined && opponent_bot !== undefined) {
+							break;
+						}
+					}
+					if($(window).data("brawl_dialog")) {
+						$(window).brawl_dialog("destroy");
+					}
+					$(window).brawl_dialog({
+						my_code: my_bot.code
+						, opponent_code: opponent_bot.code
+					});
+					$(window).on("game_over", function(event) {
+						var winner = event.winner;
+						if(winner === undefined) { // Draw
+						} else if(winner.name === "Me") {
+							winner = my_id;
+						} else {
+							winner = opponent_id;
+						}
+
+						BrawlIO.on_brawl_run(my_id, opponent_id, winner, function() {
+						});
+					});
+				});
+			});
 		}
 		, destroy: function() {
 			var element = this.element;
@@ -192,8 +229,13 @@
 			}
 			var my_code = this.editor.bot_edit("get_code");
 
-
-			console.log(my_code, other_code);
+			if($(window).data("brawl_dialog")) {
+				$(window).brawl_dialog("destroy");
+			}
+			$(window).brawl_dialog({
+				my_code: my_code
+				, opponent_code: other_code
+			});
 		}
 	});
 }(BrawlIO));
