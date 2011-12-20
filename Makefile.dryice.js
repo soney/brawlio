@@ -34,6 +34,18 @@ var do_build_dashboard = function() {
 	});
 };
 
+var do_build_set_username = function() {
+	copy({
+		source: bio_inc.set_username_css_src
+		, dest: bio_inc.set_username_css_build
+	});
+	copy({
+		source: bio_inc.set_username_src
+		, dest: bio_inc.set_username_build
+		, filter: copy.filter.uglifyjs
+	});
+};
+
 
 if(require.main === module) { //Called directly
 	var target = process.argv[2];
@@ -41,12 +53,14 @@ if(require.main === module) { //Called directly
 	var build_home = false;
 	var build_api = false;
 	var build_dashboard = false;
+	var build_set_username = false;
 
 	if(target === "all") {
 		build_game = true;
 		build_home = true;
 		build_api = true;
 		build_dashboard = true;
+		build_set_username = true;
 	} else if(target === "game") {
 		build_game = true;
 	} else {
@@ -73,13 +87,19 @@ if(require.main === module) { //Called directly
 	if(build_dashboard) {
 		console.log("Building Dashboard files...");
 		do_build_dashboard();
-	};
+	}
+	if(build_set_username) {
+		console.log("Building username set files...");
+		do_build_set_username();
+	}
 	console.log("Done!");
 } else { //required
 	exports.build = function(callback) {
 		do_build_game();
 		do_build_home();
 		do_build_api();
+		do_build_dashboard();
+		do_build_set_username();
 		if(callback) {
 			callback();
 		}
