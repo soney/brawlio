@@ -93,4 +93,5 @@ input[type=text].validated_input.succeeded {
 	color: #999;
 	padding-top: 7px;
 	padding-bottom: 7px;
+	margin-top: 10px;
 }

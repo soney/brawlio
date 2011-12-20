@@ -34,11 +34,11 @@
 			});
 		}
 
-		, render_bot: function(bot) {
+		, render_bot: function(bot_id) {
 			this.destroy_body();
 			this.element.dashboard_bot({
 				dashboard: this
-				, bot: bot
+				, bot_id: bot_id
 			});
 		}
 	};

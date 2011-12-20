@@ -29,9 +29,9 @@
 			}
 		};
 
-		this.get_team_by_id = function(id) {
-			for(var i = 0, len = this.teams.length; i < len; i++) {
-				if(this.teams[i].id === id) return this.teams[i];
+		this.get_bot_by_id = function(id) {
+			for(var i = 0, len = this.bots.length; i < len; i++) {
+				if(this.bots[i].id === id) { return this.bots[i]; }
 			}
 			return null;
 		};
@@ -80,7 +80,7 @@
 			, {name: "Class H", min: 400,  max: 599}
 			, {name: "Class I", min: 200,  max: 399}
 			, {name: "Class J", max: 199}
-			, {name: "Unranked"}
+			, {name: "Unrated"}
 		];
 
 		this.get_class_name = function(rating) {

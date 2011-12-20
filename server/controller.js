@@ -101,6 +101,7 @@ var BrawlIOController = function(options) {
 	};
 
 	proto.set_bot_code = function(bot_k, code, callback) {
+		database.set_bot_code(bot_k, code, callback);
 	};
 
 	proto.get_bot_code = function(bot_k, callback) {

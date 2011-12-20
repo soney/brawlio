@@ -60,7 +60,7 @@
 			var link = $("<a />")	.attr("href", "javascript:void(0)")
 									.appendTo(bot_row)
 									.click(function() {
-										dashboard.render_bot(bot);
+										dashboard.render_bot(bot.id);
 									});
 
 			var bot_name = $("<span />").text(bot.name)
@@ -70,7 +70,7 @@
 			if(bot.rated) {
 				rating = bot.rating;
 			} else {
-				rating = "unranked";
+				rating = "Unrated";
 			}
 			var bot_rating = $("<span />")	.text(rating)
 											.addClass("rating");

@@ -47,7 +47,7 @@
 											.text(bot.name)
 											.on("click", $.proxy(this.on_select_bot, this, bot, bot_row));
 
-				var rating_str = bot.rated === false ? "Unranked" : bot.rating;
+				var rating_str = bot.rated === false ? "Unrated" : bot.rating;
 				var bot_rating = $("<span />")	.addClass("rating")
 												.text(rating_str)
 												.appendTo(bot_link);
@@ -122,7 +122,7 @@
 				var bot = this.bots[i];
 				this.sorted_bots["All"].push(bot);
 				if(bot.rated === false) {
-					this.sorted_bots["Unranked"].push(bot);
+					this.sorted_bots["Unrated"].push(bot);
 				} else {
 					var class_name = BrawlIO.get_class_name(bot.rating);
 					this.sorted_bots[class_name].push(bot);

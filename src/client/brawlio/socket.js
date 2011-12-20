@@ -38,12 +38,12 @@
 			});
 		};
 
-		this.set_team_code = function(team_id, code) {
-			var team = this.get_team_by_id(team_id);
-			team.code = code;
-			socket.emit('set_team_code', team_id, code, function() {
-				var team = BrawlIO.get_team_by_id(team_id);
-				team.code = code;
+		this.set_bot_code = function(bot_id, code) {
+			var bot = this.get_bot_by_id(bot_id);
+			bot.code = code;
+			socket.emit('set_bot_code', bot_id, code, function() {
+				var bot = BrawlIO.get_bot_by_id(bot_id);
+				bot.code = code;
 			});
 		};
 

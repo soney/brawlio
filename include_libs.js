@@ -137,6 +137,7 @@ exports.dashboard_src = c(
 			, "widgets/dashboard/bot_list.js"
 			, "widgets/dashboard/home.js"
 			, "widgets/dashboard/bot.js"
+			, "widgets/dashboard/bot_edit.js"
 			, "widgets/dashboard/challenge.js"
 
 			, "widgets/shared/input_validation.js"

@@ -361,7 +361,10 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 	};
 
 	proto.set_bot_code = function(bot_pk, code, callback) {
-		_database.run("UPDATE bot SET code = (?), WHERE pk = " + bot_pk, [code], callback);
+		_database.run("UPDATE bots SET code = $code WHERE pk = $pk", {
+			$code: code
+			 , $pk: bot_pk
+		}, callback);
 	};
 
 	proto.get_all_bots = function(callback) {

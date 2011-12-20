@@ -53,6 +53,25 @@ var handle_command = function(command_str, callback_fn) {
 			}
 			callback_fn();
 		});
+	} else if(command_name === "SETCODE") {
+		var bot_k = command[1];
+		var code = command[2];
+		database.set_bot_code(bot_k, code, callback("Set code"));
+	} else if(command_name === "LISTBOTS") {
+		database.get_all_bots(function(users) {
+			for(var i = 0; i<users.length; i++) {
+				var user = users[i];
+				var user_str = "";
+				for(var key in user) {
+					if(user.hasOwnProperty(key)) {
+						var value = user[key];
+						user_str += key + ": " + value + "    ";
+					}
+				}
+				console.log(user_str);
+			}
+			callback_fn();
+		});
 	} else if(command_name === "CREATE") {
 		database.create_tables(callback("Created tables"));
 	} else if(command_name === "RESET") {

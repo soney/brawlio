@@ -130,6 +130,10 @@ var callback_map = function(arr, func, callback) {
 		socket.on('get_all_bots', function(callback) {
 			self.controller.get_all_bots(callback);
 		});
+
+		socket.on('set_bot_code', function(bot_id, code, callback) {
+			self.controller.set_bot_code(bot_id, code, callback);
+		});
 	};
 
 	proto.on_bot_added = function(user_id, bot_id) {
@@ -245,7 +249,7 @@ var callback_map = function(arr, func, callback) {
 							var claimed_identifier = result.claimedIdentifier;
 							var email = result.email;
 
-							after_authenticated(claimed_identifer, email);
+							after_authenticated(claimed_identifier, email);
 						} else {
 							res.render("verify/fail.jade", {layout: false});
 						}

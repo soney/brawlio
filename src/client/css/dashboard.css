@@ -170,14 +170,15 @@ input[type=text].validated_input {
 	border-radius: 3px;
 	overflow: hidden;
 	font-size: 0.9em;
+	height: 150px;
 }
 
 .challenge .column {
 	float: left;
 	border-right: 1px solid #DDD;
-	max-height: 250px;
 	overflow: auto;
 	width: 32%;
+	height: 100%;
 }
 
 .challenge .column.final {
@@ -219,4 +220,13 @@ input[type=text].validated_input {
 	color: #333;
 	margin-bottom: 10px;
 	margin-top: 8px;
+}
+
+.record {
+	color: #555;
+	margin-top: 10px;
+}
+
+.test.button {
+	padding: 2px;
 }
