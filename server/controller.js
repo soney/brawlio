@@ -4,11 +4,19 @@ var fs = require('fs');
 var INVITED_EMAILS_FILE = "invited_emails.txt";
 
 var BrawlIOController = function(options) {
+	options = options || {};
 	this.server = options.server;
 };
 
 (function(my) {
 	var proto = my.prototype;
+
+	proto.create_tables = function(callback) {
+		database.create_tables(callback);
+	};
+	proto.drop_tables = function(callback) {
+		database.drop_tables(callback);
+	};
 
 	proto.user_with_openid = function(claimed_id, callback) {
 		database.user_key_with_openid(claimed_id, function(user_key) {
@@ -33,8 +41,12 @@ var BrawlIOController = function(options) {
 		});
 	};
 
+	proto.add_user = function(options, callback) {
+		database.add_user(options, callback);
+	};
+
 	proto.add_openid_user = function(openid_url, user_options, callback) {
-		database.add_user(user_options, function(user_id) {
+		this.add_user(user_options, function(user_id) {
 			database.add_openid({
 				openid_url: openid_url
 				, user_fk: user_id
@@ -79,9 +91,6 @@ var BrawlIOController = function(options) {
 		database.set_user_details(user_id, query_setting, callback);
 	};
 
-	proto.user_has_bot_with_name = function(user_k, name, callback) {
-	};
-
 	proto.add_bot = function(user_fk, name, code, callback) {
 		var server = this.server;
 		database.add_bot({
@@ -91,7 +100,9 @@ var BrawlIOController = function(options) {
 		}, function(bot_id) {
 			callback(bot_id);
 			if(bot_id !== null) {
-				server.on_bot_added(user_fk, bot_id);
+				if(server) {
+					server.on_bot_added(user_fk, bot_id);
+				}
 			}
 		});
 	};
@@ -102,18 +113,6 @@ var BrawlIOController = function(options) {
 
 	proto.set_bot_code = function(bot_k, code, callback) {
 		database.set_bot_code(bot_k, code, callback);
-	};
-
-	proto.get_bot_code = function(bot_k, callback) {
-	};
-
-	proto.rename_bot = function(bot_k, new_name, callback) {
-	};
-	
-	proto.delete_bot = function(bot_k, callback) {
-	};
-
-	proto.get_unranked_bots = function(callback) {
 	};
 
 	proto.get_all_bots = function(callback) {
@@ -127,45 +126,25 @@ var BrawlIOController = function(options) {
 		});
 	};
 	
-	proto.get_bots_with_ranking_between = function(above, below, callback) {
-	};
-
-	proto.delete_user = function(user_k, callback) {
-	};
 	proto.brawl_result = function(bot1_id, bot2_id, winner_id, callback) {
 		database.get_bots([bot1_id, bot2_id], function(bots) {
 			var bot1 = bots[0];
 			var bot2 = bots[1];
 
-			var new_bot1_rating, new_bot2_rating;
+			var new_bot1_rating = bot1.rating, new_bot2_rating = bot2.rating;
 
 			if(winner_id === undefined) {
 				bot1.draws++;
 				bot2.draws++;
-				if(bot1.rated === false) {
-					new_bot1_rating = bot2.rating;
-				} if(bot2.rated === false) {
-					new_bot2_rating = bot1.rating;
-				}
 			} else if(winner_id === bot1_id) {
 				bot1.wins++;
 				bot2.losses++;
-				if(bot1.rated === false) {
-					new_bot1_rating = bot2.rating + 100;
-				} if(bot2.rated === false) {
-					new_bot2_rating = bot1.rating - 100;
-				}
 			} else if(winner_id === bot2_id) {
 				bot1.losses++;
 				bot2.wins++;
-				if(bot1.rated === false) {
-					new_bot1_rating = bot2.rating - 100;
-				} if(bot2.rated === false) {
-					new_bot2_rating = bot1.rating + 100;
-				}
 			}
 
-			if(bot1.rated === true) {
+			if(bot1.rated) {
 				var rating_diff = bot2.rating - bot1.rating;
 				var ea = 1/(1+Math.pow(10, rating_diff/400));
 				var k = 32;
@@ -175,15 +154,23 @@ var BrawlIOController = function(options) {
 					k = 16;
 				}
 				var sa;
-				if(winner_id === undefined) {
-					sa = 0.0;
-				} else if(winner_id = bot1.id) {
+				if(winner_id === bot1_id) {
 					sa = 1.0;
-				} else {
+				} else if(winner_id === bot2_id) {
 					sa = 0.0;
+				} else {
+					sa = 0.5;
 				}
 
 				new_bot1_rating = bot1.rating + k * (sa - ea);
+			} else {
+				if(winner_id === bot1_id) {
+					new_bot1_rating = bot2.rating + 100;
+				} else if(winner_id === bot2_id) {
+					new_bot1_rating = bot2.rating - 100;
+				} else {
+					new_bot1_rating = bot2.rating;
+				}
 			}
 
 			if(bot2.rated === true) {
@@ -196,16 +183,30 @@ var BrawlIOController = function(options) {
 					k = 16;
 				}
 				var sa;
-				if(winner_id === undefined) {
+				if(winner_id === bot1_id) {
 					sa = 0.0;
-				} else if(winner_id = bot2.id) {
+				} else if(winner_id === bot2_id) {
 					sa = 1.0;
 				} else {
-					sa = 0.0;
+					sa = 0.5;
 				}
 
 				new_bot2_rating = bot2.rating + k * (sa - ea);
+			} else {
+				if(winner_id === bot1_id) {
+					new_bot2_rating = bot1.rating - 100;
+				} else if(winner_id === bot2_id) {
+					new_bot2_rating = bot1.rating + 100;
+				} else {
+					new_bot2_rating = bot1.rating;
+				}
 			}
+
+			var b1_rating_floor = Math.min(100 + 4*bot1.wins + 2*bot1.draws, 150);
+			var b2_rating_floor = Math.min(100 + 4*bot2.wins + 2*bot2.draws, 150);
+
+			new_bot1_rating = Math.max(b1_rating_floor, new_bot1_rating);
+			new_bot2_rating = Math.max(b2_rating_floor, new_bot2_rating);
 
 			bot1.rated = true;
 			bot2.rated = true;

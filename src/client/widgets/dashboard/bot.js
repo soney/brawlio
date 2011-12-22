@@ -23,7 +23,7 @@
 												.append(
 													$("<a />")	.attr("href", "javascript:void(0)")
 																.click(function() {
-																	dashboard.render_bot(bot);
+																	dashboard.render_bot(bot_id);
 																})
 																.text(bot.name)
 												)

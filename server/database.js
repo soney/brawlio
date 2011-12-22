@@ -3,8 +3,6 @@ var constants = require("./constants");
 var db_path = __dirname+"/"+constants.db_name;
 var fs = require('fs');
 
-var WeightClasses = require("./weight_class");
-
 var Database = function() {};
 
 var DBBot = function(id, name, rated, rating, wins, losses, draws, code, user_fk) {

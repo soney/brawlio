@@ -140,7 +140,7 @@
 
 		, set_bots: function(bots) {
 			this.bots = bots.sort(function(bot1,bot2) {
-				return bot1.rating > bot2.rating;
+				return bot1.rating < bot2.rating;
 			}).filter(function(bot) {
 				return bot.user_fk !== BrawlIO.user.id;
 			});
