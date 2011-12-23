@@ -59,7 +59,7 @@
 											.text(owner_name+bot.name)
 											.on("click", $.proxy(this.on_select_bot, this, bot, bot_row, owner));
 
-				var rating_str = bot.rated === false ? "Unrated" : (bot.rating + " " + BrawlIO.get_class_name(bot.rating));
+				var rating_str = bot.rated === false ? "Unrated" : (bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")");
 				var bot_rating = $("<span />")	.addClass("rating")
 												.text(rating_str)
 												.appendTo(bot_link);
@@ -78,7 +78,7 @@
 			if(bot.rated === false ) {
 				rating_text = "Unrated";
 			} else {
-				rating_text = bot.rating + "(" + BrawlIO.get_class_name(bot.rating) + ")";
+				rating_text = bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")";
 			}
 
 			var record_text = bot.wins + " wins, " + bot.losses + " losses, " + bot.draws + " draws";

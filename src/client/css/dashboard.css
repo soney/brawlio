@@ -139,6 +139,7 @@ input[type=text].validated_input {
 .challenge .column.final {
 	border-right: none;
 	text-align: center;
+	padding: 5px;
 }
 
 .challenge .row.all {

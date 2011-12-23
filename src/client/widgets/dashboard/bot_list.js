@@ -68,7 +68,7 @@
 
 			var rating;
 			if(bot.rated) {
-				rating = bot.rating;
+				rating = bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")";
 			} else {
 				rating = "Unrated";
 			}

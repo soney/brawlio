@@ -1,10 +1,44 @@
 (function(BrawlIO) {
-	BrawlIO.initialize_socket = function(key, callback) {
+	BrawlIO.initialize_socket = function(callback) {
 		var socket = io.connect();
 
-		socket.emit('session_key', key, function() {
+		socket.on('connect', function() {
 			on_socket_ready(callback);
 		});
+
+		socket.on('disconnect', function(disconnect_type) {
+			if(disconnect_type === "booted") {
+				//They went somewhere else....don't display an error
+				return;
+			}
+			var delay = 10000;
+			var redirect_timeout = window.setTimeout(function() {
+				window.location = "/";
+			}, delay);
+			var redirect_time = (new Date()).getTime() + delay;
+			var get_seconds_until_redirect = function () {
+				var time = (new Date()).getTime();
+				return Math.round((redirect_time - time)/1000);
+			};
+
+			var update_in_seconds_interval = window.setInterval(function() {
+				in_seconds.text(get_seconds_until_redirect());
+			}, 1000);
+
+			var in_seconds = $("<span />").text(get_seconds_until_redirect());
+			$("<div />").html("Our server seems to have gone down. Sorry.<hr />Hit 'ESC' or we will redirect you in ").append(in_seconds).append(" seconds.").dialog({
+				modal: true
+				, resizable: false
+				, draggable: false
+				, title: "Disconnected"
+				, close: function() {
+					window.clearTimeout(redirect_timeout);
+					window.clearInterval(update_in_seconds_interval);
+				}
+				, closeText: 'close'
+			});
+		});
+
 
 		this.get_user = function(username, callback) {
 			if(arguments.length === 1) {

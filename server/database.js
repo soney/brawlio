@@ -52,7 +52,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		return bot;
 	};
 	var brawl_factory = function(options) {
-		var brawl = new DBBrawl(options.id, options.team_1_fk, options.bot_1_fk, options.bot_2_fk, options.user_2_fk, options.result, options.status, options.replay_filename)
+		var brawl = new DBBrawl(options.id, options.bot_1_fk, options.bot_2_fk, options.user_2_fk, options.result, options.status, options.replay_filename)
 		return brawl;
 	};
 	var users_from_rows = function(rows) {
@@ -177,18 +177,25 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			+ ", losses INTEGER DEFAULT 0"
 			+ ", draws INTEGER DEFAULT 0"
 			+ ", code TEXT"
+			+ ", api_version INTEGER"
 			+ ")", callback);
 	};
 
 	proto.create_brawls_table = function(callback) {
 		_database.run("CREATE TABLE brawls ("
 			+ "pk INTEGER PRIMARY KEY UNIQUE"
-			+ ", bot_1_fk INTEGER REFERENCES teams(pk)"
+			+ ", date INTEGER"
+			+ ", bot_1_fk INTEGER REFERENCES bots(pk)"
+			+ ", bot_1_rating INTEGER"
+			+ ", bot_1_name TEXT"
 			+ ", user_1_fk INTEGER REFERENCES users(pk)"
-			+ ", bot_2_fk INTEGER REFERENCES teams(pk)"
+			+ ", user_1_name TEXT"
+			+ ", bot_2_fk INTEGER REFERENCES bots(pk)"
+			+ ", bot_2_rating INTEGER"
+			+ ", bot_2_name TEXT"
 			+ ", user_2_fk INTEGER REFERENCES users(pk)"
-			+ ", result INTEGER"
-			+ ", status INTEGER"
+			+ ", user_2_name TEXT"
+			+ ", winner_fk INTEGER"
 			+ ", replay_filename TEXT"
 			+ ")", callback);
 	};

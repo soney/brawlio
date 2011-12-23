@@ -8,10 +8,6 @@ html(lang="en")
     script(type="text/javascript", src="/socket.io/socket.io.js")
     script(type="text/javascript")
       var socket = io.connect();
-      socket.on("connect", function() {
-        socket.emit("session_key", "#{session_key}", function() {
-        });
-      });
       $(function() {
         $(".alias_selection").validated_input({
           server_validation: function(inp, callback) {

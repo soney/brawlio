@@ -7,6 +7,8 @@ var constants = require('./constants');
 var bio_inc = require('../include_libs');
 var create_bio_controller = require('./controller');
 
+var parseCookie = require('connect').utils.parseCookie;
+
 var BrawlIOServer = function(options) {
 	options = options || {};
 	this.check_invite = options.check_invite || true;
@@ -74,12 +76,28 @@ var callback_map = function(arr, func, callback) {
 	proto.start_server = function(path, port) {
 		server = express.createServer(
 				express.cookieParser()
-				, express.session({secret: constants.session_secret})
+				, express.session({key: 'express.sid', secret: constants.session_secret})
 				, express.router(bind(this.routes, this))
 				, express.static(path)
 			);
 		io = socket_io.listen(server);
 		io.set("log level", 0);
+		io.set("authorization", function(data, accept) {
+			// check if there's a cookie header
+			if (data.headers.cookie) {
+				// if there is, parse the cookie
+				data.cookie = parseCookie(data.headers.cookie);
+				// note that you will need to use the same key to grad the
+				// session id, as you specified in the Express setup.
+				data.sessionID = data.cookie['express.sid'];
+			} else {
+				// if there isn't, turn down the connection with a message
+				// and leave the function.
+				return accept('No cookie transmitted.', false);
+			}
+			// accept the incoming connection
+			accept(null, true);
+		});
 
 		this.initialize_sockets(io);
 
@@ -89,14 +107,12 @@ var callback_map = function(arr, func, callback) {
 	proto.initialize_sockets = function(io) {
 		var self = this;
 		io.sockets.on('connection', function(socket) {
-			socket.on('session_key', function(key, callback) {
-				var user_id = self.session_to_user[key];
-				if(user_id) {
-					delete self.session_to_user[key];
-					self.initialize_socket(socket, user_id);
-					callback();
-				}
-			});
+			var key = socket.handshake.sessionID;
+			var user_id = self.session_to_user[key];
+			if(user_id) {
+				delete self.session_to_user[key];
+				self.initialize_socket(socket, user_id);
+			}
 		});
 	};
 
@@ -160,9 +176,9 @@ var callback_map = function(arr, func, callback) {
 			this.session_to_user[req.sessionID] = session.user_id;
 			this.controller.user_with_id(session.user_id, function(user) {
 				if(user.username === null) {
-					res.render("set_username.jade", {layout: false, session_key: req.sessionID, locals: self.locals});
+					res.render("set_username.jade", {layout: false, locals: self.locals});
 				} else {
-					res.render("dashboard.jade", {layout: false, session_key: req.sessionID, locals: self.locals});
+					res.render("dashboard.jade", {layout: false, locals: self.locals});
 				}
 			});
 		}

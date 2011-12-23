@@ -6,10 +6,10 @@
 	};
 
 	(function() {
-		this.initialize = function(key, dashboard_tag) {
+		this.initialize = function(dashboard_tag) {
 			this.dashboard_tag = dashboard_tag;
 
-			this.initialize_socket(key, function() {
+			this.initialize_socket(function() {
 				dashboard_tag.dashboard();
 			});
 		};
