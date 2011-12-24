@@ -5,34 +5,40 @@ var fs = require('fs');
 
 var Database = function() {};
 
-var DBBot = function(id, name, rated, rating, wins, losses, draws, code, user_fk) {
-	this.id = id;
-	this.name = name;
-	this.rated = rated;
-	this.rating = rating;
-	this.wins = wins;
-	this.losses = losses;
-	this.draws = draws;
-	this.code = code;
-	this.user_fk = user_fk;
+var DBRow = function(options) {
+	for(var key in options) {
+		if(options.hasOwnProperty(key)) {
+			if(key === "pk") { key = "id"; }
+			this[key] = options[key];
+		}
+	}
 };
 
-var DBUser = function(id, username, email) {
-	this.id = id;
-	this.username = username;
-	this.email = email;
+var create_db_row = function(row, convert_column_names, convert_item_functions) {
+	var options = {};
+	for(var key in row) {
+		if(row.hasOwnProperty(key)) {
+			var column = key;
+			var value = row[column];
+
+			if(convert_column_names !== undefined) {
+				if(convert_column_names.hasOwnProperty(column)) {
+					column = convert_column_names[column];
+				}
+			}
+
+			if(convert_item_functions !== undefined) {
+				if(convert_item_functions.hasOwnProperty(column)) {
+					value = convert_item_functions[column](value);
+				}
+			}
+
+			options[column] = value;
+		}
+	}
+	return new DBRow(options);
 };
 
-var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, status, replay_filename) {
-	this.id = id;
-	this.bot_1_fk = bot_1_fk;
-	this.user_1_fk = user_1_fk;
-	this.bot_2_fk = bot_2_fk;
-	this.user_2_fk = user_2_fk;
-	this.result = result;
-	this.status = status;
-	this.replay_filename = replay_filename;
-};
 
 (function(my) {
 	var proto = my.prototype;
@@ -43,18 +49,13 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		my.ready = true;
 	});
 
-	var user_factory = function(options) {
-		var user = new DBUser(options.id, options.username, options.email);
-		return user;
+	var to_boolean = function(integer) {
+		return integer !== 0;
 	};
-	var bot_factory = function(options) {
-		var bot = new DBBot(options.id, options.name, options.rated, options.rating, options.wins, options.losses, options.draws, options.code, options.user_fk);
-		return bot;
+	var to_date = function(time_int) {
+		return new Date(time_int);
 	};
-	var brawl_factory = function(options) {
-		var brawl = new DBBrawl(options.id, options.bot_1_fk, options.bot_2_fk, options.user_2_fk, options.result, options.status, options.replay_filename)
-		return brawl;
-	};
+
 	var users_from_rows = function(rows) {
 		var users = new Array(rows.length);
 		for(var i = 0, len = rows.length; i<len; i++) {
@@ -65,10 +66,10 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 	};
 	var user_from_row = function(row) {
 		if(row == null) return null;
-		var user = user_factory( {
-			id: row.pk
-			, username: row.username
-			, email: row.email
+		var user = create_db_row(row, {
+			"pk": "id"
+		}, {
+			"created": to_date
 		});
 		return user;
 	};
@@ -81,19 +82,13 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		return bots;
 	};
 	var bot_from_row = function(row) {
-		var options = {
-			id: row.pk
-			, name: row.name
-			, rated: row.rated !== 0
-			, rating: row.rating
-			, wins: row.wins
-			, losses: row.losses
-			, draws: row.draws
-			, code: row.code
-			, user_fk: row.user_fk
-		};
-			
-		var bot = bot_factory(options);
+		var bot = create_db_row(row, {
+			"pk": "id"
+		}, {
+			"rated": to_boolean
+			, "created": to_date
+			, "last_edit": to_date
+		});
 		return bot;
 	};
 	var brawls_from_rows = function(rows) {
@@ -105,18 +100,12 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		return brawls;
 	};
 	var brawl_from_row = function(row) {
-		var options = {
-			id: row.pk
-			, team_1_fk: row.team_1_fk
-			, user_1_fk: row.user_1_fk
-			, team_2_fk: row.team_2_fk
-			, user_2_fk: row.user_2_fk
-			, result: row.result
-			, status: row.status
-			, replay_filename: row.replay_filename
-		};
-			
-		var brawl = brawl_factory(options);
+		var brawl = create_db_row(row, {
+			"pk": "id"
+		}, {
+			"date": to_date
+		});
+
 		return brawl;
 	};
 
@@ -163,6 +152,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			+ "pk INTEGER PRIMARY KEY UNIQUE"
 			+ ", username TEXT"
 			+ ", email TEXT"
+			+ ", created INTEGER"
 			+ ")", callback);
 	};
 
@@ -177,7 +167,9 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			+ ", losses INTEGER DEFAULT 0"
 			+ ", draws INTEGER DEFAULT 0"
 			+ ", code TEXT"
-			+ ", api_version INTEGER"
+			+ ", api_version INTEGER DEFAULT 0"
+			+ ", created INTEGER"
+			+ ", last_edit INTEGER"
 			+ ")", callback);
 	};
 
@@ -185,16 +177,18 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		_database.run("CREATE TABLE brawls ("
 			+ "pk INTEGER PRIMARY KEY UNIQUE"
 			+ ", date INTEGER"
-			+ ", bot_1_fk INTEGER REFERENCES bots(pk)"
-			+ ", bot_1_rating INTEGER"
-			+ ", bot_1_name TEXT"
-			+ ", user_1_fk INTEGER REFERENCES users(pk)"
-			+ ", user_1_name TEXT"
-			+ ", bot_2_fk INTEGER REFERENCES bots(pk)"
-			+ ", bot_2_rating INTEGER"
-			+ ", bot_2_name TEXT"
-			+ ", user_2_fk INTEGER REFERENCES users(pk)"
-			+ ", user_2_name TEXT"
+			+ ", bot1_fk INTEGER REFERENCES bots(pk)"
+			+ ", bot1_pre_rating INTEGER"
+			+ ", bot1_post_rating INTEGER"
+			+ ", bot1_name TEXT"
+			+ ", user1_fk INTEGER REFERENCES users(pk)"
+			+ ", user1_name TEXT"
+			+ ", bot2_fk INTEGER REFERENCES bots(pk)"
+			+ ", bot2_pre_rating INTEGER"
+			+ ", bot2_post_rating INTEGER"
+			+ ", bot2_name TEXT"
+			+ ", user2_fk INTEGER REFERENCES users(pk)"
+			+ ", user2_name TEXT"
 			+ ", winner_fk INTEGER"
 			+ ", replay_filename TEXT"
 			+ ")", callback);
@@ -223,8 +217,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		_database.all("SELECT user_fk FROM openid WHERE openid_url = ? LIMIT 1", openid_url, function(error, rows) {
 			if(rows.length === 0) {
 				callback(null);
-			}
-			else {
+			} else {
 				callback(rows[0].user_fk);
 			}
 		});
@@ -239,6 +232,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		if(options === undefined) {
 			query = "INSERT INTO " + table + " DEFAULT VALUES";
 			_database.run(query, function(error) {
+				if(error) { throw error; }
 				var id = this.lastID;
 				callback(id);
 			});
@@ -260,6 +254,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 
 			query = "INSERT INTO " + table + " (" + columns_str + ") VALUES (" + q_marks_str + ")";
 			_database.run(query, values, function(error) {
+				if(error) { throw error; }
 				var id = this.lastID;
 				callback(id);
 			});
@@ -278,21 +273,25 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		this.insert("bots", options, callback);
 	};
 
-	proto.get_users = function(callback) {
+	proto.add_brawl = function(options, callback) {
+		this.insert("brawls", options, callback);
+	};
+
+	proto.get_all_users = function(callback) {
 		_database.all("SELECT * FROM users", function(err, rows) {
 			if(err) { throw err; }
 			var users = users_from_rows(rows);
 			callback(users);
 		});
 	};
-	proto.get_user_with_id = function(id, callback) {
-		return this.get_users_with_ids([id], function(result) {
+	proto.get_user = function(id, callback) {
+		return this.get_users([id], function(result) {
 			if(result.length === 1) { callback(result[0]); }
 			else { callback(null); }
 		});
 	};
 
-	proto.get_users_with_ids = function(ids, callback) {
+	proto.get_users = function(ids, callback) {
 		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
 			return "pk = " + id;
 		}).join(" OR ");
@@ -366,9 +365,10 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 	};
 
 	proto.set_bot_code = function(bot_pk, code, callback) {
-		_database.run("UPDATE bots SET code = $code WHERE pk = $pk", {
+		_database.run("UPDATE bots SET code = $code, last_edit = $last_edit WHERE pk = $pk", {
 			$code: code
 			 , $pk: bot_pk
+			 , $last_edit: (new Date()).getTime()
 		}, callback);
 	};
 
@@ -386,7 +386,7 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 		}).join(" OR ");
 
 		_database.all("SELECT * FROM bots " + condition + " LIMIT " + ids.length, function(err, rows) {
-			if(err) throw err;
+			if(err) { throw err; }
 			var bots = bots_from_rows(rows);
 			callback(bots);
 		});
@@ -401,6 +401,14 @@ var DBBrawl = function(id, bot_1_fk, user_1_fk, bot_2_fk, user_2_fk, result, sta
 			, $rating: bot.rating
 			, $pk: bot.id
 		}, callback);
+	};
+
+	proto.get_all_brawls = function(callback) {
+		_database.all("SELECT * FROM brawls", function(err, rows) {
+			if(err) { throw err; }
+			var brawls = brawls_from_rows(rows);
+			callback(brawls);
+		});
 	};
 })(Database);
 

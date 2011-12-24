@@ -8,6 +8,8 @@ var helptext = "========================================\n"
 				+ "create - Create all of the tables\n"
 				+ "drop - Drop all of the tables\n"
 				+ "help - This list\n"
+				+ "listbots - List every bot\n"
+				+ "listbrawls - List every brawl\n"
 				+ "listusers - List every user\n"
 				+ "quit - Quit the program\n"
 				+ "reset - Drop and then create all of the tables\n"
@@ -16,6 +18,20 @@ var helptext = "========================================\n"
 				+ "========================================";
 
 var controller = create_controller();
+
+var enumerate_properties = function(objs) {
+	for(var i = 0; i<objs.length; i++) {
+		var obj = objs[i];
+		var obj_str = "";
+		for(var key in obj) {
+			if(obj.hasOwnProperty(key)) {
+				var value = obj[key];
+				obj_str += key + ": " + value + "    ";
+			}
+		}
+		console.log(obj_str);
+	}
+};
 
 var handle_command = function(command_str, callback_fn) {
 	var command = command_str.split(" ");
@@ -44,17 +60,7 @@ var handle_command = function(command_str, callback_fn) {
 		});
 	} else if(command_name === "LISTUSERS") {
 		controller.get_all_users(function(users) {
-			for(var i = 0; i<users.length; i++) {
-				var user = users[i];
-				var user_str = "";
-				for(var key in user) {
-					if(user.hasOwnProperty(key)) {
-						var value = user[key];
-						user_str += key + ": " + value + "    ";
-					}
-				}
-				console.log(user_str);
-			}
+			enumerate_properties(users);
 			callback_fn();
 		});
 	} else if(command_name === "SETCODE") {
@@ -63,17 +69,12 @@ var handle_command = function(command_str, callback_fn) {
 		controller.set_bot_code(bot_k, code, callback("Set code"));
 	} else if(command_name === "LISTBOTS") {
 		controller.get_all_bots(function(bots) {
-			for(var i = 0; i<bots.length; i++) {
-				var bot = bots[i];
-				var bot_str = "";
-				for(var key in bot) {
-					if(bot.hasOwnProperty(key)) {
-						var value = bot[key];
-						bot_str += key + ": " + value + "    ";
-					}
-				}
-				console.log(bot_str);
-			}
+			enumerate_properties(bots);
+			callback_fn();
+		});
+	} else if(command_name === "LISTBRAWLS") {
+		controller.get_all_brawls(function(brawls) {
+			enumerate_properties(brawls);
 			callback_fn();
 		});
 	} else if(command_name === "CREATE") {
@@ -86,7 +87,7 @@ var handle_command = function(command_str, callback_fn) {
 		console.log(helptext+"\n");
 		callback_fn();
 	} else if(command_name === "ADDBOT") {
-		var user_fk = command[1];
+		var user_fk = parseInt(command[1]);
 		var name = command[2];
 		var code = command[3];
 
@@ -94,9 +95,9 @@ var handle_command = function(command_str, callback_fn) {
 			callback_fn("Bot " + name + " added with id " + bot_id);
 		});
 	} else if(command_name === "RUNBRAWL") {
-		var bot1_fk = command[1];
-		var bot2_fk = command[2];
-		var winner_bot_fk = command[3];
+		var bot1_fk = parseInt(command[1]);
+		var bot2_fk = parseInt(command[2]);
+		var winner_bot_fk = parseInt(command[3]);
 
 		controller.brawl_result(bot1_fk, bot2_fk, winner_bot_fk, function(bot1, bot2) {
 			console.log("Bot 1: " + bot1.wins + "W " + bot1.losses + "L " + bot1.draws + "D ("+bot1.rating+")");

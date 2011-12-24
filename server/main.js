@@ -6,8 +6,25 @@ var socket_io = require('socket.io');
 var constants = require('./constants');
 var bio_inc = require('../include_libs');
 var create_bio_controller = require('./controller');
-
 var parseCookie = require('connect').utils.parseCookie;
+
+var listener_id = 0;
+var Listener = function(type, callback) {
+	this.id = listener_id++;
+	this.type = type;
+	this.callback = callback;
+};
+
+(function(my) {
+	var proto = my.prototype;
+	proto.matches = function(id_or_callback) {
+		return this.id === id_or_callback || this.callback === id_or_callback;
+	};
+	proto.interested_in = function(event) {
+		return event.type === this.type;
+	};
+	proto.get_callback = function() { return this.callback; };
+}(Listener));
 
 var BrawlIOServer = function(options) {
 	options = options || {};
@@ -18,6 +35,7 @@ var BrawlIOServer = function(options) {
 	this.skip_auth = options.skip_auth || false;
 	this.session_to_user = {};
 	this.controller = create_bio_controller({server: this});
+	this.listeners = [];
 
 	this.locals = {
 		include: function(files) {
@@ -130,12 +148,11 @@ var callback_map = function(arr, func, callback) {
 
 		socket.on('get_user', function(uid, callback) {
 			if(uid === null) { uid = user_id; }
-			self.controller.user_with_id(uid, callback);
+			self.controller.get_user(uid, callback);
 		});
 
 		socket.on('get_user_bots', function(uid, callback) {
 			if(uid === null) { uid = user_id; }
-
 			self.controller.get_user_bots(uid, callback);
 		});
 
@@ -150,6 +167,7 @@ var callback_map = function(arr, func, callback) {
 		socket.on('set_bot_code', function(bot_id, code, callback) {
 			self.controller.set_bot_code(bot_id, code, callback);
 		});
+
 		socket.on('get_all_users', function(callback) {
 			self.controller.get_all_users(callback);
 		});
@@ -158,9 +176,44 @@ var callback_map = function(arr, func, callback) {
 			self.controller.brawl_result(bot1_id, bot2_id, winner_id, callback);
 		});
 
+
+		var callback_id0 = this.on("brawl_run", function(brawl) {
+			console.log(brawl);
+		});
+
+		socket.on('disconnect', function() {
+			self.off(callback_id0);
+		});
 	};
 
 	proto.on_bot_added = function(user_id, bot_id) {
+		var self = this;
+		this.controller.get_bot(bot_id, function(bot) {
+			self.emit({
+				type: "bot_added"
+				, bot: bot
+			});
+		});
+	};
+
+	proto.on_username_set = function(user_id, username) {
+		var self = this;
+		this.controller.get_user(user_id, function(user) {
+			self.emit({
+				type: "username_set"
+				, user: user
+			});
+		});
+	};
+
+	proto.on_brawl_run = function(brawl_id) {
+		var self = this;
+		this.controller.get_brawl(brawl_id, function(brawl) {
+			self.emit({
+				type: "brawl_run"
+				, brawl: brawl
+			});
+		});
 	};
 
 	var relyingParty;
@@ -174,15 +227,14 @@ var callback_map = function(arr, func, callback) {
 
 		if(session.user_id) {
 			this.session_to_user[req.sessionID] = session.user_id;
-			this.controller.user_with_id(session.user_id, function(user) {
+			this.controller.get_user(session.user_id, function(user) {
 				if(user.username === null) {
 					res.render("set_username.jade", {layout: false, locals: self.locals});
 				} else {
 					res.render("dashboard.jade", {layout: false, locals: self.locals});
 				}
 			});
-		}
-		else {
+		} else {
 			res.render("index.jade", {layout: false, locals: this.locals});
 		}
 	}
@@ -229,6 +281,7 @@ var callback_map = function(arr, func, callback) {
 				});
 			}
 		});
+
 		server.get("/api", function(req, res, next) {
 			res.render("api.jade", {layout: false, locals: self.locals});
 		});
@@ -334,6 +387,32 @@ var callback_map = function(arr, func, callback) {
 		this.start_server(path, port);
 		if(message) {
 			console.log(message);
+		}
+	};
+
+	proto.on = proto.add_listener = function(type, callback) {
+		var listener = new Listener(type, callback);
+		this.listeners.push(listener);
+		return listener.id;
+	};
+
+	proto.off = proto.remove_listener = function(id_or_callback) {
+		for(var i = 0; i<this.listeners.length; i++) {
+			var listener = this.listeners[i];
+			if(listener.matches(id_or_callback)) {
+				this.listeners.splice(i, 1);
+				i--;
+			}
+		}
+	};
+
+	proto.emit = function(event) {
+		for(var i = 0; i<this.listeners.length; i++) {
+			var listener = this.listeners[i];
+			if(listener.interested_in(event)) {
+				var callback = listeners.get_callback();
+				callback(event);
+			}
 		}
 	};
 }(BrawlIOServer));

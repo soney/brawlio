@@ -22,15 +22,15 @@ var BrawlIOController = function(options) {
 		database.user_key_with_openid(claimed_id, function(user_key) {
 			if(user_key === null) { callback(null); }
 			else {
-				database.get_user_with_id(user_key, function(user) {
+				database.get_user(user_key, function(user) {
 					callback(user);
 				});
 			}
 		});
 	};
 
-	proto.user_with_id = function(user_k, callback) {
-		database.get_user_with_id(user_k, callback);
+	proto.get_user = function(user_k, callback) {
+		database.get_user(user_k, callback);
 	};
 
 	proto.email_has_invite = function(email, callback) {
@@ -42,6 +42,7 @@ var BrawlIOController = function(options) {
 	};
 
 	proto.add_user = function(options, callback) {
+		options.created = (new Date()).getTime();
 		database.add_user(options, callback);
 	};
 
@@ -64,6 +65,7 @@ var BrawlIOController = function(options) {
 
 	proto.set_username = function(user_k, username, callback) {
 		var regex = /^[a-zA-Z_$][0-9a-zA-Z_$]{2,14}$/;
+		var server = this.server;
 		if(username.match(regex) !== null) {
 			var self = this;
 			this.user_exists_with_username(username, function(taken) {
@@ -72,6 +74,9 @@ var BrawlIOController = function(options) {
 				} else {
 					self.set_user_details(user_k, {username: username}, function() {
 						callback(true);
+						if(server) {
+							server.on_username_set(user_k, username);
+						}
 					});
 				}
 			});
@@ -97,6 +102,8 @@ var BrawlIOController = function(options) {
 			user_fk: user_fk
 			, name: name
 			, code: code
+			, created: (new Date()).getTime()
+			, last_edit: (new Date()).getTime()
 		}, function(bot_id) {
 			callback(bot_id);
 			if(bot_id !== null) {
@@ -120,101 +127,127 @@ var BrawlIOController = function(options) {
 			callback(bots);
 		});
 	};
+
 	proto.get_all_users = function(callback) {
-		database.get_users(function(users) {
+		database.get_all_users(function(users) {
 			callback(users);
 		});
+	};
+
+	proto.get_bots = function(bot_ids, callback) {
+		database.get_bots(bot_ids, callback);
+	};
+
+	proto.get_bot = function(bot_id, callback) {
+		this.get_bots([bot_id], function(bots) {
+			var bot = bots[0] || null;
+			callback(bot);
+		});
+	};
+
+	proto.get_all_brawls = function(callback) {
+		database.get_all_brawls(callback);
+	};
+
+
+	var get_new_wins_losses_draws = function(me_bot, other_bot, winner_id) {
+		var rv = {wins: me_bot.wins, losses: me_bot.losses, draws: me_bot.draws};
+		if(winner_id === me_bot.id) {
+			rv.wins++;
+		} else if(winner_id === other_bot.id) {
+			rv.losses++;
+		} else {
+			rv.draws++;
+		}
+		return rv;
+	};
+
+	var get_new_rating = function(me_bot, other_bot, winner_id) {
+		var new_rating = me_bot.rating;;
+		if(me_bot.rated) {
+			var rating_diff = other_bot.rating - me_bot.rating;
+			var ea = 1/(1+Math.pow(10, rating_diff/400));
+			var k = 32;
+			if(me_bot.rating > 2100 && me_bot.rating <= 2400) {
+				k = 24;
+			} else if(me_bot.rating > 2400) {
+				k = 16;
+			}
+			var sa;
+			if(winner_id === me_bot.id) {
+				sa = 1.0;
+			} else if(winner_id === other_bot.id) {
+				sa = 0.0;
+			} else {
+				sa = 0.5;
+			}
+
+			new_rating = me_bot.rating + k * (sa - ea);
+		} else {
+			if(winner_id === me_bot.id) {
+				new_rating = other_bot.rating + 20;
+			} else if(winner_id === other_bot.id) {
+				new_rating = other_bot.rating - 20;
+			} else {
+				new_rating = other_bot.rating;
+			}
+		}
+
+		var rating_floor = Math.min(100 + 4*me_bot.wins + 2*me_bot.draws, 150);
+		new_rating = Math.max(new_rating, rating_floor);
+
+		return Math.round(new_rating);
 	};
 	
 	proto.brawl_result = function(bot1_id, bot2_id, winner_id, callback) {
 		database.get_bots([bot1_id, bot2_id], function(bots) {
 			var bot1 = bots[0];
 			var bot2 = bots[1];
+			database.get_users([bot1.user_fk, bot2.user_fk], function(users) {
+				var user1 = users[0];
+				var user2 = users[1];
 
-			var new_bot1_rating = bot1.rating, new_bot2_rating = bot2.rating;
+				var brawl_options = {
+					date: (new Date()).getTime()
+					, bot1_fk: bot1_id
+					, bot1_pre_rating: bot1.rated ? bot1.rating : 0
+					, bot1_name: bot1.name
+					, user1_fk: user1.id
+					, user1_name: user1.username
 
-			if(winner_id === undefined) {
-				bot1.draws++;
-				bot2.draws++;
-			} else if(winner_id === bot1_id) {
-				bot1.wins++;
-				bot2.losses++;
-			} else if(winner_id === bot2_id) {
-				bot1.losses++;
-				bot2.wins++;
-			}
+					, bot2_fk: bot2_id
+					, bot2_pre_rating: bot2.rated ? bot2.rating : 0
+					, bot2_name: bot2.name
+					, user2_fk: user2.id
+					, user2_name: user2.username
 
-			if(bot1.rated) {
-				var rating_diff = bot2.rating - bot1.rating;
-				var ea = 1/(1+Math.pow(10, rating_diff/400));
-				var k = 32;
-				if(bot1.rating > 2100 && bot1.rating <= 2400) {
-					k = 24;
-				} else if(bot1.rating > 2400) {
-					k = 16;
-				}
-				var sa;
-				if(winner_id === bot1_id) {
-					sa = 1.0;
-				} else if(winner_id === bot2_id) {
-					sa = 0.0;
-				} else {
-					sa = 0.5;
-				}
+					, winner_fk: winner_id
+					, replay_filename: ""
+				};
 
-				new_bot1_rating = bot1.rating + k * (sa - ea);
-			} else {
-				if(winner_id === bot1_id) {
-					new_bot1_rating = bot2.rating + 100;
-				} else if(winner_id === bot2_id) {
-					new_bot1_rating = bot2.rating - 100;
-				} else {
-					new_bot1_rating = bot2.rating;
-				}
-			}
+				var b1_wld = get_new_wins_losses_draws(bot1, bot2, winner_id);
+				bot1.wins = b1_wld.wins; bot1.losses = b1_wld.losses; bot1.draws = b1_wld.draws;
+				var b2_wld = get_new_wins_losses_draws(bot2, bot1, winner_id);
+				bot2.wins = b2_wld.wins; bot2.losses = b2_wld.losses; bot2.draws = b2_wld.draws;
 
-			if(bot2.rated === true) {
-				var rating_diff = bot1.rating - bot2.rating;
-				var ea = 1/(1+Math.pow(10, rating_diff/400));
-				var k = 32;
-				if(bot2.rating > 2100 && bot2.rating <= 2400) {
-					k = 24;
-				} else if(bot2.rating > 2400) {
-					k = 16;
-				}
-				var sa;
-				if(winner_id === bot1_id) {
-					sa = 0.0;
-				} else if(winner_id === bot2_id) {
-					sa = 1.0;
-				} else {
-					sa = 0.5;
-				}
+				var b1_rating = get_new_rating(bot1, bot2, winner_id);
+				var b2_rating = get_new_rating(bot2, bot1, winner_id);
 
-				new_bot2_rating = bot2.rating + k * (sa - ea);
-			} else {
-				if(winner_id === bot1_id) {
-					new_bot2_rating = bot1.rating - 100;
-				} else if(winner_id === bot2_id) {
-					new_bot2_rating = bot1.rating + 100;
-				} else {
-					new_bot2_rating = bot1.rating;
-				}
-			}
+				bot1.rating = b1_rating;
+				bot2.rating = b2_rating;
 
-			var b1_rating_floor = Math.min(100 + 4*bot1.wins + 2*bot1.draws, 150);
-			var b2_rating_floor = Math.min(100 + 4*bot2.wins + 2*bot2.draws, 150);
+				bot1.rated = true;
+				bot2.rated = true;
 
-			new_bot1_rating = Math.max(b1_rating_floor, new_bot1_rating);
-			new_bot2_rating = Math.max(b2_rating_floor, new_bot2_rating);
+				brawl_options.bot1_post_rating = bot1.rated ? bot1.rating : 0;
+				brawl_options.bot2_post_rating = bot2.rated ? bot2.rating : 0;
 
-			bot1.rated = true;
-			bot2.rated = true;
-			bot1.rating = Math.round(new_bot1_rating);
-			bot2.rating = Math.round(new_bot2_rating);
-			database.set_bot_stats(bot1, function() {
-				database.set_bot_stats(bot2, function() {
-					callback(bot1, bot2);
+				database.add_brawl(brawl_options, function() {
+					database.set_bot_stats(bot1, function() {
+						database.set_bot_stats(bot2, function() {
+							callback(bot1, bot2);
+						});
+					});
 				});
 			});
 		});
