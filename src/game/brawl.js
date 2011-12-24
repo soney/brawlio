@@ -28,6 +28,7 @@ var Brawl = function(options) {
 	proto.initialize = function() {
 		this.create_player_workers();
 	};
+
 	//WORKERS=======
 	proto.create_player_workers = function() {
 		var self = this;
@@ -47,15 +48,18 @@ var Brawl = function(options) {
 			});
 		}, 5000);
 	};
+
 	proto.terminate_player_workers = function() {
 		_.forEach(this.player_workers, function(player_worker) {
 			player_worker.terminate();
 		});
 		window.clearInterval(this.worker_sync_interval);
 	};
+
 	proto.post = function(worker, message) {
 		return worker.postMessage(message);
 	};
+
 	proto.on_player_message = function(player, worker, data) {
 		if(data === "ready") {
 			this._waiting_for_workers--;
@@ -69,18 +73,24 @@ var Brawl = function(options) {
 				this.run_if_ready();
 			}
 		} else {
-			var type = data.type;
+			var type = data.type
+				, game = this.game;
 			if(type === "console.log") {
 				if(this.logging) {
-					console.log.apply(console, data.args);
+					var args = data.args;
+					var round = data.rounds;
+					game.log(args, player, round);
 				}
 			} else if(type === "console.error") {
 				if(this.logging) {
-					console.error.apply(console, data.args);
+					var args = data.args;
+					game.error(args, player, round);
 				}
 			} else if(type === "exception") {
 				if(this.logging) {
-					console.log(data.message);
+					var args = [data.message];
+					var round = data.round;
+					game.error(args, player, round);
 				}
 			} else if(type === "action") {
 				var self = this;
@@ -88,7 +98,6 @@ var Brawl = function(options) {
 				var action = request.action;
 				var action_type = BrawlIO.game_constants.actions.get_type(action);
 				var options = request.options || {};
-				var game = this.game;
 				var delay, do_action;
 
 				var callback = function() {};
@@ -185,19 +194,23 @@ var Brawl = function(options) {
 			}
 		}
 	};
+
 	proto.run = function(callback) {
 		this.game_callback = callback || undefined;
 		this.asked_to_run = true;
 		this.run_if_ready();
 	};
+
 	proto.ready_to_run = function() {
 		return this.workers_ready;
 	};
+
 	proto.run_if_ready = function() {
 		if(this.ready_to_run() && this.asked_to_run) {
 			this.do_run();
 		}
 	};
+
 	proto.do_run = function() {
 		var self = this;
 		this.game.on("start", function() {
@@ -206,6 +219,7 @@ var Brawl = function(options) {
 				self.post(worker, {type: "game_start", start_time: start_time});
 			});
 		});
+
 		this.game.on("end", function(event) {
 			var winner = event.winner;
 			if(_.isFunction(self.game_callback)) {
@@ -215,13 +229,16 @@ var Brawl = function(options) {
 
 		this.game.start();
 	};
+
 	proto.terminate = function() {
 		this.terminate_player_workers();
 		this.game.stop();
 	};
+
 	proto.get_replay = function() {
 		return this.game.get_replay();
 	};
+
 	proto.sync_worker = function(player_worker) {
 		var game_round = this.game.get_round();
 		var time = get_time();

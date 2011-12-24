@@ -16,7 +16,9 @@ var console = {
 			args.push(arguments[i]);
 		}
 		post({type: "console.log"
-				, args: args});
+				, args: args
+				, round: game.get_round()
+			});
 	}
 	, error: function() {
 		var args = [];
@@ -24,13 +26,17 @@ var console = {
 			args.push(arguments[i]);
 		}
 		post({type: "console.error"
-				, args: args});
+				, args: args
+				, round: game.get_round()
+			});
 	}
 
 	, exception: function(error) {
 		post({type: "exception"
 				, message: error.message
-				, stack: error.stack});
+				, stack: error.stack
+				, round: game.get_round()
+			});
 	}
 };
 var controller = {}

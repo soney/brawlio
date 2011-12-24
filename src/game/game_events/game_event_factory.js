@@ -42,11 +42,27 @@
 		};
 	}(PlayerHit));
 	//========================================
+	var Console;
+	Console = function(options) {
+		Console.superclass.call(this, options);
+		this.type = options.type;
+		this.args = options.args;
+	};
+	BrawlIO.oo_extend(Console, GameEvent);
+	(function(my) {
+		var proto = my.prototype;
+		proto.get_type = function() { return this.type; };
+		proto.get_args = function() { return this.args; };
+	}(Console));
+	//========================================
 
 	BrawlIO.define_factory("player_fired_event", function(options) {
 		return new PlayerFired(options);
 	});
 	BrawlIO.define_factory("player_hit_event", function(options) {
 		return new PlayerHit(options);
+	});
+	BrawlIO.define_factory("console_event", function(options) {
+		return new Console(options);
 	});
 }(BrawlIO));

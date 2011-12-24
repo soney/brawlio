@@ -157,6 +157,7 @@ var Game = function(options) {
 		var fire_event = BrawlIO.create("player_fired_event", {
 			fired_by: projectile.get_fired_by()
 			, projectile: projectile
+			, round: round
 		});
 		this.replay.push_game_event(fire_event);
 		this.update_state(round, "Fire");
@@ -168,13 +169,16 @@ var Game = function(options) {
 		}
 		var projectile_hit_event = BrawlIO.create("player_hit_event", {
 			projectile: projectile
+			, round: round
 		});
 		this.replay.push_game_event(projectile_hit_event);
 		this.update_state(round, "Projectile hit");
 	};
+
 	proto.get_active_moving_objects = function() {
 		return this.get_living_players().concat(this.get_projectiles());
 	};
+
 	proto.on_player_fire = function(player, round) {
 		var position = this.get_moving_object_position_on_round(player, round);
 		var player_radius = player.get_radius();
@@ -194,6 +198,7 @@ var Game = function(options) {
 		});
 		this.add_projectile(projectile, round);
 	};
+
 	proto.start = function() {
 		var self = this;
 		this.running = true;
@@ -208,6 +213,7 @@ var Game = function(options) {
 			type: "start"
 		});
 	};
+
 	proto.stop = function(winner, round) {
 		if(round === undefined) {
 			round = this.get_round();
@@ -229,12 +235,15 @@ var Game = function(options) {
 			, winner: winner
 		});
 	};
+
 	proto.get_round_limit = function() {
 		return this.round_limit;
 	};
+
 	proto.get_map = function() {
 		return this.map;
 	};
+
 	proto.on_round = function(callback, round, description) {
 		var round_diff = round - this.get_round();
 		if(round_diff <= 0) {
@@ -256,16 +265,19 @@ var Game = function(options) {
 			return round_listener;
 		}
 	};
+
 	proto.remove_round_listener = function(round_listener) {
 		round_listener.clear_timeout();
 		this.round_listeners = _.without(this.round_listeners, round_listener);
 	};
+
 	proto.clear_round_listeners = function() {
 		_.forEach(this.round_listeners, function(round_listener) {
 			round_listener.clear_timeout();
 		});
 		this.round_listeners = [];
 	};
+
 	proto.update_round_listeners = function() {
 		var self = this;
 		var latest_state = this.peek_state();
@@ -279,6 +291,7 @@ var Game = function(options) {
 			}
 		});
 	};
+
 	proto.get_round = function(time) {
 		var last_state = this.peek_state();
 		if(last_state === undefined) {
@@ -290,6 +303,7 @@ var Game = function(options) {
 			return last_state.start_round + round_diff;
 		}
 	};
+
 	proto.push_state = function(options) {
 		var round = options.round;
 		var last_state = this.peek_state();
@@ -301,6 +315,7 @@ var Game = function(options) {
 		this.update_round_listeners();
 		return new_state;
 	};
+
 	proto.peek_state = function() {
 		return _.last(this.states);
 	};
@@ -329,18 +344,21 @@ var Game = function(options) {
 		}
 		this.replay.set_last_round(last_valid_round);
 	};
+
 	proto.set_interesting_round_timeout = function(round, event) {
 		var self = this;
 		this.special_timeouts.next_interesting_round = this.on_round(function() {
 			self.update_state(round, "Interesting Round ("+event.event_type+")");
 		}, round, "Update timer");
 	};
+
 	proto.clear_interesting_round_timeout = function() {
 		if(this.special_timeouts.next_interesting_round !== undefined) {
 			this.remove_round_listener(this.special_timeouts.next_interesting_round);
 			this.special_timeouts.next_interesting_round = undefined;
 		}
 	};
+
 	proto.get_next_touch_event = function() {
 		var map_event = this.get_next_map_event();
 		var moving_object_event= this.get_next_moving_object_event();
@@ -604,6 +622,7 @@ var Game = function(options) {
 		}
 		return false;
 	};
+
 	proto.check_game_over = function(round) {
 		var living_players = this.get_living_players();
 		var living_team, i, len = living_players.length;
@@ -619,6 +638,23 @@ var Game = function(options) {
 		}
 		//Only one team left
 		this.stop(living_team, round);
+	};
+
+	proto.log = function(args, player, round) {
+		this.do_log("log", args, player, round);
+	};
+
+	proto.error = function(args, player, round) {
+		this.do_log("error", args, player, round);
+	};
+
+	proto.do_log = function(type, args, player, round) {
+		var log_event = BrawlIO.create("console_event", {
+			args: args
+			, player: player
+			, type: type
+		});
+		this.replay.push_game_event(log_event);
 	};
 }(Game));
 
