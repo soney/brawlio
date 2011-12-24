@@ -20,6 +20,7 @@ var Brawl = function(options) {
 	this.workers_ready = false;
 	this.game_callback = undefined;
 	this.worker_sync_interval = undefined;
+	this.logging = true;
 };
 
 (function(my) {
@@ -70,7 +71,17 @@ var Brawl = function(options) {
 		} else {
 			var type = data.type;
 			if(type === "console.log") {
-				console.log.apply(console, data.args);
+				if(this.logging) {
+					console.log.apply(console, data.args);
+				}
+			} else if(type === "console.error") {
+				if(this.logging) {
+					console.error.apply(console, data.args);
+				}
+			} else if(type === "exception") {
+				if(this.logging) {
+					console.log(data.message);
+				}
 			} else if(type === "action") {
 				var self = this;
 				var request = data;

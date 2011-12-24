@@ -18,6 +18,20 @@ var console = {
 		post({type: "console.log"
 				, args: args});
 	}
+	, error: function() {
+		var args = [];
+		for(var i = 0, len = arguments.length; i<len; i++) {
+			args.push(arguments[i]);
+		}
+		post({type: "console.error"
+				, args: args});
+	}
+
+	, exception: function(error) {
+		post({type: "exception"
+				, message: error.message
+				, stack: error.stack});
+	}
 };
 var controller = {}
 	, game = {};
@@ -306,7 +320,11 @@ var run = function() {
 			, fire = controller.fire
 			, sense = controller.sense
 			;
-		eval(code);
+		try {
+			eval(code);
+		} catch(e) {
+			console.exception(e);
+		}
 	}).call();
 };
 post("ready");
