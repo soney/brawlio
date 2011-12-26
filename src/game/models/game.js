@@ -80,9 +80,9 @@ var proto = my.prototype;
 			, moving_object_states: _.map(obj.moving_object_states, function(serialized_moving_object_state) {
 				var rv;
 				if(serialized_moving_object_state.type === "projectile_state") {
-					rv = BrawlIO.create("deserialized_projectile_state", serialized_moving_object_state, moving_object_map)
+					rv = BrawlIO.create("deserialized_projectile_state", serialized_moving_object_state, moving_object_map);
 				} else if(serialized_moving_object_state.type === "player_state") {
-					rv = BrawlIO.create("deserialized_player_state", serialized_moving_object_state, moving_object_map)
+					rv = BrawlIO.create("deserialized_player_state", serialized_moving_object_state, moving_object_map);
 				}
 				var path = BrawlIO.create("deserialized_movement_path", serialized_moving_object_state.path);
 				rv.set_path(path);

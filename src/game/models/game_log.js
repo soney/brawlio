@@ -124,7 +124,7 @@
 			return {
 				map: serialized_map
 				, teams: _.map(this.teams, function(team) {
-					return team.serialize()
+					return team.serialize();
 				})
 				, game_events: serialized_game_events
 				, game_states: serialized_game_states
@@ -165,7 +165,7 @@
 
 			_.forEach(projectile_moving_objects, function(serialized_moving_object) {
 				var id = serialized_moving_object.id;
-				var moving_object = BrawlIO.create("deserialized_projectile", serialized_moving_object, moving_object_map)
+				var moving_object = BrawlIO.create("deserialized_projectile", serialized_moving_object, moving_object_map);
 				moving_object_map[id] = moving_object;
 			});
 

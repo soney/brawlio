@@ -367,7 +367,7 @@
 		};
 		proto.serialize = function() {
 			var rv = my.superclass.prototype.serialize.call(this);
-			rv.theta0 = this.theta0
+			rv.theta0 = this.theta0;
 			rv.rotational_speed = this.rotational_speed;
 			return rv;
 		};

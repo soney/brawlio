@@ -136,6 +136,7 @@
 			var t1 = (Math.sqrt(discriminant) - 2*A*B - 2*C*D)/(2*(A*A + C*C));
 			var t2 = (-1*Math.sqrt(discriminant) - 2*A*B - 2*C*D)/(2*(A*A + C*C));
 			t = Math.min(t1,t2);
+			if(_.isNaN(t)) { return false; } //TODO: find out why this occured once and fix it
 			return {
 				time: t
 				, event_type: "Moving Object Hit B"

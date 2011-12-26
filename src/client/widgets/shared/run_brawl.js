@@ -1,4 +1,5 @@
 (function(BrawlIO) {
+	var _ = BrawlIO._;
 	var BrawlDialog = {
 		options: {
 			my_code: ""
@@ -30,7 +31,7 @@
 					width: 50
 					, height: 50
 				}
-				, round_limit: 5
+				, round_limit: 40
 				, debug_mode: this.option("debug")
 			});
 			this.brawl = brawl;
@@ -56,10 +57,11 @@
 				, title: this.option("title")
 				, width: this.replay_element.replay_viewer("get_width") + 40
 				, height: this.replay_element.replay_viewer("get_height") + 60
-				, close: function() {
-					window.setTimeout(function() {
+				, beforeClose: function() {
+					_.defer(function() {
 						self.destroy();
-					}, 0);
+					});
+					return false;
 				}
 			});
 		}

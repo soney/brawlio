@@ -42,7 +42,7 @@ var Brawl = function(options) {
 			};
 			return player_worker;
 		});
-		this.worker_sync_interval = window.setInterval(function() {
+		this.worker_sync_interval = setInterval(function() {
 			_.forEach(self.player_workers, function(worker) {
 				self.sync_worker(worker);
 			});
@@ -53,7 +53,7 @@ var Brawl = function(options) {
 		_.forEach(this.player_workers, function(player_worker) {
 			player_worker.terminate();
 		});
-		window.clearInterval(this.worker_sync_interval);
+		clearInterval(this.worker_sync_interval);
 	};
 
 	proto.post = function(worker, message) {
@@ -74,22 +74,23 @@ var Brawl = function(options) {
 			}
 		} else {
 			var type = data.type
-				, game = this.game;
+				, game = this.game
+				, args, round;
 			if(type === "console.log") {
 				if(this.logging) {
-					var args = data.args;
-					var round = data.rounds;
+					args = data.args;
+					round = data.rounds;
 					game.log(args, player, round);
 				}
 			} else if(type === "console.error") {
 				if(this.logging) {
-					var args = data.args;
+					args = data.args;
 					game.error(args, player, round);
 				}
 			} else if(type === "exception") {
 				if(this.logging) {
-					var args = [data.message];
-					var round = data.round;
+					args = [data.message];
+					round = data.round;
 					game.error(args, player, round);
 				}
 			} else if(type === "action") {
@@ -170,7 +171,7 @@ var Brawl = function(options) {
 					game.on_round(do_action, request.round+delay, "Rotate");
 				} else if(action_type === Actions.instantaneous_type) {
 					if(action === Actions.fire) {
-						var round = request.round;
+						round = request.round;
 						var do_fire;
 						do_fire = function(round) {
 							player.fire(round);
@@ -189,7 +190,7 @@ var Brawl = function(options) {
 						};
 						game.on_round(do_initial_fire, round, "Fire");
 					} else if(action === Actions.stop_firing) {
-						var round = request.round;
+						round = request.round;
 						var do_stop_firing = function() {
 							player.set_auto_fire(false);
 						};

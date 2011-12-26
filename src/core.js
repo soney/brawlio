@@ -1,4 +1,4 @@
-(function() {
+var BrawlIO = (function() {
 	var on_call = function() {
 	};
 
@@ -38,5 +38,10 @@
 		return factory.apply(this, args);
 	};
 
-	window.BrawlIO = BrawlIO;
+	if (typeof module !== 'undefined' && module.exports) {
+		module.exports = BrawlIO;
+    } else {
+		window.BrawlIO = BrawlIO;
+    }
+	return BrawlIO;
 }());

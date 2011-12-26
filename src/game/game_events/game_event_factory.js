@@ -99,31 +99,30 @@
 
 	BrawlIO.define_factory("deserialized_game_event", function(obj, moving_object_map) {
 		var type = obj.type;
+		var player, projectile;
 		if(type === "player_fired") {
-			var player = moving_object_map[obj.player];
-			var projectile = moving_object_map[obj.projectile];
+			player = moving_object_map[obj.player];
+			projectile = moving_object_map[obj.projectile];
 			return BrawlIO.create("player_fired_event", {
 				player: player
 				, projectile: projectile
 				, round: obj.round
 			});
 		} else if(type === "player_hit") {
-			var hit_player = moving_object_map[obj.hit_player];
-			var projectile = moving_object_map[obj.projectile];
+			player = moving_object_map[obj.hit_player];
+			projectile = moving_object_map[obj.projectile];
 			return BrawlIO.create("player_hit_event", {
-				hit_player: hit_player
+				hit_player: player
 				, projectile: projectile
 				, round: obj.round
 			});
 		} else if(type === "console") {
-			var player = moving_object_map[obj.player];
-			var log_type = obj.log_type;
+			player = moving_object_map[obj.player];
 			return BrawlIO.create("console_event", {
 				player: player
 				, log_type: obj.log_type
 				, args: obj.args
 			});
 		}
-		console.log(obj, moving_object_map);
 	});
 }(BrawlIO));

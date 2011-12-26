@@ -347,6 +347,7 @@ var callback_map = function(arr, func, callback) {
 		});
 
 		if(this.debug_pages) {
+			var fs = require("fs");
 			var jslint = require("jslint/lib/jslint");
 			server.get("/jslint", function(req, res, next) {
 				var errors_only = true;

@@ -206,16 +206,16 @@
 
 		, set_update_interval: function() {
 			var self = this;
-			if(this.hasOwnProperty("__update_interval")) {
-				this.clear_update_interval();
-			} 
-			this.__update_interval = window.setInterval(function() {
+			this.clear_update_interval();
+			this.__update_interval = setInterval(function() {
 				self.update();
 			}, 1000/this.option("fps"));
 		}
 		, clear_update_interval: function() {
-			window.clearInterval(this.__update_interval);
-			delete this.__update_interval;
+			if(this.hasOwnProperty("__update_interval")) {
+				clearInterval(this.__update_interval);
+				delete this.__update_interval;
+			}
 		}
 		, on_play_percentage_set: function(event) {
 			var percentage = event.percentage;

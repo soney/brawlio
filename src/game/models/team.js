@@ -48,7 +48,7 @@
 				, id: this.get_id()
 				, name: this.get_name()
 				, players: _.map(this.get_players(), function(player) {
-					return player.serialize()
+					return player.serialize();
 				})
 			};
 		};

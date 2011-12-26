@@ -37,9 +37,13 @@
 		else if(action<20) { return game_constants.actions.rotate_type; }
 		else if(action<30) { return game_constants.actions.instantaneous_type; }
 	};
-	if(this.hasOwnProperty("BrawlIO")) {
-		this.BrawlIO.game_constants = game_constants;
-	} else {
-		this.game_constants = game_constants;
-	}
+	if (typeof module !== 'undefined' && module.exports) { //Node
+		BrawlIO.game_constants = game_constants;
+    } else {
+		if(this.hasOwnProperty("BrawlIO")) {
+			this.BrawlIO.game_constants = game_constants;
+		} else {
+			this.game_constants = game_constants;
+		}
+    }
 }());
