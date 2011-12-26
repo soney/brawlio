@@ -41,30 +41,9 @@
 					type: "game_over"
 					, winner: winner
 				});
-				var stringified_game_log = game_log.stringify();
-				var new_game_log = BrawlIO.create("game_log_from_string", stringified_game_log);
-				console.log(new_game_log);
-				self.replay_element = $("<div />").replay_viewer({
-					game_log: new_game_log
-					, debug: self.option("debug")
-				});
-				self.replay_element.dialog({
-					modal: true
-					, resizable: false
-					, draggable: false
-					, title: self.option("title")
-					, width: self.replay_element.replay_viewer("get_width") + 40
-					, height: self.replay_element.replay_viewer("get_height") + 60
-					, close: function() {
-						window.setTimeout(function() {
-							self.destroy();
-						}, 0);
-					}
-				});
 			});
 
 			var game_log = this.brawl.get_game_log();
-			/*
 
 			this.replay_element = $("<div />").replay_viewer({
 				game_log: game_log
@@ -83,7 +62,6 @@
 					}, 0);
 				}
 			});
-			*/
 		}
 
 		, destroy: function() {
