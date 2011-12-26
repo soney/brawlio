@@ -63,7 +63,7 @@ exports.game_src = c(
 					, "models/obstacles/polygon_obstacle.js"
 					, "models/obstacles/map_boundary_obstacle.js"
 
-					, "models/replay.js"
+					, "models/game_log.js"
 					, "models/team.js"
 					, "models/map.js"
 					, "models/game.js"

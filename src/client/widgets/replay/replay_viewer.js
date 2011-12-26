@@ -11,7 +11,7 @@
 
 	var ReplayViewer = {
 		options: {
-			replay: undefined
+			game_log: undefined
 			, pixels_per_tile: 8 
 			, minimized_scrub_height: 2
 			, maximized_scrub_height: 10
@@ -41,27 +41,27 @@
 			this.paper.remove();
 		}
 		, get_width: function() {
-			var replay = this.option("replay");
-			var map = replay.get_map()
+			var game_log = this.option("game_log");
+			var map = game_log.get_map()
 				, pixels_per_tile = this.option("pixels_per_tile")
 				, map_width = map.get_width();
 			return map_width * pixels_per_tile;
 		}
 
 		, get_height: function() {
-			var replay = this.option("replay");
-			var map = replay.get_map()
+			var game_log = this.option("game_log");
+			var map = game_log.get_map()
 				, pixels_per_tile = this.option("pixels_per_tile")
 				, map_height = map.get_height();
 			return map_height * pixels_per_tile;
 		}
 
 		, initialize: function() {
-			var replay = this.option("replay")
+			var game_log = this.option("game_log")
 				, pixels_per_tile = this.option("pixels_per_tile")
 				, minimized_scrub_height = this.option("minimized_scrub_height")
 				, control_height = this.option("control_height");
-			var map = replay.get_map()
+			var map = game_log.get_map()
 				, map_width = map.get_width()
 				, map_height = map.get_height();
 			this.paper.setSize(map_width * pixels_per_tile, map_height * pixels_per_tile + minimized_scrub_height);
@@ -87,8 +87,8 @@
 			this.set_round(0);
 			this.update_loaded_percentage();
 
-			replay.on("last_round_changed", this.on_replay_chunk, this);
-			replay.on("complete", this.on_replay_chunk, this);
+			game_log.on("last_round_changed", this.on_replay_chunk, this);
+			game_log.on("complete", this.on_replay_chunk, this);
 		}
 		, on_replay_chunk: function() {
 			if(this.mode === mode.stalled) {
@@ -97,10 +97,10 @@
 			this.update_loaded_percentage();
 		}
 		, update_loaded_percentage: function() {
-			var replay = this.option("replay");
-			var max_rounds = replay.get_max_rounds();
+			var game_log = this.option("game_log");
+			var max_rounds = game_log.get_max_rounds();
 			this.progress_bar.set_max_text("/"+max_rounds.toFixed(1));
-			var loaded_rounds = replay.get_last_round();
+			var loaded_rounds = game_log.get_last_round();
 
 			var loaded_percentage = loaded_rounds / max_rounds;
 			this.progress_bar.set_loaded_percentage(loaded_percentage)
@@ -169,12 +169,12 @@
 		}
 
 		, on_scrub_stop: function() {
-			var replay = this.option("replay");
-			var max_round = replay.get_max_rounds();
+			var game_log = this.option("game_log");
+			var max_round = game_log.get_max_rounds();
 			var round = this.round;
-			if(replay.is_complete() && round >= max_round) {
+			if(game_log.is_complete() && round >= max_round) {
 				this.set_mode(mode.at_end);
-				var winner = replay.get_winner();
+				var winner = game_log.get_winner();
 				this.render_result(winner);
 			} else if(this.mode === mode.scrubbing_playing) {
 				this.set_mode(mode.playing);
@@ -223,9 +223,9 @@
 			this.set_round(round, false);
 		}
 		, set_round: function(round, set_progress_bar) {
-			var replay = this.option("replay");
-			var last_round = replay.get_last_round();
-			var max_round = replay.get_max_rounds();
+			var game_log = this.option("game_log");
+			var last_round = game_log.get_last_round();
+			var max_round = game_log.get_max_rounds();
 
 			round = Math.min(round, last_round);
 
@@ -241,13 +241,13 @@
 
 
 			if(round >= max_round && this.mode === mode.playing) {
-				var winner = replay.get_winner();
+				var winner = game_log.get_winner();
 				this.render_result(winner);
 			} else {
 				this.render_round(round);
 			}
 
-			if(!replay.is_complete() && round >= last_round && this.mode === mode.playing) {
+			if(!game_log.is_complete() && round >= last_round && this.mode === mode.playing) {
 				_.defer(_.bind(this.set_mode, this, mode.stalled));
 			} else if(round >= max_round && this.mode === mode.playing) {
 				_.defer(_.bind(this.set_mode, this, mode.at_end));
@@ -261,10 +261,10 @@
 			this.set_mode(mode.playing);
 		}
 		, render_round: function(round) {
-			var replay = this.option("replay");
+			var game_log = this.option("game_log");
 			round = round || this.round;
 
-			var snapshot = replay.get_snapshot_at(round);
+			var snapshot = game_log.get_snapshot_at(round);
 
 			var visible_sprites = _.map(snapshot.moving_object_states, function(moving_object_state) {
 				var moving_object = moving_object_state.moving_object;
@@ -289,8 +289,8 @@
 		}
 
 		, render_result: function(winner) {
-			var replay = this.option("replay")
-			var map = replay.get_map()
+			var game_log = this.option("game_log")
+			var map = game_log.get_map()
 				, map_width = map.get_width()
 				, map_height = map.get_height()
 				, pixels_per_tile = this.option("pixels_per_tile");
@@ -323,7 +323,7 @@
 		}
 
 		, get_sprite_for: function(moving_object) {
-			var replay = this.option("replay");
+			var game_log = this.option("game_log");
 			var i, len = this.sprites.length;
 			var rv, sprite;
 			for(i = 0; i<len; i++) {
@@ -336,7 +336,7 @@
 			if(rv === undefined) {
 				if(moving_object.is("player")) {
 					var team = moving_object.get_team();
-					var map = replay.get_map();
+					var map = game_log.get_map();
 					rv = create_player_widget({
 						moving_object: moving_object
 						, paper: this.paper

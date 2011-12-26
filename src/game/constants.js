@@ -6,6 +6,8 @@
 		, REPLAY_MS_PER_ROUND: 1000
 		, PROJECTILE_SPEED: 20 
 		, PROJECTILE_DAMAGE: 2
+		, ROUNDS_PER_WORKER_SYNC: 1
+		, REPLAY_VERSION: 0
 		, actions: {
 			move_type: 0
 			, move: {

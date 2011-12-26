@@ -24,7 +24,7 @@
 		this.x0 = options.x0;
 		this.y0 = options.y0;
 		this.debug_info = options.debug_info;
-		this.name = "generic_movement_path";
+		this.type = "generic_movement_path";
 	};
 	(function(my) {
 		var proto = my.prototype;
@@ -32,6 +32,13 @@
 			return {x: 0, y: 0};
 		};
 		proto.is = function(type) { return this.type === type; };
+		proto.serialize = function() {
+			return {
+				type: this.type
+				, x0: this.x0
+				, y0: this.y0
+			};
+		};
 	}(MovementPath));
 	//========================================
 	var Stationary;
@@ -47,6 +54,13 @@
 				x: this.x0
 				, y: this.y0
 			};
+		};
+		proto.serialize = function() {
+			var rv = my.superclass.prototype.serialize.call(this);
+			return rv;
+		};
+		my.deserialize = function(obj) {
+			return new my(obj);
 		};
 	}(Stationary));
 	//========================================
@@ -120,6 +134,15 @@
 			}
 			return rv;
 		};
+		proto.serialize = function() {
+			var rv = my.superclass.prototype.serialize.call(this);
+			rv.angle = this.angle;
+			rv.speed = this.speed;
+			return rv;
+		};
+		my.deserialize = function(obj) {
+			return new my(obj);
+		};
 	}(ConstantVelocityLine));
 	//========================================
 	var ConstantVelocityCircle;
@@ -184,14 +207,22 @@
 			var angle = this.movement_angle + round * this.rotational_speed;
 			return BrawlIO.create("vector_from_magnitude_and_angle", this.speed, angle);
 		};
+		proto.serialize = function() {
+			var rv = my.superclass.prototype.serialize.call(this);
+			rv.movement_angle = this.movement_angle;
+			rv.speed = this.speed;
+			rv.rotational_speed = this.rotational_speed;
+			return rv;
+		};
+		my.deserialize = function(obj) {
+			return new my(obj);
+		};
 	}(ConstantVelocityCircle));
 	//========================================
 	var SinusoidalVelocityLine;
 	SinusoidalVelocityLine = function(options) {
 		SinusoidalVelocityLine.superclass.call(this, options);
 		this.type = "sinusoidal_velocity_line";
-		this.x0 = options.x0;
-		this.y0 = options.y0;
 		this.movement_angle = options.movement_angle;
 		this.rotational_speed = options.rotational_speed;
 		this.speed = options.speed;
@@ -294,6 +325,18 @@
 		proto.get_rotational_speed = function() {
 			return this.rotational_speed;
 		};
+		proto.serialize = function() {
+			var rv = my.superclass.prototype.serialize.call(this);
+			rv.movement_angle = this.movement_angle;
+			rv.rotational_speed = this.rotational_speed;
+			rv.speed = this.speed;
+			rv.initial_theta = this.initial_theta;
+			rv.initial_circle_theta = this.initial_circle_theta;
+			return rv;
+		};
+		my.deserialize = function(obj) {
+			return new my(obj);
+		};
 	}(SinusoidalVelocityLine));
 	//========================================
 	var RotatingStationary;
@@ -322,6 +365,15 @@
 			var delta_theta = theta - this.theta0;
 			return delta_theta / this.rotational_speed;
 		};
+		proto.serialize = function() {
+			var rv = my.superclass.prototype.serialize.call(this);
+			rv.theta0 = this.theta0
+			rv.rotational_speed = this.rotational_speed;
+			return rv;
+		};
+		my.deserialize = function(obj) {
+			return new my(obj);
+		};
 	}(RotatingStationary));
 
 	BrawlIO.define_factory("stationary_path", function(options) {
@@ -338,5 +390,19 @@
 	});
 	BrawlIO.define_factory("rotating_stationary_path", function(options) {
 		return new RotatingStationary(options);
+	});
+
+	BrawlIO.define_factory("deserialized_movement_path", function(obj) {
+		if(obj.type === "stationary") {
+			return Stationary.deserialize(obj);
+		} else if(obj.type === "constant_velocity_line") {
+			return ConstantVelocityLine.deserialize(obj);
+		} else if(obj.type === "constant_velocity_circle") {
+			return ConstantVelocityCircle.deserialize(obj);
+		} else if(obj.type === "sinusoidal_velocity_line") {
+			return SinusoidalVelocityLine.deserialize(obj);
+		} else if(obj.type === "rotating_stationary") {
+			return RotatingStationary.deserialize(obj);
+		}
 	});
 }(BrawlIO));

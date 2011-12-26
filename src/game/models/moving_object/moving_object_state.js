@@ -8,7 +8,6 @@
 		this.theta0 = options.theta0;
 		this.rotational_velocity = options.rotational_velocity;
 		this.translational_velocity = options.translational_velocity;
-		this.game = options.game;
 
 		this.specified_path = this.get_specified_path();
 	};
@@ -59,6 +58,9 @@
 				});
 			}
 		};
+		proto.set_path = function(path) {
+			this.path = path;
+		};
 		proto.get_path = function() {
 			return this.path;
 		};
@@ -76,6 +78,17 @@
 			return Math.sqrt( Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2) );
 		};
 		proto.restrict_path = function(other_moving_object_state) {
+		};
+		proto.serialize = function() {
+			return {
+				moving_object: this.get_moving_object().get_id()
+				, x0: this.get_x0()
+				, y0: this.get_y0()
+				, theta0: this.get_theta0()
+				, rotational_velocity: this.rotational_velocity
+				, translational_velocity: this.translational_velocity
+				, path: this.get_path().serialize()
+			};
 		};
 	}(MovingObjectState));
 

@@ -6,7 +6,7 @@ var GameState = function(options) {
 	this.start_round = options.round;
 	this.start_time  = BrawlIO.get_time();
 	this.trigger_action = options.trigger;
-	this.end_round = undefined;
+	this.end_round = options.end_round || undefined;
 	this.moving_object_states = options.moving_object_states;
 };
 (function(my) {
@@ -53,7 +53,49 @@ var proto = my.prototype;
 			return rv;
 		});
 	};
+	proto.get_moving_objects = function() {
+		return _.map(this.moving_object_states, function(moving_object_state) {
+			var moving_object = moving_object_state.get_moving_object();
+			return moving_object;
+		});
+	};
+	proto.serialize = function() {
+		var rv = {
+			start_round: this.start_round
+			, end_round: this.end_round
+			, trigger: this.trigger_action
+		};
+
+		rv.moving_object_states = _.map(this.moving_object_states, function(moving_object_state) {
+			return moving_object_state.serialize();
+		});
+
+		return rv;
+	};
+	my.deserialize = function(obj, moving_object_map) {
+		var rv = new my({
+			round: obj.start_round
+			, end_round: obj.end_round
+			, trigger: obj.trigger
+			, moving_object_states: _.map(obj.moving_object_states, function(serialized_moving_object_state) {
+				var rv;
+				if(serialized_moving_object_state.type === "projectile_state") {
+					rv = BrawlIO.create("deserialized_projectile_state", serialized_moving_object_state, moving_object_map)
+				} else if(serialized_moving_object_state.type === "player_state") {
+					rv = BrawlIO.create("deserialized_player_state", serialized_moving_object_state, moving_object_map)
+				}
+				var path = BrawlIO.create("deserialized_movement_path", serialized_moving_object_state.path);
+				rv.set_path(path);
+				return rv;
+			})
+		});
+		return rv;
+	};
 }(GameState));
+
+BrawlIO.define_factory("deserialized_game_state", function(obj, moving_object_map) {
+	return GameState.deserialize(obj, moving_object_map);
+});
 
 var RoundListener = function(options) {
 	this.on_round = options.on_round;
@@ -94,9 +136,8 @@ var Game = function(options) {
 	this.map = options.map;
 	this.round_limit = options.round_limit;
 	BrawlIO.make_listenable(this);
-	this.states = [];
 	this.round_listeners = [];
-	this.replay = BrawlIO.create("replay", { game: this });
+	this.game_log = BrawlIO.create("game_log", {map: this.get_map(), teams: this.teams, round_limit: this.get_round_limit() });
 	this.initialize();
 	this.active_projectiles = [];
 	this.special_timeouts = {
@@ -116,7 +157,6 @@ var Game = function(options) {
 	};
 	proto.initialize_player = function(player) {
 		var self = this;
-		player.set_game(this);
 		player.on("state_change", function(event) {
 			var round = event.round;
 			var trigger = event.change_type;
@@ -155,11 +195,11 @@ var Game = function(options) {
 	proto.add_projectile = function(projectile, round) {
 		this.active_projectiles.push(projectile);
 		var fire_event = BrawlIO.create("player_fired_event", {
-			fired_by: projectile.get_fired_by()
+			player: projectile.get_fired_by()
 			, projectile: projectile
 			, round: round
 		});
-		this.replay.push_game_event(fire_event);
+		this.game_log.push_game_event(fire_event);
 		this.update_state(round, "Fire");
 	};
 	proto.remove_projectile = function(projectile, round) {
@@ -167,11 +207,6 @@ var Game = function(options) {
 		if(index >= 0) {
 			this.active_projectiles.splice(index, 1);
 		}
-		var projectile_hit_event = BrawlIO.create("player_hit_event", {
-			projectile: projectile
-			, round: round
-		});
-		this.replay.push_game_event(projectile_hit_event);
 		this.update_state(round, "Projectile hit");
 	};
 
@@ -204,7 +239,7 @@ var Game = function(options) {
 		this.running = true;
 		this.update_state(0, "Game Started");
 		if(this.round_limit !== undefined) {
-			var round_limit = this.round_limit;
+			var round_limit = this.get_round_limit();
 			this.special_timeouts.end_game = this.on_round(function() {
 				self.stop(undefined, round_limit);
 			}, round_limit, "End of game");
@@ -221,10 +256,10 @@ var Game = function(options) {
 
 		this.clear_round_listeners();
 		var last_round = Math.min(this.get_round(), this.get_round_limit());
-		this.replay.set_last_round(last_round);
-		this.replay.mark_complete(winner);
+		this.game_log.set_last_round(last_round);
+		this.game_log.mark_complete(winner);
 		this.running = false;
-		var last_state = this.peek_state();
+		var last_state = this.game_log.peek_state();
 		this.push_state({round: round, trigger: "Game end", moving_object_states: this.create_moving_object_states(round)});
 		if(last_state !== undefined) {
 			last_state.set_end_round(round);
@@ -280,7 +315,7 @@ var Game = function(options) {
 
 	proto.update_round_listeners = function() {
 		var self = this;
-		var latest_state = this.peek_state();
+		var latest_state = this.game_log.peek_state();
 		_.forEach(this.round_listeners, function(round_listener) {
 			if(round_listener.for_state !== latest_state) {
 				round_listener.for_state = latest_state;
@@ -293,7 +328,7 @@ var Game = function(options) {
 	};
 
 	proto.get_round = function(time) {
-		var last_state = this.peek_state();
+		var last_state = this.game_log.peek_state();
 		if(last_state === undefined) {
 			return 0;
 		} else {
@@ -306,27 +341,18 @@ var Game = function(options) {
 
 	proto.push_state = function(options) {
 		var round = options.round;
-		var last_state = this.peek_state();
+		var last_state = this.game_log.peek_state();
 		if(last_state !== undefined) {
 			last_state.set_end_round(round);
 		}
 		var new_state = new GameState(options);
-		this.states.push(new_state);
+		this.game_log.push_game_state(new_state);
 		this.update_round_listeners();
 		return new_state;
 	};
 
-	proto.peek_state = function() {
-		return _.last(this.states);
-	};
-
 	proto.update_state = function(round, trigger, more_info) {
 		var new_state, next_event, next_event_round;
-		/*
-		if(this.debug_mode) {
-			console.log("------", round, trigger, "------");
-		}
-		*/
 		this.clear_interesting_round_timeout();
 		if(!this.running) {
 			return;
@@ -342,7 +368,7 @@ var Game = function(options) {
 		if(this.debug_mode) {
 			last_valid_round = next_event_round || round; //This way, the replay can peek ahead
 		}
-		this.replay.set_last_round(last_valid_round);
+		this.game_log.set_last_round(last_valid_round);
 	};
 
 	proto.set_interesting_round_timeout = function(round, event) {
@@ -378,7 +404,7 @@ var Game = function(options) {
 	proto.get_next_map_event = function() {
 		var moving_objects = this.get_active_moving_objects();
 		var map = this.get_map();
-		var game_state = this.peek_state();
+		var game_state = this.game_log.peek_state();
 
 		var touch_events = _(moving_objects)	.chain()
 												.map(function(moving_object) {
@@ -399,7 +425,7 @@ var Game = function(options) {
 	};
 	proto.get_next_moving_object_event = function() {
 		var moving_objects = this.get_active_moving_objects();
-		var game_state = this.peek_state();
+		var game_state = this.game_log.peek_state();
 		var i,j, len = moving_objects.length;
 		var events = [];
 
@@ -429,23 +455,12 @@ var Game = function(options) {
 		else { return next_event; }
 	};
 
-	proto.get_replay = function() {
-		return this.replay;
-	};
-
-	proto.get_relevant_state = function(round) {
-		var i;
-		for(i = this.states.length-1; i>=0; i--) {
-			var state = this.states[i];
-			if(state.is_relevant_to_round(round)) {
-				return state;
-			}
-		}
-		return undefined;
+	proto.get_game_log = function() {
+		return this.game_log;
 	};
 
 	proto.get_moving_object_position_on_round = function(moving_object, round) {
-		var relevant_state = this.get_relevant_state(round);
+		var relevant_state = this.game_log.get_relevant_state(round);
 		if(relevant_state === undefined) {
 			return undefined;
 		}
@@ -462,15 +477,6 @@ var Game = function(options) {
 		return rv;
 	};
 
-	proto.get_moving_object_states = function(round) {
-		var relevant_state = this.get_relevant_state(round);
-		if(relevant_state === undefined) {
-			return undefined;
-		}
-		var include_paths = true;
-		return relevant_state.get_moving_object_states(round, include_paths);
-	};
-
 	proto.create_moving_object_states = function(round) {
 		var self = this;
 		var start_positions;
@@ -485,14 +491,16 @@ var Game = function(options) {
 
 		var player_states = _.map(this.get_living_players(), function(player, index) {
 			var start_position = start_positions[index];
-			return BrawlIO.create("player_state", _.extend({
+			var player_state = BrawlIO.create("player_state", _.extend({
 				moving_object: player
 				, x0: start_position.x
 				, y0: start_position.y
 				, theta0: start_position.theta
 				, health: player.get_health()
-				, game: self
 			}, player.get_state()));
+			player_state.set_path(self.restrict_path(player, player_state.get_specified_path()));
+
+			return player_state;
 		});
 
 		var projectile_states = _.map(this.get_projectiles(), function(projectile, index) {
@@ -503,7 +511,6 @@ var Game = function(options) {
 					, x0: projectile.x0
 					, y0: projectile.y0
 					, theta0: projectile.theta0
-					, game: self
 				}, projectile.get_state()));
 			} else {
 				return BrawlIO.create("projectile_state", _.extend({
@@ -511,7 +518,6 @@ var Game = function(options) {
 					, x0: start_position.x
 					, y0: start_position.y
 					, theta0: start_position.theta
-					, game: self
 				}, projectile.get_state()));
 			}
 		});
@@ -541,7 +547,13 @@ var Game = function(options) {
 		if(other_object === this.get_map()) {
 			this.remove_projectile(projectile, round);
 		} else if(other_object.is("player")) {
-			this.remove_projectile(projectile, round);
+			this.remove_projectile(projectile, round, other_object);
+			var projectile_hit_event = BrawlIO.create("player_hit_event", {
+				player: other_object
+				, projectile: projectile
+				, round: round
+			});
+			this.game_log.push_game_event(projectile_hit_event);
 			other_object.remove_health(BrawlIO.game_constants.PROJECTILE_DAMAGE);
 			var self = this;
 			//Defer the check game over call....we might be in the middle of an update timer
@@ -648,13 +660,13 @@ var Game = function(options) {
 		this.do_log("error", args, player, round);
 	};
 
-	proto.do_log = function(type, args, player, round) {
+	proto.do_log = function(log_type, args, player, round) {
 		var log_event = BrawlIO.create("console_event", {
 			args: args
 			, player: player
-			, type: type
+			, log_type: log_type
 		});
-		this.replay.push_game_event(log_event);
+		this.game_log.push_game_event(log_event);
 	};
 }(Game));
 

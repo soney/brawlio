@@ -1,4 +1,4 @@
-(function(BrawlIO) {
+(function(BrajlIO) {
 var Actions = BrawlIO.game_constants.actions;
 var _ = BrawlIO._;
 var get_time = BrawlIO.get_time;
@@ -46,7 +46,7 @@ var Brawl = function(options) {
 			_.forEach(self.player_workers, function(worker) {
 				self.sync_worker(worker);
 			});
-		}, 5000);
+		}, BrawlIO.game_constants.ROUNDS_PER_WORKER_SYNC * BrawlIO.game_constants.SIM_MS_PER_ROUND);
 	};
 
 	proto.terminate_player_workers = function() {
@@ -65,7 +65,7 @@ var Brawl = function(options) {
 			this._waiting_for_workers--;
 			this.post(worker, {
 				type: "initialize"
-				, info: player.serialize()
+				, info: player.worker_summary()
 			});
 			if(this._waiting_for_workers === 0) {
 				delete this._waiting_for_workers;
@@ -170,16 +170,30 @@ var Brawl = function(options) {
 					game.on_round(do_action, request.round+delay, "Rotate");
 				} else if(action_type === Actions.instantaneous_type) {
 					if(action === Actions.fire) {
-						var do_fire = function() {
-							player.set_auto_fire(options.automatic);
-							player.fire();
+						var round = request.round;
+						var do_fire;
+						do_fire = function(round) {
+							player.fire(round);
+							if(player.is_auto_fire()) {
+								var next_round = player.get_next_fireable_round();
+								game.on_round(function() {
+									if(player.is_auto_fire()) {
+										do_fire(next_round);
+									}
+								}, next_round, "Auto Fire");
+							}
 						};
-						game.on_round(do_fire, request.round, "Fire");
+						var do_initial_fire = function() {
+							player.set_auto_fire(options.automatic);
+							do_fire(round);
+						};
+						game.on_round(do_initial_fire, round, "Fire");
 					} else if(action === Actions.stop_firing) {
+						var round = request.round;
 						var do_stop_firing = function() {
 							player.set_auto_fire(false);
 						};
-						game.on_round(do_stop_firing, request.round, "Stop firing");
+						game.on_round(do_stop_firing, round, "Stop firing");
 					} else if(action === Actions.sense) {
 						var snapshot_data = game.get_snapshot();
 						snapshot_data.players.forEach(function(player) {
@@ -235,8 +249,8 @@ var Brawl = function(options) {
 		this.game.stop();
 	};
 
-	proto.get_replay = function() {
-		return this.game.get_replay();
+	proto.get_game_log = function() {
+		return this.game.get_game_log();
 	};
 
 	proto.sync_worker = function(player_worker) {

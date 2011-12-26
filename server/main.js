@@ -87,17 +87,20 @@ var callback_map = function(arr, func, callback) {
 	var jslint_options = {};
 
 	var proto = my.prototype;
-	//Private memebers
+	//Private static memebers
 	var server = undefined,
 		io = undefined;
 
 	proto.start_server = function(path, port) {
-		server = express.createServer(
-				express.cookieParser()
-				, express.session({key: 'express.sid', secret: constants.session_secret})
-				, express.router(bind(this.routes, this))
-				, express.static(path)
-			);
+		var self = this;
+		server = express.createServer();
+		server.configure(function() {
+			server.use(express.cookieParser());
+			server.use(express.session({key: "express.sid", secret: constants.session_secret}));
+			server.use(express.router(bind(self.routes, self)));
+			server.use(express.static(path));
+		});
+
 		io = socket_io.listen(server);
 		io.set("log level", 0);
 		io.set("authorization", function(data, accept) {
@@ -376,6 +379,10 @@ var callback_map = function(arr, func, callback) {
 
 					res.render("jslint.jade", {layout: false, locals: self.locals});
 				});
+				return;
+			});
+			server.get("/test", function(req, res, next) {
+				res.render("api.jade", {layout: false, locals: self.locals});
 				return;
 			});
 		}

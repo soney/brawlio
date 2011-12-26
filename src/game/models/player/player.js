@@ -1,4 +1,5 @@
 (function(BrawlIO) {
+	var _ = BrawlIO._;
 	var MovingObject = BrawlIO.get_type("MovingObject");
 
 	var error_tolerance = 0.0001;
@@ -8,10 +9,10 @@
 		var radius = 2; //Radius in tiles
 		this.code = options.code;
 
-		Player.superclass.call(this, {
+		Player.superclass.call(this, _.extend({
 			shape: BrawlIO.create("circle_shape", {radius: radius})
 			, type: "player"
-		});
+		}, options));
 		this.attributes = {
 			max_movement_speed: 5.0 //Tiles per round
 			, max_rotation_speed: 90*Math.PI/180.0 //Radians per round
@@ -34,19 +35,9 @@
 		proto.set_attribute = function(attr_name, value) {this.attributes[attr_name] = value;};
 		proto.get_max_movement_speed = function() {return this.get_attribute("max_movement_speed");};
 
-		proto.set_game = function(game) { this.game = game; };
-		proto.get_game = function() { return this.game; };
-		proto.get_round = function() { var game = this.get_game(); return game.get_round(); };
 		proto.get_code = function() { return this.options.code; };
 		proto.get_team = function() { return this.options.team; };
 		proto.get_number = function() { return this.options.number; };
-
-		proto.serialize = function() {
-			return {
-				code: this.get_code()
-				, number: this.get_number()
-			};
-		};
 
 		proto.get_radius = function() { return this.shape.get_radius(); };
 		proto.get_max_rotation_speed = function() { return this.get_attribute("max_rotation_speed"); };
@@ -68,29 +59,24 @@
 		proto.set_auto_fire = function(auto_fire) {
 			this.auto_fire = auto_fire;
 		};
-		proto.can_fire = function() {
-			var game = this.get_game();
-			var round = game.get_round();
-			return round + error_tolerance > this.get_next_fireable_round();
+		proto.can_fire = function(round) {
+			return round + error_tolerance >= this.get_next_fireable_round();
 		};
 		proto.get_next_fireable_round = function() {
 			return this.next_fireable_round;
 		};
-		proto.set_next_fireable_round = function() {
-			var game = this.get_game();
-			var round = game.get_round();
+		proto.set_next_fireable_round = function(from_round) {
 			var rounds_between_shots = 1.0/this.get_attribute("shots_per_round");
-			var next_fireable_round = round + rounds_between_shots;
+			var next_fireable_round = from_round + rounds_between_shots;
 			this.next_fireable_round = next_fireable_round;
 			return next_fireable_round;
 		};
-		proto.on_fire = function(options) {
-			this.set_next_fireable_round();
-			var game = this.get_game();
+		proto.on_fire = function(round, options) {
+			this.set_next_fireable_round(round);
 			this.emit({
 				type: "fire"
 				, fired: true
-				, round: game.get_round()
+				, round: round
 			});
 		};
 		proto.on_fire_fail = function(options) {
@@ -99,20 +85,12 @@
 				, fired: false
 			});
 		};
-		proto.fire = function(options) {
-			if(this.can_fire()) {
-				this.on_fire(options);
+		proto.fire = function(round, options) {
+			if(this.can_fire(round)) {
+				this.on_fire(round, options);
 			} else {
 				this.on_fire_fail();
 			}
-
-			var self = this;
-			var game = this.get_game();
-			game.on_round(function() {
-				if(self.is_auto_fire()) {
-					self.fire();
-				}
-			}, this.get_next_fireable_round(), "Fire");
 		};
 		proto.can_collide_with = function(moving_object) {
 			if(moving_object.is("projectile")) {
@@ -132,9 +110,37 @@
 			}
 			return path;
 		};
+
+		proto.worker_summary = function() {
+			return {
+				code: this.get_code()
+				, number: this.get_number()
+			};
+		};
+
+		proto.serialize = function() {
+			var rv = my.superclass.prototype.serialize.call(this);
+			rv.code = this.get_code();
+			rv.number = this.get_number();
+			return rv;
+		};
+
+/*
+		my.deserialize = function(obj) {
+			return new my({
+				number: obj.number
+				, code: obj.code
+			});
+		};
+		*/
 	}(Player));
 
 	BrawlIO.define_factory("player", function(options) {
 		return new Player(options);
 	});
+	/*
+	BrawlIO.define_factory("deserialized_player", function(obj) {
+		return Player.deserialize(obj);
+	});
+	*/
 }(BrawlIO));

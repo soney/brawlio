@@ -1,6 +1,8 @@
 (function(BrawlIO) {
 	var _ = BrawlIO._;
+	var id = 0;
 	var MovingObject = function(options) {
+		this.id = options.id  === undefined ? id++ : options.id;
 		this.shape = options.shape;
 		this.x0 = options.x0;
 		this.y0 = options.y0;
@@ -40,6 +42,15 @@
 		};
 		proto.can_collide_with = function(moving_object) {
 			return true;
+		};
+		proto.get_id = function() {
+			return this.id;
+		};
+		proto.serialize = function() {
+			return {
+				id: this.get_id()
+				, type: this.type
+			};
 		};
 	}(MovingObject));
 

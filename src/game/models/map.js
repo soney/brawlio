@@ -79,9 +79,23 @@
 														.value();
 			return touching_obstacles;
 		};
+		proto.serialize = function() {
+			return {
+				width: this.get_width()
+				, height: this.get_height()
+				, start_positions: this.get_start_positions()
+			};
+		};
+
+		my.deserialize = function(obj) {
+			return new my(obj);
+		};
 	}(Map));
 
 	BrawlIO.define_factory("map", function(options) {
 		return new Map(options);
+	});
+	BrawlIO.define_factory("deserialized_map", function(obj) {
+		return Map.deserialize(obj);
 	});
 }(BrawlIO));

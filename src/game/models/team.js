@@ -41,9 +41,26 @@
 		proto.get_win_text = function() {
 			return this.options.win_text;
 		};
+		proto.serialize = function() { 
+			return {
+				win_text: this.get_win_text()
+				, colors: this.get_colors()
+				, id: this.get_id()
+				, name: this.get_name()
+				, players: _.map(this.get_players(), function(player) {
+					return player.serialize()
+				})
+			};
+		};
+		my.deserialize = function(obj) {
+			return new my(obj);
+		};
 	}(Team));
 
 	BrawlIO.define_factory("team", function(options) {
 		return new Team(options);
+	});
+	BrawlIO.define_factory("deserialized_team", function(obj) {
+		return Team.deserialize(obj);
 	});
 }(BrawlIO));
