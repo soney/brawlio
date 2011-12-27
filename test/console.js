@@ -7,6 +7,7 @@ var helptext = "========================================\n"
 				+ "adduser <username> <email> - Create a new user\n"
 				+ "create - Create all of the tables\n"
 				+ "drop - Drop all of the tables\n"
+				+ "gamelog <brawl_id> - Get the game log of a brawl\n"
 				+ "help - This list\n"
 				+ "listbots - List every bot\n"
 				+ "listbrawls - List every brawl\n"
@@ -58,6 +59,12 @@ var handle_command = function(command_str, callback_fn) {
 		}, function(user_id) {
 			callback_fn("User " + username + (email ? " ("+email+") " : " ") + "added with id " + user_id);
 		});
+	} else if(command_name === "GAMELOG") {
+		var brawl_id = command[1];
+		controller.get_game_log(brawl_id, function(game_log) {
+			console.log(game_log);
+			callback_fn();
+		});
 	} else if(command_name === "LISTUSERS") {
 		controller.get_all_users(function(users) {
 			enumerate_properties(users);
@@ -99,7 +106,7 @@ var handle_command = function(command_str, callback_fn) {
 		var bot2_fk = parseInt(command[2]);
 		var winner_bot_fk = parseInt(command[3]);
 
-		controller.brawl_result(bot1_fk, bot2_fk, winner_bot_fk, function(bot1, bot2) {
+		controller.brawl_result(bot1_fk, bot2_fk, winner_bot_fk, "", function(bot1, bot2) {
 			console.log("Bot 1: " + bot1.wins + "W " + bot1.losses + "L " + bot1.draws + "D ("+bot1.rating+")");
 			console.log("Bot 2: " + bot2.wins + "W " + bot2.losses + "L " + bot2.draws + "D ("+bot2.rating+")");
 			callback_fn();

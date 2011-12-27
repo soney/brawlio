@@ -141,3 +141,18 @@ body > .header {
 .header_contents span#items a {
 	margin-left: 20px;
 }
+
+.wide_button {
+	font-size: 0.9em;
+	text-align: center;
+	border: 1px solid #EEE;
+}
+
+.wide_button a {
+	display: block;
+	padding: 3px;
+	background-color: #F7F7F7;
+}
+.wide_button a:hover {
+	background-color: #F3F3F3;
+}

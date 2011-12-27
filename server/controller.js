@@ -1,7 +1,9 @@
 var database = require('./database').database;
 var fs = require('fs');
+var zlib = require('zlib');
 
 var INVITED_EMAILS_FILE = "invited_emails.txt";
+var GAME_LOGS_FOLDER = __dirname+"/../game_logs";
 
 var BrawlIOController = function(options) {
 	options = options || {};
@@ -148,6 +150,18 @@ var BrawlIOController = function(options) {
 	proto.get_all_brawls = function(callback) {
 		database.get_all_brawls(callback);
 	};
+	proto.get_brawl = function(brawl_id, callback) {
+		this.get_brawls([brawl_id], function(brawls) {
+			var brawl = brawls[0] || null;
+			callback(brawl);
+		});
+	};
+	proto.get_brawls = function(brawl_ids, callback) {
+		database.get_brawls(brawl_ids, callback);
+	};
+	proto.get_bot_brawls = function(bot_id, limit, callback) {
+		database.get_bot_brawls(bot_id, limit, callback);
+	};
 
 
 	var get_new_wins_losses_draws = function(me_bot, other_bot, winner_id) {
@@ -199,7 +213,8 @@ var BrawlIOController = function(options) {
 		return Math.round(new_rating);
 	};
 	
-	proto.brawl_result = function(bot1_id, bot2_id, winner_id, callback) {
+	proto.brawl_result = function(bot1_id, bot2_id, winner_id, game_log, callback) {
+		var server = this.server;
 		database.get_bots([bot1_id, bot2_id], function(bots) {
 			var bot1 = bots[0];
 			var bot2 = bots[1];
@@ -241,15 +256,44 @@ var BrawlIOController = function(options) {
 
 				brawl_options.bot1_post_rating = bot1.rated ? bot1.rating : 0;
 				brawl_options.bot2_post_rating = bot2.rated ? bot2.rating : 0;
+				database.add_brawl(brawl_options, function(brawl_id) {
+					var game_log_filename = "brawl_"+brawl_id+".json.gz";
+					var full_game_log_filename = GAME_LOGS_FOLDER + "/" + game_log_filename;
+					database.set_replay_filename(brawl_id, game_log_filename, function() {
+						zlib.gzip(game_log, function(err, zipped_game_log) {
+							if(err) { throw err; }
+							fs.writeFile(full_game_log_filename, zipped_game_log, function(err) {
+								if(err) { throw err; }
+								database.set_bot_stats(bot1, function() {
+									database.set_bot_stats(bot2, function() {
+										callback(bot1, bot2);
 
-				database.add_brawl(brawl_options, function() {
-					database.set_bot_stats(bot1, function() {
-						database.set_bot_stats(bot2, function() {
-							callback(bot1, bot2);
+										if(server) {
+											server.on_brawl_run(brawl_id);
+										}
+									});
+								});
+							}); 
 						});
 					});
 				});
 			});
+		});
+	};
+
+	proto.get_game_log = function(brawl_id, callback) {
+		this.get_brawl(brawl_id, function(brawl) {
+			var game_log_filename = brawl.replay_filename;
+			var full_game_log_filename = GAME_LOGS_FOLDER + "/" + game_log_filename;
+
+			fs.readFile(full_game_log_filename, function (err, data) {
+				if (err) { throw err; }
+				zlib.gunzip(data, function(err, game_log) {
+					if (err) { throw err; }
+					callback(game_log.toString());
+				});
+			});
+
 		});
 	};
 }(BrawlIOController));

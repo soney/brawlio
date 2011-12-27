@@ -130,6 +130,7 @@ exports.dashboard_src = c(
 			, "widgets/replay/control_bar.js"
 			, "widgets/replay/replay_viewer.js"
 
+			, "widgets/dashboard/brawl_log.js"
 			, "widgets/dashboard/dashboard.js"
 			, "widgets/dashboard/bot_list.js"
 			, "widgets/dashboard/home.js"

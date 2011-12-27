@@ -1,7 +1,11 @@
 
-.username {
+.username, .bot_title {
 	font-size: 1.2em;
 	margin-bottom: 20px;
+}
+
+.bot_title .rating {
+	color: #AAA;
 }
 
 .body {
@@ -143,7 +147,9 @@ input[type=text].validated_input {
 }
 
 .challenge .row.all {
+	/*
 	font-weight: bold;
+	*/
 }
 
 .challenge .row a {
@@ -165,10 +171,10 @@ input[type=text].validated_input {
 }
 
 .challenge .row.selected .count {
-	color: white;
+	color: #CCC;
 }
 .challenge .row.selected .rating {
-	color: white;
+	color: #CCC;
 }
 
 .challenge .bot_title {
@@ -177,18 +183,76 @@ input[type=text].validated_input {
 	margin-bottom: 2px;
 	margin-top: 8px;
 }
-.challenge .bot_subtitle {
+.challenge .bot_subtitle1 {
+	font-size: 0.9em;
+	color: #777;
+	margin-bottom: 0px;
+	margin-top: 0px;
+}
+.challenge .bot_subtitle2 {
 	font-size: 0.9em;
 	color: #777;
 	margin-bottom: 10px;
 	margin-top: 0px;
 }
 
-.record {
-	color: #555;
-	margin-top: 10px;
+span.record {
+	float: right;
+	color: #AAA;
 }
 
 .test.button {
 	padding: 2px;
+}
+
+.past_brawls {
+	padding-bottom: 1px;
+}
+
+.brawl_row {
+	font-size: 0.9em;
+	overflow: hidden;
+	border-bottom: 1px solid #EEE;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+
+.brawl_row:last-child {
+	border-bottom: none;
+}
+
+.brawl_row > span {
+	float: left;
+	display: inline-block;
+}
+.brawl_row .date {
+	color: #AAA;
+	width: 130px;
+}
+.brawl_row .bot {
+}
+.brawl_row .bot.winner {
+	font-weight: bold;
+}
+.brawl_row .vs {
+	margin-left: 10px;
+	margin-right: 5px;
+	color: #AAA;
+}
+.brawl_row .result {
+	float: right;
+	font-weight: bold;
+}
+.brawl_row .result.win {
+	color: green;
+}
+.brawl_row .result.loss {
+	color: red;
+}
+.brawl_row .result.draw {
+	color: #555;
+}
+.brawl_row .replay {
+	margin-left: 15px;
+	float: right;
 }

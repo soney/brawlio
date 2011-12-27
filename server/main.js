@@ -175,13 +175,28 @@ var callback_map = function(arr, func, callback) {
 			self.controller.get_all_users(callback);
 		});
 
-		socket.on('brawl_result', function(bot1_id, bot2_id, winner_id, callback) {
-			self.controller.brawl_result(bot1_id, bot2_id, winner_id, callback);
+		socket.on('brawl_result', function(bot1_id, bot2_id, winner_id, game_log, callback) {
+			self.controller.brawl_result(bot1_id, bot2_id, winner_id, game_log, callback);
+		});
+
+		socket.on('bot_brawls', function(bot_id, count, callback) {
+			if(count === undefined || count === null) {
+				count = undefined;
+			}
+			self.controller.get_bot_brawls(bot_id, count, callback);
+		});
+
+		socket.on('game_log', function(brawl_id, callback) {
+			self.controller.get_game_log(brawl_id, callback);
 		});
 
 
-		var callback_id0 = this.on("brawl_run", function(brawl) {
-			console.log(brawl);
+		var callback_id0 = this.on("brawl_run", function(event) {
+			var brawl = event.brawl;
+			socket.emit("brawl_run", {
+				brawl: brawl
+				, time: (new Date()).getTime()
+			});
 		});
 
 		socket.on('disconnect', function() {
@@ -418,7 +433,7 @@ var callback_map = function(arr, func, callback) {
 		for(var i = 0; i<this.listeners.length; i++) {
 			var listener = this.listeners[i];
 			if(listener.interested_in(event)) {
-				var callback = listeners.get_callback();
+				var callback = listener.get_callback();
 				callback(event);
 			}
 		}

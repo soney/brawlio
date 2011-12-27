@@ -41,6 +41,12 @@
 				, bot_id: bot_id
 			});
 		}
+
+		, brawl_added: function(brawl) {
+			if(this.element.data("dashboard_bot")) {
+				this.element.dashboard_bot("brawl_added");
+			}
+		}
 	};
 
 	$.widget("brawlio.dashboard", Dashboard);

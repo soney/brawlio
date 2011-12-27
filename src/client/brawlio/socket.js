@@ -93,11 +93,28 @@
 			});
 		};
 
-		this.on_brawl_run = function(team1_id, team2_id, winner_id, callback) {
-			socket.emit('brawl_result', team1_id, team2_id, winner_id, function() {
+		this.on_brawl_run = function(team1_id, team2_id, winner_id, game_log, callback) {
+			socket.emit('brawl_result', team1_id, team2_id, winner_id, game_log, function() {
 				callback();
 			});
 		};
+
+		this.get_game_log = function(brawl_id, callback) {
+			socket.emit('game_log', brawl_id, function(game_log_str) {
+				var game_log = BrawlIO.create("game_log_from_string", game_log_str);
+				callback(game_log);
+			});
+		};
+		this.get_bot_brawls = function(bot_id, limit, callback) {
+			socket.emit('bot_brawls', bot_id, limit, function(brawls) {
+				callback(brawls);
+			});
+		};
+
+		socket.on("brawl_run", function(event) {
+			var brawl = event.brawl;
+			BrawlIO.add_brawl(brawl);
+		});
 	};
 	
 	var on_socket_ready = function(callback) {

@@ -66,13 +66,8 @@
 			var bot_name = $("<span />").text(bot.name)
 										.addClass("name");
 
-			var rating;
-			if(bot.rated) {
-				rating = bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")";
-			} else {
-				rating = "Unrated";
-			}
-			var bot_rating = $("<span />")	.text(rating)
+			var rating_text = BrawlIO.get_rating_str(bot);
+			var bot_rating = $("<span />")	.text(rating_text)
 											.addClass("rating");
 			
 			link	.append(bot_name)

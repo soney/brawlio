@@ -345,14 +345,14 @@ html(lang="en")
                     span.description If the player is my opponent
                   .param_method
                     span.name getLocation()
-                    span.description Returns the opponent's location
+                    span.description Returns the opponent's location (x &amp; y properties)
             .examples
               h3 Examples
               .example Put the map width into a variable:
                 pre.code.
                   var width;
                   sense(function(data) {
-                    width = data.map.get_width();
+                    width = data.map.getWidth();
                   });
               .example Get the location of your enemy:
                 pre.code.
@@ -361,7 +361,7 @@ html(lang="en")
                     for(var i = 0; i<data.players.length; i++) {
                       var player = data.players[i]; 
                       if(player.isOpponent()) {
-                        enemy_location = player.get_location();
+                        enemy_location = player.getLocation();
                       }
                     }
                   });

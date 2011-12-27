@@ -250,6 +250,11 @@ var Game = function(options) {
 	};
 
 	proto.stop = function(winner, round) {
+		if(this.running === false) {
+			return;
+		}
+
+		this.running = false;
 		if(round === undefined) {
 			round = this.get_round();
 		}
@@ -258,7 +263,6 @@ var Game = function(options) {
 		var last_round = Math.min(this.get_round(), this.get_round_limit());
 		this.game_log.set_last_round(last_round);
 		this.game_log.mark_complete(winner);
-		this.running = false;
 		var last_state = this.game_log.peek_state();
 		this.push_state({round: round, trigger: "Game end", moving_object_states: this.create_moving_object_states(round)});
 		if(last_state !== undefined) {

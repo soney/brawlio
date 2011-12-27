@@ -8,6 +8,7 @@
 		this.map = options.map;
 		this.round_limit = options.round_limit;
 		this.teams = options.teams;
+		this.winner = options.winner;
 		BrawlIO.make_listenable(this);
 	};
 
@@ -121,6 +122,12 @@
 				});
 				return x.serialize();
 			});
+			var winner = this.get_winner();
+			if(winner === undefined) {
+				winner = null;
+			} else {
+				winner = winner.id;
+			}
 			return {
 				map: serialized_map
 				, teams: _.map(this.teams, function(team) {
@@ -133,6 +140,7 @@
 				, round_limit: this.get_round_limit()
 				, version: BrawlIO.game_constants.REPLAY_VERSION
 				, moving_objects: serialized_moving_objects
+				, winner: winner
 			};
 		};
 		proto.stringify = function() {
@@ -158,6 +166,16 @@
 					moving_object_map[player.id] = player;
 				});
 			});
+
+			var winning_team;
+			if(obj.winner !== null) {
+				for(var i = 0; i<teams.length; i++) {
+					if(teams[i].id === obj.winner) {
+						winning_team = teams[i];
+						break;
+					}
+				}
+			}
 
 			var projectile_moving_objects = _.filter(obj.moving_objects, function(serialized_moving_object, id) {
 				return serialized_moving_object.type === "projectile";
@@ -187,6 +205,7 @@
 				, game_states: game_states
 				, map: map
 				, teams: teams
+				, winner: winning_team
 			});
 		};
 	}(GameLog));

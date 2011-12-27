@@ -45,20 +45,20 @@
 		options.type = "player_hit";
 		PlayerHit.superclass.call(this, options);
 		this.projectile = options.projectile;
-		this.hit_player = options.hit_player;
+		this.player = options.player;
 	};
 	BrawlIO.oo_extend(PlayerHit, GameEvent);
 	(function(my) {
 		var proto = my.prototype;
-		proto.get_hit_player = function() {
-			return this.hit_player;
+		proto.get_player = function() {
+			return this.player;
 		};
 		proto.get_projectile = function() {
 			return this.projectile;
 		};
 		proto.serialize = function() {
 			var rv = my.superclass.prototype.serialize.call(this);
-			rv.hit_player = this.get_hit_player().get_id();
+			rv.player = this.get_player().get_id();
 			rv.projectile = this.get_projectile().get_id();
 			return rv;
 		};
@@ -109,10 +109,10 @@
 				, round: obj.round
 			});
 		} else if(type === "player_hit") {
-			player = moving_object_map[obj.hit_player];
+			player = moving_object_map[obj.player];
 			projectile = moving_object_map[obj.projectile];
 			return BrawlIO.create("player_hit_event", {
-				hit_player: player
+				player: player
 				, projectile: projectile
 				, round: obj.round
 			});

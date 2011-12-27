@@ -103,7 +103,6 @@ var create_db_row = function(row, convert_column_names, convert_item_functions) 
 		var brawl = create_db_row(row, {
 			"pk": "id"
 		}, {
-			"date": to_date
 		});
 
 		return brawl;
@@ -403,8 +402,39 @@ var create_db_row = function(row, convert_column_names, convert_item_functions) 
 		}, callback);
 	};
 
+	proto.set_replay_filename = function(brawl_id, replay_filename, callback) {
+		_database.run("UPDATE brawls SET replay_filename = $replay_filename WHERE pk = $pk LIMIT 1", {
+			$pk: brawl_id
+			, $replay_filename: replay_filename
+		}, callback);
+	};
+
 	proto.get_all_brawls = function(callback) {
 		_database.all("SELECT * FROM brawls", function(err, rows) {
+			if(err) { throw err; }
+			var brawls = brawls_from_rows(rows);
+			callback(brawls);
+		});
+	};
+
+	proto.get_brawls = function(ids, callback) {
+		var condition = ids.length === 0 ? "" : " WHERE " + ids.map(function(id) {
+			return "pk == " + id;
+		}).join(" OR ");
+
+		_database.all("SELECT * FROM brawls " + condition + " LIMIT " + ids.length, function(err, rows) {
+			if(err) { throw err; }
+			var brawls = brawls_from_rows(rows);
+			callback(brawls);
+		});
+	};
+
+	proto.get_bot_brawls = function(bot_id, limit, callback) {
+		var self = this;
+		var limit_clause = limit === undefined ? "" : (" LIMIT " + limit);
+		_database.all("SELECT * FROM brawls WHERE bot1_fk = $bot_id OR bot2_fk = $bot_id ORDER BY pk DESC" + limit_clause, {
+			$bot_id: bot_id
+		}, function(err, rows) {
 			if(err) { throw err; }
 			var brawls = brawls_from_rows(rows);
 			callback(brawls);

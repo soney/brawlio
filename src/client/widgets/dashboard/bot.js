@@ -12,6 +12,8 @@
 			var bot_id = this.option("bot_id");
 			var bot = BrawlIO.get_bot_by_id(bot_id);
 
+
+			this.rating_display = $("<span />").addClass("rating");
 			this.botname_display = $("<div />")	.append(
 													$("<a />")	.attr("href", "javascript:void(0)")
 																.click(function() {
@@ -27,7 +29,9 @@
 																})
 																.text(bot.name)
 												)
-												.addClass("username")
+												.append("&nbsp;&nbsp;")
+												.append(this.rating_display)
+												.addClass("bot_title")
 												.appendTo(element);
 			this.tabs = $("<div />").appendTo(element);
 			this.tab_content = $("<div />").appendTo(element);
@@ -43,6 +47,8 @@
 
 				, default_tab: "brawls"
 			});
+
+			this.update_stats();
 		}
 
 		, destroy: function() {
@@ -56,6 +62,19 @@
 		}
 
 		, refresh: function() {
+			var self = this;
+			BrawlIO.get_bots(function(bots) {
+				BrawlIO.set_bots(bots);
+
+				var bot_id = self.option("bot_id");
+				var bot = BrawlIO.get_bot_by_id(bot_id);
+
+				if(self.tab_content.data("dashboard_bot_brawls")) {
+					self.tab_content.dashboard_bot_brawls("option", "bot", bot);
+				}
+
+				self.update_stats();
+			});
 		}
 
 		, on_select_tab: function(tab_name) {
@@ -63,7 +82,7 @@
 			var bot = BrawlIO.get_bot_by_id(bot_id);
 			this.destroy_tab_content();
 			if(tab_name === "brawls") {
-				this.tab_content.dashboard_bot_brawls({bot: bot});
+				this.tab_content.dashboard_bot_brawls({bot: bot, dashboard: this});
 			} else if(tab_name === "edit") {
 				this.tab_content.dashboard_bot_edit({bot: bot});
 			}
@@ -77,6 +96,19 @@
 				this.tab_content.dashboard_bot_edit("destroy");
 			}
 		}
+
+		, update_stats: function() {
+			var bot_id = this.option("bot_id");
+			var bot = BrawlIO.get_bot_by_id(bot_id);
+
+			var rating_text = BrawlIO.get_rating_str(bot);
+			this.rating_display.text(rating_text);
+		}
+		, brawl_added: function(brawl) {
+			if(this.tab_content.data("dashboard_bot_brawls")) {
+				this.tab_content.dashboard_bot_brawls("brawl_added", brawl);
+			}
+		}
 	};
 
 	$.widget("brawlio.dashboard_bot", DashboardBot);
@@ -84,24 +116,11 @@
 	$.widget("brawlio.dashboard_bot_brawls", {
 		options: {
 			bot: undefined
+			, dashboard: undefined
 		}
 		, _create: function() {
 			var bot = this.option("bot");
-
-			var rating_text;
-			if(bot.rated === false) {
-				rating_text = "Unrated";
-			} else {
-				rating_text = bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")";
-			}
-
-			var record_text = bot.wins+" wins, " + bot.losses+" losses, " + bot.draws+" draws";
-
-			this.record_summary = $("<div />")	.text(record_text+ "; " + rating_text)
-												.addClass("record")
-												.appendTo(this.element);
-
-			
+			var dashboard = this.option("dashboard");
 			this.challenge_title = $("<div />")	.text("Challenge")
 												.addClass("section_header")
 												.appendTo(this.element);
@@ -128,21 +147,39 @@
 					$(window).brawl_dialog({
 						my_code: my_bot.code
 						, opponent_code: opponent_bot.code
-					});
-					$(window).on("game_over", function(event) {
-						var winner = event.winner;
-						if(winner === undefined) { // Draw
-						} else if(winner.name === "Me") {
-							winner = my_id;
-						} else {
-							winner = opponent_id;
-						}
+						, on_game_over: function(event) {
+							var winner = event.winner;
+							if(winner === undefined) { // Draw
+							} else if(winner.name === "Me") {
+								winner = my_id;
+							} else {
+								winner = opponent_id;
+							}
+							var brawl = event.brawl;
+							var game_log = brawl.get_game_log();
+							var stringified_log = game_log.stringify();
 
-						BrawlIO.on_brawl_run(my_id, opponent_id, winner, function() {
-						});
+							BrawlIO.on_brawl_run(my_id, opponent_id, winner, stringified_log, function() {
+								dashboard.refresh();
+							});
+						}
 					});
 				});
 			});
+
+			this.past_brawls_title = $("<div />")	.text("Past Brawls")
+													.addClass("section_header past_brawls")
+													.appendTo(this.element);
+
+
+			this.record_summary = $("<span />")	.addClass("record")
+												.appendTo(this.past_brawls_title);
+			this.past_brawls = $("<div />")	.appendTo(this.element);
+			this.past_brawls.brawl_log({
+				bot_id: bot.id
+			});
+
+			this.update_stats();
 		}
 		, destroy: function() {
 			var element = this.element;
@@ -150,8 +187,30 @@
 			this.challenge_section.remove();
 			this.challenge_title.remove();
 
+			this.past_brawls_title.remove();
 			this.record_summary.remove();
+			this.past_brawls.brawl_log("destroy");
+			this.past_brawls.remove();
 			$.Widget.prototype.destroy.apply(this, arguments);
+		}
+		, update_stats: function() {
+			var bot = this.option("bot");
+			var record_text = BrawlIO.get_record_str(bot);
+			this.record_summary.text(record_text);
+		}
+		, _setOption: function( key, value ) {
+			// In jQuery UI 1.8, you have to manually invoke the _setOption method from the base widget
+			$.Widget.prototype._setOption.apply( this, arguments );
+
+			switch( key ) {
+				case "bot":
+					this.update_stats();
+				break;
+			}
+		}
+
+		, brawl_added: function(brawl) {
+			this.past_brawls.brawl_log("refresh");
 		}
 	});
 
@@ -160,7 +219,7 @@
 			bot: undefined
 		}
 		, _create: function() {
-			this.editor_title = $("<div />")	.text("Editor (autosaved)")
+			this.editor_title = $("<div />")	.text("Editor")
 												.addClass("section_header")
 												.appendTo(this.element);
 			this.editor = $("<div />")	.appendTo(this.element)

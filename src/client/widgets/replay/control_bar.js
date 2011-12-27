@@ -107,7 +107,12 @@
 			this.add_handlers();
 		};
 		proto.destroy = function() {
+			this.stop();
 			this.remove_handlers();
+		};
+		proto.stop = function() {
+			this.path.stop();
+			this.background_rect.stop();
 		};
 		proto.remove_handlers = function() {
 			if(this.hasOwnProperty("__remove_hover")) {
@@ -199,9 +204,18 @@
 			this.set_played_percentage(this.played_percentage);
 		};
 		proto.destroy = function() {
+			this.stop();
 			this.play_button.destroy();
-			this.element.unbind("mouseenter.control_bar");
-			this.element.unbind("mouseleave.control_bar");
+			this.element.off("mouseenter.control_bar");
+			this.element.off("mouseleave.control_bar");
+		};
+		proto.stop = function() {
+			this.inner_scrub_circle.stop();
+			this.scrub_rects.stop();
+			this.scrub_handle.stop();
+			this.control_bar.stop();
+			this.text.stop();
+			this.play_button.stop();
 		};
 		proto.create_control_bar = function() {
 			//Will be hidden by virtue of setting the top property to bottom
@@ -271,8 +285,8 @@
 										fill: "#F00" , stroke: "none", "fill-opacity": 0.6
 									});
 			this.scrub_rects = this.paper.setFinish();
-			this.element.bind("mouseenter.control_bar", _.bind(this.on_hover_in, this));
-			this.element.bind("mouseleave.control_bar", _.bind(this.on_hover_out, this));
+			this.element.on("mouseenter.control_bar", _.bind(this.on_hover_in, this));
+			this.element.on("mouseleave.control_bar", _.bind(this.on_hover_out, this));
 		};
 		proto.create_scrub_handle = function() {
 			this.paper.setStart();

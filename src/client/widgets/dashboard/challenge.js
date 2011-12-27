@@ -59,7 +59,7 @@
 											.text(owner_name+bot.name)
 											.on("click", $.proxy(this.on_select_bot, this, bot, bot_row, owner));
 
-				var rating_str = bot.rated === false ? "Unrated" : (bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")");
+				var rating_str = BrawlIO.get_rating_str(bot);
 				var bot_rating = $("<span />")	.addClass("rating")
 												.text(rating_str)
 												.appendTo(bot_link);
@@ -74,23 +74,19 @@
 			other_rows.addClass("not_selected").removeClass("selected");
 			this.challenge_col.children().remove();
 
-			var rating_text;
-			if(bot.rated === false ) {
-				rating_text = "Unrated";
-			} else {
-				rating_text = bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")";
-			}
+			var rating_text = BrawlIO.get_rating_str(bot);
+			var record_text = BrawlIO.get_record_str(bot);
 
-			var record_text = bot.wins + " wins, " + bot.losses + " losses, " + bot.draws + " draws";
-
-			var bot_subtitle = record_text + "; " + rating_text;
 
 			var bot_title = $("<div />")	.appendTo(this.challenge_col)
 											.addClass("bot_title")
 											.text(owner_name+bot.name);
-			var but_subtitle = $("<div />")	.appendTo(this.challenge_col)
-											.addClass("bot_subtitle")
-											.text(bot_subtitle);
+			var bot_rating = $("<div />")	.appendTo(this.challenge_col)
+											.addClass("bot_subtitle1")
+											.text(rating_text);
+			var bot_record = $("<div />")	.appendTo(this.challenge_col)
+											.addClass("bot_subtitle2")
+											.text(record_text);
 
 			var self = this;
 			var challenge_button = $("<a />")	.attr("href", "javascript:void(0)")

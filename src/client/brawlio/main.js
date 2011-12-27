@@ -1,4 +1,5 @@
 (function(BrawlIO) {
+	var _ = BrawlIO._;
 	BrawlIO.assert = function(test, message) {
 		if(BrawlIO._debug) {
 			console.assert(test, message);
@@ -8,6 +9,7 @@
 	(function() {
 		this.initialize = function(dashboard_tag) {
 			this.dashboard_tag = dashboard_tag;
+			this.brawls = [];
 
 			this.initialize_socket(function() {
 				dashboard_tag.dashboard();
@@ -20,6 +22,41 @@
 
 		this.set_bots = function(bots) {
 			this.bots = bots;
+		};
+
+		this.add_brawl = function(brawl) {
+			if(!this.has_brawl_with_id(brawl.id)) {
+				this.brawls.push(brawl);
+				this.dashboard_tag.dashboard("brawl_added", brawl);
+			}
+		};
+
+		var brawl_involves_bot = function(brawl, bot_id) {
+			return brawl.bot1_fk === bot_id || brawl.bot2_fk === bot_id;
+		};
+
+		this.get_brawls_for_bot_id = function(bot_id) {
+			return _(this.brawls)	.chain()
+									.filter(function(brawl) {
+										return brawl_involves_bot(brawl, bot_id);
+									})
+									.sortBy(function(brawl) {
+										return -brawl.date;
+									})
+									.value()
+									;
+		};
+
+		this.brawl_with_id = function(brawl_id) {
+			var i = 0, len = this.brawls.length;
+			for(i=0; i<len; i++) {
+				var brawl = this.brawls[i];
+				if(brawl.id === brawl_id) { return brawl; }
+			}
+			return null;
+		};
+		this.has_brawl_with_id = function(id) {
+			return this.brawl_with_id(id) !== null;
 		};
 
 		this.get_user_by_id = function(id) {
@@ -110,6 +147,30 @@
 				}
 			}
 			return undefined;
+		};
+		this.pluralize = function(num, str, pluralized) {
+			if(num === 1) {
+				return num + " " + str;
+			} else {
+				if(pluralized === undefined) {
+					pluralized = str + "s";
+				}
+				return num + " " + pluralized;
+			}
+		};
+		this.get_record_str = function(bot) {
+			var p = BrawlIO.pluralize;
+			var record_text = p(bot.wins, "win") + ", " + p(bot.losses, "loss", "losses") + ", " + p(bot.draws, "tie");
+			return record_text;
+		};
+		this.get_rating_str = function(bot) {
+			var rating_text;
+			if(bot.rated === false ) {
+				rating_text = "Unrated";
+			} else {
+				rating_text = bot.rating + " (" + BrawlIO.get_class_name(bot.rating) + ")";
+			}
+			return rating_text;
 		};
 	}).call(BrawlIO);
 }(BrawlIO));

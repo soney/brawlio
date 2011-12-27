@@ -35,10 +35,14 @@
 		}
 
 		, destroy: function() {
-			$.Widget.prototype.destroy.apply(this, arguments);
+			_.forEach(this.sprites, function(sprite) {
+				sprite.stop();
+			});
 			this.clear_update_interval();
 			this.progress_bar.destroy();
 			this.paper.remove();
+
+			$.Widget.prototype.destroy.apply(this, arguments);
 		}
 		, get_width: function() {
 			var game_log = this.option("game_log");
@@ -296,7 +300,7 @@
 				, pixels_per_tile = this.option("pixels_per_tile");
 			var result_text;
 			if(winner === undefined) {
-				result_text = "Draw";
+				result_text = "Tie";
 			} else {
 				result_text = winner.get_win_text();
 			}
@@ -413,6 +417,11 @@
 			this.health.attr("transform", "S"+ppt+","+ppt+",0,0T"+x+","+y);
 		};
 		proto.set_health = function(health) {
+			if(this.__last_health === health) {
+				return;
+			} else {
+				this.__last_health = health;
+			}
 			var player = this.moving_object;
 			var health_percentage = Math.max(health / player.get_max_health(), 0);
 			var radius = this.moving_object.get_radius();
@@ -420,6 +429,9 @@
 			this.health_fill.animate({
 				width: width
 			}, 90, "ease-out");
+		};
+		proto.stop = function() {
+			this.health_fill.stop();
 		};
 		proto.hide = function() {
 			this.set.hide();
@@ -446,6 +458,8 @@
 	};
 	(function(my) {
 		var proto = my.prototype;
+		proto.stop = function() {
+		};
 		proto.create = function() {
 			var radius = this.moving_object.get_radius();
 			
