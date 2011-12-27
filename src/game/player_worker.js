@@ -288,6 +288,9 @@ var get_time = function() {
 		var sync_time = this.sync_time;
 		return sync_round + (time - sync_time) / game_constants.SIM_MS_PER_ROUND;
 	};
+	game.getRound = function() {
+		return game.get_round();
+	};
 })(game);
 
 var code;
@@ -321,6 +324,7 @@ var run = function() {
 			, clearTimeout = game.clearTimeout
 			, setInterval = game.setInterval
 			, clearInterval = game.clearInterval
+			, getRound = game.get_round
 			, move = controller.move
 			, turn = controller.turn
 			, fire = controller.fire

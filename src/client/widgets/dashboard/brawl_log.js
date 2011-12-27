@@ -32,7 +32,7 @@
 			this.clear();
 			this.brawls.remove();
 			this.show_more_button.off("click.show_more");
-			this.show_more_button.remove();
+			this.show_more.remove();
 			$.Widget.prototype.destroy.apply(this, arguments);
 		}
 
@@ -57,7 +57,14 @@
 					, my_bot_id: bot_id
 				});
 				this.brawl_rows.push(row);
+
 			}, this);
+			var num_brawls = brawls.length;
+			var bot = BrawlIO.get_bot_by_id(bot_id);
+			var tot_brawls = bot.wins + bot.losses + bot.draws;
+			if(tot_brawls <= num_brawls) {
+				this.show_more.hide();
+			}
 		}
 		, show_more_logs: function() {
 			var bot_id = this.option("bot_id");
@@ -132,7 +139,7 @@
 
 			if(brawl.winner_fk === brawl.bot1_fk) {
 				this.bot1.addClass("winner");
-			} else if(brawl.winner_fk === brawl.bot1_fk) {
+			} else if(brawl.winner_fk === brawl.bot2_fk) {
 				this.bot2.addClass("winner");
 			}
 

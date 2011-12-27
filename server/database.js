@@ -298,7 +298,18 @@ var create_db_row = function(row, convert_column_names, convert_item_functions) 
 		_database.all("SELECT * FROM users " + condition + " LIMIT " + ids.length, function(err, rows) {
 			if(err) { throw err; }
 			var users = users_from_rows(rows);
-			callback(users);
+			var rv = [];
+			for(var i = 0; i<ids.length; i++) {
+				var desired_id = ids[i];
+				for(var j = 0; j<users.length; j++) {
+					var user = users[j];
+					if(user.id === desired_id) {
+						rv.push(user);
+						break;
+					}
+				}
+			}
+			callback(rv);
 		});
 	};
 
@@ -387,7 +398,18 @@ var create_db_row = function(row, convert_column_names, convert_item_functions) 
 		_database.all("SELECT * FROM bots " + condition + " LIMIT " + ids.length, function(err, rows) {
 			if(err) { throw err; }
 			var bots = bots_from_rows(rows);
-			callback(bots);
+			var rv = [];
+			for(var i = 0; i<bots.length; i++) {
+				var desired_id = ids[i];
+				for(var j = 0; j<bots.length; j++) {
+					var bot = bots[j];
+					if(bot.id === desired_id) {
+						rv.push(bot);
+						break;
+					}
+				}
+			}
+			callback(rv);
 		});
 	};
 
@@ -403,7 +425,7 @@ var create_db_row = function(row, convert_column_names, convert_item_functions) 
 	};
 
 	proto.set_replay_filename = function(brawl_id, replay_filename, callback) {
-		_database.run("UPDATE brawls SET replay_filename = $replay_filename WHERE pk = $pk LIMIT 1", {
+		_database.run("UPDATE brawls SET replay_filename = $replay_filename WHERE pk = $pk", {
 			$pk: brawl_id
 			, $replay_filename: replay_filename
 		}, callback);
@@ -425,7 +447,18 @@ var create_db_row = function(row, convert_column_names, convert_item_functions) 
 		_database.all("SELECT * FROM brawls " + condition + " LIMIT " + ids.length, function(err, rows) {
 			if(err) { throw err; }
 			var brawls = brawls_from_rows(rows);
-			callback(brawls);
+			var rv = [];
+			for(var i = 0; i<brawls.length; i++) {
+				var desired_id = ids[i];
+				for(var j = 0; j<brawls.length; j++) {
+					var brawl = brawls[j];
+					if(brawl.id === desired_id) {
+						rv.push(brawl);
+						break;
+					}
+				}
+			}
+			callback(rv);
 		});
 	};
 
