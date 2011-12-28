@@ -4,4 +4,4 @@ server/brawlio_db.sqlite3
 invited_emails.txt
 build
 .DS_Store
-game_logs/*
+game_logs/*.gz
