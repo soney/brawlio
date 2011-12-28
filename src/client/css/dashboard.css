@@ -42,10 +42,8 @@
 }
 
 a.add_bot {
-	padding: 3px;
 	position: absolute;
 	right: 2px;
-	font-size: 0.7em;
 	font-weight: normal;
 }
 
@@ -201,9 +199,6 @@ span.record {
 	color: #AAA;
 }
 
-.test.button {
-	padding: 2px;
-}
 
 .past_brawls {
 	padding-bottom: 1px;
@@ -255,4 +250,55 @@ span.record {
 .brawl_row .replay {
 	margin-left: 15px;
 	float: right;
+}
+
+.toolbar_row {
+	text-align: right;
+}
+.editor {
+	position: relative;
+	top: -5px;
+}
+.console_title {
+	border-bottom: 1px solid #DDD;
+	color: #AAA;
+}
+.brawl_console {
+	font-family: "Courier New", Courier, monospace;
+	border: 1px solid #EEE;
+	border-radius: 3px;
+	overflow: auto;
+	background-color: #FCFCFC;
+	font-size: 0.85em;
+	padding: 2px;
+	margin-top: 5px;
+	word-wrap: break-word;
+	color: black;
+}
+
+.console_row {
+	overflow: hidden;
+	margin-top: 7px;
+	margin-bottom: 7px;
+}
+.console_row span {
+	float: left;
+	display: inline-block;
+}
+.console_row .round, .console_row.error .round {
+	font-weight: bold;
+	width: 90px;
+}
+.console_row.error {
+	color: red;
+}
+.console_row .arg_separator {
+	color: #888;
+	padding-left: 2px;
+	padding-right: 2px;
+}
+.console_row .arg_separator.comma {
+	color: #AAA;
+	padding-left: 5px;
+	padding-right: 5px;
 }

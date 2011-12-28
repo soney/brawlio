@@ -656,6 +656,33 @@ var Game = function(options) {
 		this.stop(living_team, round);
 	};
 
+	proto.get_snapshot = function() {
+		var map = this.get_map();
+		var self = this;
+		var round = this.get_round();
+		var players = this.get_living_players().map(function(player) {
+				var position = self.get_moving_object_position_on_round(player, round);
+				return {
+					x: position.x
+					, y: position.y
+					, theta: position.theta
+					, player: player
+					, number: player.get_number()
+					, team_id: player.get_team().get_id()
+				};
+			});
+
+		var data = {
+			round: this.get_round()
+			, players: players
+			, map: {
+				width: map.get_width()
+				, height: map.get_height()
+			}
+		};
+		return data;
+	};
+
 	proto.log = function(args, player, round) {
 		this.do_log("log", args, player, round);
 	};
@@ -669,6 +696,7 @@ var Game = function(options) {
 			args: args
 			, player: player
 			, log_type: log_type
+			, round: round
 		});
 		this.game_log.push_game_event(log_event);
 	};

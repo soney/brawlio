@@ -20,7 +20,7 @@ var Brawl = function(options) {
 	this.workers_ready = false;
 	this.game_callback = undefined;
 	this.worker_sync_interval = undefined;
-	this.logging = true;
+	this.logging = options.logging || false;
 };
 
 (function(my) {
@@ -79,17 +79,18 @@ var Brawl = function(options) {
 			if(type === "console.log") {
 				if(this.logging) {
 					args = data.args;
-					round = data.rounds;
+					round = data.round;
 					game.log(args, player, round);
 				}
 			} else if(type === "console.error") {
 				if(this.logging) {
 					args = data.args;
+					round = data.round;
 					game.error(args, player, round);
 				}
 			} else if(type === "exception") {
 				if(this.logging) {
-					args = [data.message];
+					args = ["Error: " + data.message];
 					round = data.round;
 					game.error(args, player, round);
 				}

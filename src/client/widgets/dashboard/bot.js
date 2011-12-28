@@ -130,39 +130,45 @@
 			this.challenge_section.on("challenge", function(event) {
 				var opponent_id = event.opponent_id;
 				var my_id = bot.id;
-
-				BrawlIO.get_all_bots(function(bots) {
-					var my_bot, opponent_bot;
-					for(var i = 0; i<bots.length; i++) {
-						var bot = bots[i];
-						if(bot.id === my_id) { my_bot = bot; }
-						if(bot.id === opponent_id) { opponent_bot = bot; }
-						if(my_bot !== undefined && opponent_bot !== undefined) {
-							break;
-						}
-					}
-					if($(window).data("brawl_dialog")) {
-						$(window).brawl_dialog("destroy");
-					}
-					$(window).brawl_dialog({
-						my_code: my_bot.code
-						, opponent_code: opponent_bot.code
-						, on_game_over: function(event) {
-							var winner = event.winner;
-							if(winner === undefined) { // Draw
-							} else if(winner.name === "Me") {
-								winner = my_id;
-							} else {
-								winner = opponent_id;
+				BrawlIO.get_user(opponent_id, function(opponent) {
+					BrawlIO.get_all_bots(function(bots) {
+						var my_bot, opponent_bot;
+						for(var i = 0; i<bots.length; i++) {
+							var bot = bots[i];
+							if(bot.id === my_id) { my_bot = bot; }
+							if(bot.id === opponent_id) { opponent_bot = bot; }
+							if(my_bot !== undefined && opponent_bot !== undefined) {
+								break;
 							}
-							var brawl = event.brawl;
-							var game_log = brawl.get_game_log();
-							var stringified_log = game_log.stringify();
-
-							BrawlIO.on_brawl_run(my_id, opponent_id, winner, stringified_log, function() {
-								dashboard.refresh();
-							});
 						}
+						var my_name = BrawlIO.user.username + "/" + my_bot.name;
+						var opponent_name = opponent.username + "/" + opponent_bot.name;
+
+						if($(window).data("brawl_dialog")) {
+							$(window).brawl_dialog("destroy");
+						}
+						$(window).brawl_dialog({
+							my_code: my_bot.code
+							, opponent_code: opponent_bot.code
+							, bot1_name: my_name
+							, bot2_name: opponent_name
+							, on_game_over: function(event) {
+								var winner = event.winner;
+								if(winner === undefined) { // Draw
+								} else if(winner.name === "Me") {
+									winner = my_id;
+								} else {
+									winner = opponent_id;
+								}
+								var brawl = event.brawl;
+								var game_log = brawl.get_game_log();
+								var stringified_log = game_log.stringify();
+
+								BrawlIO.on_brawl_run(my_id, opponent_id, winner, stringified_log, function() {
+									dashboard.refresh();
+								});
+							}
+						});
 					});
 				});
 			});
@@ -223,6 +229,7 @@
 												.addClass("section_header")
 												.appendTo(this.element);
 			this.editor = $("<div />")	.appendTo(this.element)
+										.addClass("editor")
 										.bot_edit({
 											bot: this.option("bot")
 										});
@@ -263,7 +270,7 @@
 
 			var test_versus_button = $("<a />")	.attr("href", "javascript:void(0)")
 												.text("Test")
-												.addClass("test button")
+												.addClass("test medium button")
 												.on("click", $.proxy(this.do_test, this))
 												.appendTo(this.test_text);
 
@@ -281,11 +288,14 @@
 		, do_test: function() {
 			this.editor.bot_edit("save");
 			var test_option = this.test_options[this.test_versus_select.val()];
+			var bot = this.option("bot")
+			var user = BrawlIO.user;
 
 			var other_code = test_option.code;
 			if($.isFunction(other_code)) {
 				other_code = other_code();
 			}
+			var other_name = test_option.name;
 			var my_code = this.editor.bot_edit("get_code");
 
 			if($(window).data("brawl_dialog")) {
@@ -294,6 +304,9 @@
 			$(window).brawl_dialog({
 				my_code: my_code
 				, opponent_code: other_code
+				, bot1_name: user.username+"/"+bot.name
+				, bot2_name: other_name
+				, console: true
 			});
 		}
 	});

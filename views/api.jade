@@ -231,6 +231,15 @@ html(lang="en")
               .example Fire on round 10.5:
                 pre.code onRound(function() { fire(); }, 10.5);
 
+          .method#getRound
+            .signature getRound()
+            .description Returns the current round 
+            .doc 
+            .examples
+              h3 Examples
+              .example Get the current round:
+                pre.code var round = getRound();
+
           .method#setTimeout
             .signature setTimeout(callback, rounds)
             .description Runs 
@@ -365,5 +374,21 @@ html(lang="en")
                       }
                     }
                   });
+        .section_header
+          span.numeral 5
+          | Debugging
+        .quote
+          .words A good programmer does not necessarily get things right the first time.
+          .author Alison Balter
+        .section
+          .method#console.log
+            .signature console.log([...])
+            .description Logs arguments to the console 
+            .doc 
+              | Note: This only works in "test" mode and not in rated challenge matches.
+            .examples
+              h3 Examples
+              .example Log the current round to the console:
+                pre.code console.log(getRound());
     .footer
       span.copyright &copy; 2012 Brawl.IO

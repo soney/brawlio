@@ -14,6 +14,7 @@
 				, type: this.get_type()
 			};
 		};
+		proto.is = function(type) { return this.get_type() === type; };
 	}(GameEvent));
 	//========================================
 	var PlayerFired;

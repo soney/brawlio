@@ -44,6 +44,12 @@
 		};
 		proto.push_game_event = function(game_event) {
 			this.game_events.push(game_event);
+			if(game_event.is("console")) {
+				this.emit({
+					type: "console"
+					, game_event: game_event
+				});
+			}
 		};
 
 		proto.push_game_state = function(game_state) {

@@ -40,12 +40,12 @@
 		});
 
 
-		this.get_user = function(username, callback) {
+		this.get_user = function(user_id, callback) {
 			if(arguments.length === 1) {
-				callback = username;
-				username = null;
+				callback = user_id;
+				user_id = null;
 			}
-			socket.emit('get_user', username, function(user) {
+			socket.emit('get_user', user_id, function(user) {
 				callback(user);
 			});
 		};
@@ -72,12 +72,13 @@
 			});
 		};
 
-		this.set_bot_code = function(bot_id, code) {
+		this.set_bot_code = function(bot_id, code, callback) {
 			var bot = this.get_bot_by_id(bot_id);
 			bot.code = code;
 			socket.emit('set_bot_code', bot_id, code, function() {
 				var bot = BrawlIO.get_bot_by_id(bot_id);
 				bot.code = code;
+				if(callback) { callback(); }
 			});
 		};
 

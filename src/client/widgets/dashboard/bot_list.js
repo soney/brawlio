@@ -21,7 +21,7 @@
 										.appendTo(element);
 
 			this.add_bot_button = $("<a />").attr("href", "javascript:void(0)")
-											.addClass("add_bot button")
+											.addClass("add_bot small button")
 											.html("Create&nbsp;new&nbsp;bot")
 											.on("click", $.proxy(this.create_new_bot, this))
 											.appendTo(this.header);

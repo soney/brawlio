@@ -38,6 +38,21 @@ a.button:hover {
 	background-color: #FF7033;
 }
 
+a.medium.button {
+	padding: 4px;
+	font-size: 0.9em;
+}
+
+a.small.button {
+	padding: 3px;
+	font-size: 0.7em;
+}
+
+a.button.disabled, a.button.disabled:hover {
+	cursor: default;
+	background-color: #777777;
+}
+
 .star {
 	color: #DF591E;
 }
