@@ -7,7 +7,7 @@ var do_build_game = function() {
 	copy({
 		source: bio_inc.game_src
 		, dest: bio_inc.game_build
-//		, filter: copy.filter.uglifyjs
+		, filter: copy.filter.uglifyjs
 	});
 };
 var do_build_home = function() {
@@ -30,7 +30,7 @@ var do_build_dashboard = function() {
 	copy({
 		source: bio_inc.dashboard_src
 		, dest: bio_inc.dashboard_build
-//		, filter: copy.filter.uglifyjs
+		, filter: copy.filter.uglifyjs
 	});
 };
 
@@ -42,7 +42,7 @@ var do_build_set_username = function() {
 	copy({
 		source: bio_inc.set_username_src
 		, dest: bio_inc.set_username_build
-//		, filter: copy.filter.uglifyjs
+		, filter: copy.filter.uglifyjs
 	});
 };
 
