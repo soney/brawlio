@@ -225,7 +225,7 @@ var get_time = function() {
 		proto.isAlly = function() { return this.team_id === controller.team_id; };
 		proto.isOpponent = function() { return !this.isAlly(); };
 
-		proto.isMe = function() { return this.number === controller.number; };
+		proto.isMe = function() { return this.team_id === controller.team_id && this.number === controller.number; };
 		proto.isNotMe = function() { return !this.isMe(); };
 
 		proto.getLocation = function() { return this.position; };

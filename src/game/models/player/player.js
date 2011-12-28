@@ -115,6 +115,7 @@
 			return {
 				code: this.get_code()
 				, number: this.get_number()
+				, team_id: this.get_team().get_id()
 			};
 		};
 
