@@ -237,7 +237,7 @@ var Brawl = function(options) {
 		});
 
 		this.game.on("end", function(event) {
-			this.terminate_player_workers();
+			self.terminate_player_workers();
 			var winner = event.winner;
 			if(_.isFunction(self.game_callback)) {
 				self.game_callback(winner);
