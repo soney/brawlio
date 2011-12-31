@@ -176,7 +176,29 @@
 		var r = rad1 + rad2;
 
 		var distance_fn = get_distance_fn(circle_path, line_path, r - root_finder_error_tolerance);
-		var t = root_finder(distance_fn, 0, 1);
+
+		var t;
+		if(line_path.is("constant_velocity_line")) {
+			var outside_circle_fn = circle_path.get_circle().add_radius(r);
+			var line_fn = line_path.get_line();
+			var intersection_points = outside_circle_fn.intersects_with_line(line_fn);
+			if(intersection_points === false) { return false; }
+			var times = _(intersection_points)	.chain()
+												.without(false)
+												.map(function(intersection_point) {
+													return line_path.delta_t_until_at(intersection_point.x, intersection_point.y);
+												})
+												.value();
+			var t0;
+			if(times.length === 0) {
+				t0 = 0.5
+			} else {
+				t0 = Math.min.apply(Math, times);
+			}
+			t = root_finder(distance_fn, t0-0.2, t0);
+		} else {
+			t = root_finder(distance_fn, 0, 1);
+		}
 		if(t === false) { return false; }
 		return {
 			time: t
