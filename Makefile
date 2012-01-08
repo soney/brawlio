@@ -1,4 +1,5 @@
 all:
+	mkdir -p game_logs
 	mkdir -p build
 	mkdir -p src/client/css/images
 	cp -R src/client/css/images build

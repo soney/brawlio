@@ -250,7 +250,7 @@ var Brawl = function(options) {
 			self.terminate_player_workers();
 			var winner = event.winner;
 			if(_.isFunction(self.game_callback)) {
-				self.game_callback(winner);
+				self.game_callback(winner, event.forced);
 			}
 		});
 
@@ -258,7 +258,7 @@ var Brawl = function(options) {
 	};
 
 	proto.terminate = function() {
-		this.game.stop();
+		this.game.stop(undefined, undefined, true);
 	};
 
 	proto.get_game_log = function() {

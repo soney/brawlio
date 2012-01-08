@@ -50,11 +50,12 @@
 				this.brawl = brawl;
 
 				var on_game_over = this.option("on_game_over");
-				this.brawl.run(function(winner) {
+				this.brawl.run(function(winner, forced) {
 					on_game_over({
 						type: "game_over"
 						, winner: winner
 						, brawl: self.brawl
+						, forced: forced
 					});
 				});
 

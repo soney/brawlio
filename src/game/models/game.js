@@ -249,7 +249,8 @@ var Game = function(options) {
 		});
 	};
 
-	proto.stop = function(winner, round) {
+	proto.stop = function(winner, round, forced_termination) {
+		forced_termination = forced_termination === true;
 		if(this.running === false) {
 			return;
 		}
@@ -272,6 +273,7 @@ var Game = function(options) {
 		this.emit({
 			type: "end"
 			, winner: winner
+			, forced: forced_termination
 		});
 	};
 

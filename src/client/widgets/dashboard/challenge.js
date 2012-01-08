@@ -96,7 +96,8 @@
 												.on("click", function() {
 													self.element.trigger({
 														type: "challenge"
-														, opponent_id: bot.id
+														, opponent_bot_id: bot.id
+														, opponent_user_id: bot.user_fk
 													});
 												});
 			
