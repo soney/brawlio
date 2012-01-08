@@ -1,5 +1,6 @@
 all:
 	mkdir -p build
+	mkdir -p src/client/css/images
 	cp -R src/client/css/images build
 	./Makefile.dryice.js all
 
