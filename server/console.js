@@ -1,4 +1,4 @@
-var create_controller = require('../server/controller');
+var create_controller = require('./controller');
 var stdin = process.openStdin();
 
 var helptext = "========================================\n"

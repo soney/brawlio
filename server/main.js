@@ -397,8 +397,10 @@ var callback_map = function(arr, func, callback) {
 				});
 				return;
 			});
-			server.get("/test", function(req, res, next) {
-				res.render("api.jade", {layout: false, locals: self.locals});
+			server.get("/test/:test_id", function(req, res, next) {
+				var test_id = req.params.test_id;
+				console.log(test_id);
+				res.render("test/"+test_id+".jade", {layout: false, locals: self.locals});
 				return;
 			});
 		}
